@@ -1,21 +1,32 @@
-use poker::models::{Card, Hand, Deck, Suits};
+use poker::models::{Card, Hand, Deck, Suits, GameMode};
 
-// define the interface
+/// TODO: Read the GameREADME.md file to understand the rules of coding this game.
+
+/// Interface functions for each action of the smart contract
 #[starknet::interface]
-trait IActions<T> {
-    fn spawn(ref self: T);
-    fn move(ref self: T, direction: Direction);
+trait IActions<TContractState> {
+    /// Initializes the game with a game format. Returns a unique game id.
+    fn initialize_game(self: @TContractState, game_mode: GameMode, no_of_decks: u8) -> u64;
+    fn join_game(self: @TContractState);
+    fn leave_game(self: @TContractState, game_id: u64);
+    fn call(self: @TContractState);
+    fn fold(self: @TContractState);
+    fn raise(self: @TContractState);
+    fn all_in(self: @TContractState);
 }
+
+
 
 // dojo decorator
 #[dojo::contract]
 pub mod actions {
-    use super::{IActions, Direction, Position, next_position};
     use starknet::{ContractAddress, get_caller_address};
-    use poker::models::{Vec2, Moves, DirectionsAvailable};
-
     use dojo::model::{ModelStorage, ModelValueStorage};
     use dojo::event::EventStorage;
+    use poker::models::{GameId, GameFormat};
+
+    pub const ID: felt252 = 'id';
+    pub const MAX_NO_OF_CHIPS: u128 = 100000; /// for test, 1 chip = 10 strk.
 
     #[derive(Copy, Drop, Serde, Debug)]
     #[dojo::event]
@@ -26,94 +37,57 @@ pub mod actions {
     }
 
     #[abi(embed_v0)]
-    impl ActionsImpl of IActions<ContractState> {
-        fn spawn(ref self: ContractState) {
-            // Get the default world.
-            let mut world = self.world_default();
-
-            // Get the address of the current caller, possibly the player's address.
-            let player = get_caller_address();
-            // Retrieve the player's current position from the world.
-            let position: Position = world.read_model(player);
-
-            // Update the world state with the new data.
-
-            // 1. Move the player's position 10 units in both the x and y direction.
-            let new_position = Position {
-                player, vec: Vec2 { x: position.vec.x + 10, y: position.vec.y + 10 }
-            };
-
-            // Write the new position to the world.
-            world.write_model(@new_position);
-
-            // 2. Set the player's remaining moves to 100.
-            let moves = Moves {
-                player, remaining: 100, last_direction: Option::None, can_move: true
-            };
-
-            // Write the new moves to the world.
-            world.write_model(@moves);
+    impl ActionsImpl of super::IActions<ContractState> {
+        fn initialize_game(self: @ContractState, game_mode: GameMode, no_of_decks: u8) -> u64 {
+            // Check if the player exists, if not, create a new player.
+            // If caller exists, call the player_in_game function.
+            // Check the game mode. each format should have different rules
         }
 
-        // Implementation of the move function for the ContractState struct.
-        fn move(ref self: ContractState, direction: Direction) {
-            // Get the address of the current caller, possibly the player's address.
-
-            let mut world = self.world_default();
-
-            let player = get_caller_address();
-
-            // Retrieve the player's current position and moves data from the world.
-            let position: Position = world.read_model(player);
-            let mut moves: Moves = world.read_model(player);
-            // if player hasn't spawn, read returns model default values. This leads to sub overflow
-            // afterwards.
-            // Plus it's generally considered as a good pratice to fast-return on matching
-            // conditions.
-            if !moves.can_move {
-                return;
-            }
-
-            // Deduct one from the player's remaining moves.
-            moves.remaining -= 1;
-
-            // Update the last direction the player moved in.
-            moves.last_direction = Option::Some(direction);
-
-            // Calculate the player's next position based on the provided direction.
-            let next = next_position(position, moves.last_direction);
-
-            // Write the new position to the world.
-            world.write_model(@next);
-
-            // Write the new moves to the world.
-            world.write_model(@moves);
-
-            // Emit an event to the world to notify about the player's move.
-            world.emit_event(@Moved { player, direction });
+        fn leave_game(self: @ContractState, game_id: u64) {
+            // assert if the player exists
+            // assert if the game exists
+            // assert player.locked == true
+            // Check if the player is in the game
+            // Check if the player has enough chips to leave the game
         }
     }
+        
 
     #[generate_trait]
     impl InternalImpl of InternalTrait {
-        /// Use the default namespace "dojo_starter". This function is handy since the ByteArray
+        /// Use the default namespace "poker". This function is handy since the ByteArray
         /// can't be const.
         fn world_default(self: @ContractState) -> dojo::world::WorldStorage {
-            self.world(@"dojo_starter")
+            self.world(@"poker")
+        }
+
+        fn generate_game_id(self: @ContractState) -> u64 {
+            let mut world = self.world_default();
+            let mut game_id: GameId = world.read_model(ID);
+            let mut id = game_id.nonce + 1;
+            game_id.nonce = id;
+            world.write_model(@game_id);
+            id
+        }
+
+        /// This function makes all assertions on if player is meant to call this function.
+        fn before_play(self: @ContractState, caller: ContractAddress) {
+            // Check the chips available in the player model
+            // check if player is locked
+        }
+
+        /// This function performs all default actions immediately a player joins the game.
+        /// May call the previous function.
+        fn player_in_game(self: @ContractState, caller: ContractAddress) {
+            // Check if player is already in the game
+            // Check if player is locked (already in a game)
+            // The above two checks seems similar, but they differ in the error messages they return.
+            // Check if player has enough chips to join the game
+        }
+
+        fn after_play(self: @ContractState, caller: ContractAddress) {
+            // check if player has more chips, prompt
         }
     }
-}
-
-// Define function like this:
-fn next_position(mut position: Position, direction: Option<Direction>) -> Position {
-    match direction {
-        Option::None => { return position; },
-        Option::Some(d) => match d {
-            Direction::Left => { position.vec.x -= 1; },
-            Direction::Right => { position.vec.x += 1; },
-            Direction::Up => { position.vec.y -= 1; },
-            Direction::Down => { position.vec.y += 1; },
-        }
-    };
-    position
 }
