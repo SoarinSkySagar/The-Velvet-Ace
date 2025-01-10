@@ -1,4 +1,4 @@
-use poker::models::{Direction, Position};
+use poker::models::{Card, Hand, Deck, Suits};
 
 // define the interface
 #[starknet::interface]
