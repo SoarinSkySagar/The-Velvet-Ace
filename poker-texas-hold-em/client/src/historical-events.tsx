@@ -1,12 +1,14 @@
-import { ParsedEntity, SDK } from "@dojoengine/sdk";
+import { ParsedEntity } from "@dojoengine/sdk";
 import { useAccount } from "@starknet-react/core";
 import { SchemaType } from "./typescript/models.gen";
 import { AccountInterface, addAddressPadding } from "starknet";
 import { useEffect, useState } from "react";
 import { Subscription } from "@dojoengine/torii-client";
+import { useDojoSDK } from "@dojoengine/sdk/react";
 
-export function HistoricalEvents({ sdk }: { sdk: SDK<SchemaType> }) {
+export function HistoricalEvents() {
     const { account } = useAccount();
+    const { sdk } = useDojoSDK();
     const [events, setEvents] = useState<ParsedEntity<SchemaType>[][]>([]);
     const [subscription, setSubscription] = useState<Subscription | null>(null);
 
@@ -96,6 +98,7 @@ function Event({ event }: { event: ParsedEntity<SchemaType> }) {
             <div>{event.entityId.toString()}</div>
             <div>
                 <div>Player: {player}</div>
+                {/* @ts-expect-error type is ok here */}
                 <div>Direction: {direction}</div>
             </div>
         </div>

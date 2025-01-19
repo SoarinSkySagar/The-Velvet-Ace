@@ -1,29 +1,14 @@
 import { useEffect, useMemo } from "react";
-import {
-    ParsedEntity,
-    QueryBuilder,
-    SDK,
-    createDojoStore,
-} from "@dojoengine/sdk";
+import { ParsedEntity, QueryBuilder } from "@dojoengine/sdk";
 import { getEntityIdFromKeys } from "@dojoengine/utils";
-import { AccountInterface, addAddressPadding } from "starknet";
+import { AccountInterface, addAddressPadding, CairoCustomEnum } from "starknet";
 
-import {
-    Direction,
-    ModelsMapping,
-    SchemaType,
-} from "./typescript/models.gen.ts";
-import { useDojo } from "./useDojo.tsx";
-import useModel from "./useModel.tsx";
+import { ModelsMapping, SchemaType } from "./typescript/models.gen.ts";
 import { useSystemCalls } from "./useSystemCalls.ts";
 import { useAccount } from "@starknet-react/core";
 import { WalletAccount } from "./wallet-account.tsx";
 import { HistoricalEvents } from "./historical-events.tsx";
-
-/**
- * Global store for managing Dojo game state.
- */
-export const useDojoStore = createDojoStore<SchemaType>();
+import { useDojoSDK, useModel } from "@dojoengine/sdk/react";
 
 /**
  * Main application component that provides game functionality and UI.
@@ -31,10 +16,8 @@ export const useDojoStore = createDojoStore<SchemaType>();
  *
  * @param props.sdk - The Dojo SDK instance configured with the game schema
  */
-function App({ sdk }: { sdk: SDK<SchemaType> }) {
-    const {
-        setup: { client },
-    } = useDojo();
+function App() {
+    const { useDojoStore, client, sdk } = useDojoSDK();
     const { account } = useAccount();
     const state = useDojoStore((state) => state);
     const entities = useDojoStore((state) => state.entities);
@@ -175,29 +158,37 @@ function App({ sdk }: { sdk: SDK<SchemaType> }) {
                         <div className="grid grid-cols-3 gap-2 w-full h-48">
                             {[
                                 {
-                                    direction: Direction.Up,
+                                    direction: new CairoCustomEnum({
+                                        Up: "()",
+                                    }),
                                     label: "↑",
                                     col: "col-start-2",
                                 },
                                 {
-                                    direction: Direction.Left,
+                                    direction: new CairoCustomEnum({
+                                        Left: "()",
+                                    }),
                                     label: "←",
                                     col: "col-start-1",
                                 },
                                 {
-                                    direction: Direction.Right,
+                                    direction: new CairoCustomEnum({
+                                        Right: "()",
+                                    }),
                                     label: "→",
                                     col: "col-start-3",
                                 },
                                 {
-                                    direction: Direction.Down,
+                                    direction: new CairoCustomEnum({
+                                        Down: "()",
+                                    }),
                                     label: "↓",
                                     col: "col-start-2",
                                 },
-                            ].map(({ direction, label, col }) => (
+                            ].map(({ direction, label, col }, idx) => (
                                 <button
                                     className={`${col} h-12 w-12 bg-gray-600 rounded-full shadow-md active:shadow-inner active:bg-gray-500 focus:outline-none text-2xl font-bold text-gray-200`}
-                                    key={direction}
+                                    key={idx}
                                     onClick={async () => {
                                         await client.actions.move(
                                             account!,
@@ -290,7 +281,7 @@ function App({ sdk }: { sdk: SDK<SchemaType> }) {
                 </div>
 
                 {/* // Here sdk is passed as props but this can be done via contexts */}
-                <HistoricalEvents sdk={sdk} />
+                <HistoricalEvents />
             </div>
         </div>
     );
