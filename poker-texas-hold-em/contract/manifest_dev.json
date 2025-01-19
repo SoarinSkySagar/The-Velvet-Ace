@@ -1252,8 +1252,8 @@
   },
   "contracts": [
     {
-      "address": "0x4dec529aeb6bc500fd92a25024b87e3f3dcba7085288e2ec8da40e295fa67e0",
-      "class_hash": "0x7c3f563385d8a322381c968e6c34fdf501eac2e537d896b974cfe755afcdeda",
+      "address": "0x2115aaa49adb5178478e04d8707ab7fe361aa9e140866b7365c3bb1f1d93334",
+      "class_hash": "0x6cbb5ab40ad7b48dff70edeacc4902a9eeae63a9e36456f9f908aedb904fbd2",
       "abi": [
         {
           "type": "impl",
@@ -1308,11 +1308,11 @@
         {
           "type": "impl",
           "name": "ActionsImpl",
-          "interface_name": "poker::systems::actions::IActions"
+          "interface_name": "dojo_starter::systems::actions::IActions"
         },
         {
           "type": "enum",
-          "name": "poker::models::Direction",
+          "name": "dojo_starter::models::Direction",
           "variants": [
             {
               "name": "Left",
@@ -1334,7 +1334,7 @@
         },
         {
           "type": "interface",
-          "name": "poker::systems::actions::IActions",
+          "name": "dojo_starter::systems::actions::IActions",
           "items": [
             {
               "type": "function",
@@ -1349,7 +1349,7 @@
               "inputs": [
                 {
                   "name": "direction",
-                  "type": "poker::models::Direction"
+                  "type": "dojo_starter::models::Direction"
                 }
               ],
               "outputs": [],
@@ -1456,7 +1456,7 @@
         },
         {
           "type": "event",
-          "name": "poker::systems::actions::actions::Event",
+          "name": "dojo_starter::systems::actions::actions::Event",
           "kind": "enum",
           "variants": [
             {
@@ -1485,19 +1485,19 @@
   "models": [
     {
       "members": [],
-      "class_hash": "0x3758c16d23d1f1b752f976ecdfe7b1b17764effa5f1e5b284e6da3daf979128",
+      "class_hash": "0x3f52c6cf17db224f4e7f88629adf7e907ff110baa0616c7e8ef17c5aecf1b1b",
       "tag": "dojo_starter-DirectionsAvailable",
       "selector": "0x77844f1facb51e60e546a9832d56c6bd04fa23be4fd5b57290caae5e9a3c1e4"
     },
     {
       "members": [],
-      "class_hash": "0x623817371c4b71c23b5ea8f8fadd4159d563105d533fad3f8bfd729ae29cceb",
+      "class_hash": "0x5f79e21312b142fc289d3bd1e0f4c65ac3c4e532252c6fb1ad48b718d892dc",
       "tag": "dojo_starter-Moves",
       "selector": "0x2a29373f1af8348bd366a990eb3a342ef2cbe5e85160539eaca3441a673f468"
     },
     {
       "members": [],
-      "class_hash": "0x7dfd01e733c532c29fc2546330bd675de8a90352f6566d3194f85840a36ec59",
+      "class_hash": "0x2283c68ecba5c60bbbbd3b00659808a02244468e41a1d2cdba1312d65b83594",
       "tag": "dojo_starter-Position",
       "selector": "0x2ac8b4c190f7031b9fc44312e6b047a1dce0b3f2957c33a935ca7846a46dd5b"
     }
@@ -1505,7 +1505,7 @@
   "events": [
     {
       "members": [],
-      "class_hash": "0x5c7b2023ec97fb23b80069c43658a7bf4fe4d84be96b8cbfd3ebb1fc048e6f0",
+      "class_hash": "0x3dca5564f84050b20e66a2e5e7619201502d241b223ea73cfc05f29e6e20ea1",
       "tag": "dojo_starter-Moved",
       "selector": "0x504403e5c02b6442527721fc464d9ea5fc8f1ee600ab5ccd5c0845d36fd45f1"
     }
