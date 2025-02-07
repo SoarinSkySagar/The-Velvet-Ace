@@ -1,5 +1,5 @@
 use core::ops::IndexView;
-use starknet::{ContractAddress};
+use starknet::{ContractAddress, contract_address_const};
 use core::poseidon::{PoseidonTrait};
 use core::hash::{HashStateTrait, HashStateExTrait};
 
@@ -7,6 +7,7 @@ use core::hash::{HashStateTrait, HashStateExTrait};
 ///
 /// **********************************************************************************************
 
+// Check the Suits struct
 #[derive(Copy, Drop, Serde, Default, Debug, Introspect, PartialEq)]
 pub struct Card {
     suit: u8,
@@ -26,6 +27,7 @@ pub enum GameMode {
     Tournament: bool,
 }
 
+/// The kicker_split is checked when comparing hands.
 #[derive(Copy, Drop, Serde, Default, Introspect, PartialEq)]
 pub struct GameParams {
     game_mode: GameMode,
@@ -33,6 +35,7 @@ pub struct GameParams {
     small_blind: u64,
     big_blind: u64,
     no_of_decks: u8,
+    kicker_split: bool
 }
 
 /// id - the game id
@@ -84,7 +87,7 @@ pub struct Deck {
     cards: Array<Card>,
 }
 
-#[derive(Serde, Drop, Debug, Introspect)]
+#[derive(Serde, Drop, Clone, Debug, Introspect)]
 #[dojo::model]
 pub struct Hand {
     #[key]
@@ -94,12 +97,12 @@ pub struct Hand {
 
 // the locked variable takes in a tuple of (is_locked, game_id) if the player is already
 // locked to a session.
-#[derive(Drop, Serde, Debug)]
+#[derive(Drop, Serde, Clone, Debug)]
 #[dojo::model]
 pub struct Player {
     #[key]
     id: ContractAddress,
-    hand: Option<Hand>,
+    hand: Hand,
     chips: u256,
     current_bet: u256,
     total_rounds: u64,
@@ -151,26 +154,103 @@ pub mod HandRank {
 pub impl HandImpl of HandTrait {
     /// This function will return the hand rank of the player's hand
     /// this will compare the cards on the player's hand with the community cards
-    fn hand_rank(player: @Player, community_cards: @Array<Card>) -> u16 {
+    fn hand_rank(player: Player, community_cards: Array<Card>) -> (Hand, u16) {
         // use HandRank to get the rank for a hand of one player
         // return using the HandRank::<the const>, and not the raw u16 value
-        0
+        // compute the hand that makes up this rank you have computed
+        // set the player value (a CA) to the player's CA with the particular hand
+        // return both values in a tuple
+        // document the function.
+
+        // this function can be called externally in the future.
+
+        (Self::new_hand(contract_address_const::<0x0>()), 0)
     }
 
-    /// This function will compare the hands of all the players and return the winning hand.
-    fn compare_hands(players: @Array<Player>, community_cards: @Array<Card>) -> Option<Player> {
-        // measure
-        Option::None
+    /// This function will compare the hands of all the players and return an array of Player
+    /// contains the player with the winning hand
+    /// this is only possible if the `kick_split` in game_params is true
+    fn compare_hands(
+        players: Array<Player>, community_cards: Array<Card>, game_params: GameParams
+    ) -> Array<Option<Player>> {
+        // for hand comparisons, there should be a kicker
+        // kicker there-in that there are times two or more players have the same hand rank, so we
+        // check the value of each card in hand.
+
+        // TODO: Ace might be changed to a higher value.
+        let mut highest_rank: u16 = 0;
+        let mut current_winner: Option<Player> = Option::None;
+        let mut current_winning_hand: Hand = Self::new_hand(contract_address_const::<0x0>());
+        let mut winning_players: Array<Option<Player>> = array![];
+        let mut winning_hands: Array<Hand> = array![];
+        for player in players {
+            let (hand, current_rank) = Self::hand_rank(player.clone(), community_cards.clone());
+            if current_rank > highest_rank {
+                highest_rank = current_rank;
+                current_winner = Option::Some(player.clone());
+                current_winning_hand = hand;
+                // append details into `winning_hands` -- extracted using a bool variables
+                // `hands_changed`
+                // the hands has been changed, set to true
+                Self::hands_changed(ref winning_players, ref winning_hands, true);
+                // update the necessary arrays here.
+
+            } else if current_rank == highest_rank {
+                // implement kicker. Only works for the current_winner variable
+                // retrieve the former current_winner already stored and the current player,
+                // and compare both hands. This should be done in another internal function and be
+                // called here.
+                // The function should take in both `hand` and `current_winning_hand`, should return
+                // the winning hand Implementation would be left to you
+                // compare the player's CA in the returned hand to the current `winning_hand`
+                // If not equal, update both `current_winner` and `winning_hand`
+
+                // TODO: Check for a straight. The kicker is different for a straight. The person
+                // with the highest straight wins (compare only the last straight.) The function
+                // called here might take in a `hand_rank` u16 variable to check for this.
+
+                // in rare case scenarios, a pot can be split based on the game params
+                // here, an array shall be used. check kicker_split, if true, add two same hands in
+                // the array Add the kicker hand first into the array, before the other...that's if
+                // `game_params.kicker_split`
+                // is true, if not, add only the kicker hand to the Array. For more than two
+                // kickers, arrange the array accordingly. might be implemented by someone else.
+                // here, hands have been changed, right?
+                Self::hands_changed(ref winning_players, ref winning_hands, true);
+                // do the necessary updates.
+            }
+        };
+
+        winning_players
+    }
+
+    // To be audited
+    fn hands_changed(
+        ref winning_players: Array<Option<Player>>,
+        ref winning_hands: Array<Hand>,
+        hands_changed: bool
+    ) {
+        if hands_changed {
+            assert(winning_hands.len() == winning_players.len(), 'HandImpl panicked.');
+            for _ in 0
+                ..winning_hands
+                    .len() {
+                        // discard all existing objects in `winning_hands`. A clean slate.
+                        winning_hands.pop_front().unwrap();
+                        winning_players.pop_front().unwrap().unwrap();
+                    };
+        }
     }
 
     fn new_hand(player: ContractAddress) -> Hand {
         Hand { player, cards: array![] }
     }
 
-    fn remove_card(position: u8, ref hand: Hand) {// ensure card is removed.
+    fn remove_card(position: u8, ref hand: Hand) { // ensure card is removed.
+    // though I haven't seen a need for this function.
     }
 
-    fn add_card(card: Card, ref hand: Hand) {// ensure card is added.
+    fn add_card(card: Card, ref hand: Hand) { // ensure card is added.
     }
 }
 
@@ -206,15 +286,16 @@ pub impl GameImpl of GameTrait {
             max_no_of_players: 5,
             small_blind: 10,
             big_blind: 20,
-            no_of_decks: 1
+            no_of_decks: 1,
+            kicker_split: true
         }
     }
 
-    fn leave_game(ref player: Player) {// here, all player params should be initialized
+    fn leave_game(ref player: Player) { // here, all player params should be re-initialized
     }
 }
 
-pub const DEFAULT_DECK_LENGTH: u32 = 52;
+pub const DEFAULT_DECK_LENGTH: u32 = 52; // move this up up
 
 #[generate_trait]
 pub impl DeckImpl of DeckTrait {

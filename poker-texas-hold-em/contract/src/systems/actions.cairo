@@ -116,7 +116,9 @@ pub mod actions {
         }
 
         /// This function makes all assertions on if player is meant to call this function.
-        fn before_play(self: @ContractState, caller: ContractAddress) {// Check the chips available in the player model
+        fn before_play(
+            self: @ContractState, caller: ContractAddress
+        ) { // Check the chips available in the player model
         // check if player is locked to a session
         // check if the player is even in the game (might have left along the way)...call the below
         // function
@@ -124,13 +126,17 @@ pub mod actions {
 
         /// This function performs all default actions immediately a player joins the game.
         /// May call the previous function. (should not, actually)
-        fn player_in_game(self: @ContractState, caller: ContractAddress) {// Check if player is already in the game
+        fn player_in_game(
+            self: @ContractState, caller: ContractAddress
+        ) { // Check if player is already in the game
         // Check if player is locked (already in a game), check the player struct.
         // The above two checks seem similar, but they differ in the error messages they return.
         // Check if player has enough chips to join the game
         }
 
-        fn after_play(self: @ContractState, caller: ContractAddress) {// check if player has more chips, prompt 'OUT OF CHIPS'
+        fn after_play(
+            self: @ContractState, caller: ContractAddress
+        ) { // check if player has more chips, prompt 'OUT OF CHIPS'
         }
 
         fn extract_current_game_id(self: @ContractState, player: @Player) -> u64 {
@@ -144,10 +150,12 @@ pub mod actions {
             Option::None
         }
 
-        fn _deal_hands(ref players: Array<Player>) {// deal hands for each player in the array
+        fn _deal_hands(ref players: Array<Player>) { // deal hands for each player in the array
         }
 
-        fn _resolve_hands(ref players: Array<Player>) {// after each round, resolve all players hands by removing all cards from each hand
+        fn _resolve_hands(
+            ref players: Array<Player>
+        ) { // after each round, resolve all players hands by removing all cards from each hand
         // and perhaps re-initialize and shuffle the deck.
         }
     }
