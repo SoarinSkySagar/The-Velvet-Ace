@@ -170,10 +170,12 @@ pub impl HandImpl of HandTrait {
     /// This function will compare the hands of all the players and return an array of Player
     /// contains the player with the winning hand
     /// this is only possible if the `kick_split` in game_params is true
-    fn compare_hands(players: Array<Player>, community_cards: Array<Card>, game_params: GameParams) -> Array<Option<Player>> {
+    fn compare_hands(
+        players: Array<Player>, community_cards: Array<Card>, game_params: GameParams
+    ) -> Array<Option<Player>> {
         // for hand comparisons, there should be a kicker
-        // kicker there-in that there are times two or more players have the same hand rank, so we check the value
-        // of each card in hand.
+        // kicker there-in that there are times two or more players have the same hand rank, so we
+        // check the value of each card in hand.
 
         // TODO: Ace might be changed to a higher value.
         let mut highest_rank: u16 = 0;
@@ -187,32 +189,35 @@ pub impl HandImpl of HandTrait {
                 highest_rank = current_rank;
                 current_winner = Option::Some(player.clone());
                 current_winning_hand = hand;
-                // append details into `winning_hands` -- extracted using a bool variables `hands_changed`
+                // append details into `winning_hands` -- extracted using a bool variables
+                // `hands_changed`
                 // the hands has been changed, set to true
                 Self::hands_changed(ref winning_players, ref winning_hands, true);
                 // update the necessary arrays here.
 
             } else if current_rank == highest_rank {
                 // implement kicker. Only works for the current_winner variable
-                // retrieve the former current_winner already stored and the current players.at(i), and
-                // compare both hands. This should be done in another internal function and be called here.
-                // The function should take in both `hand` and `current_winning_hand`, should return the winning hand
-                // Implementation would be left to you
+                // retrieve the former current_winner already stored and the current player,
+                // and compare both hands. This should be done in another internal function and be
+                // called here.
+                // The function should take in both `hand` and `current_winning_hand`, should return
+                // the winning hand Implementation would be left to you
                 // compare the player's CA in the returned hand to the current `winning_hand`
                 // If not equal, update both `current_winner` and `winning_hand`
 
-                // TODO: Check for a straight. The kicker is different for a straight. The person with the
-                // highest straight wins (compare only the last straight.) The function called here might take in
-                // a `hand_rank` u16 variable to check for this. 
+                // TODO: Check for a straight. The kicker is different for a straight. The person
+                // with the highest straight wins (compare only the last straight.) The function
+                // called here might take in a `hand_rank` u16 variable to check for this.
 
                 // in rare case scenarios, a pot can be split based on the game params
-                // here, an array shall be used. check kicker_split, if true, add two same hands in the array
-                // Add the kicker hand first into the array, before the other...that's if `game_params.kicker_split`
-                // is true, if not, add only the kicker hand to the Array. For more than two kickers, arrange the array
-                // accordingly. might be implemented by someone else.
-                // here, hands has been changed, right?
-                // do the necessary updates.
+                // here, an array shall be used. check kicker_split, if true, add two same hands in
+                // the array Add the kicker hand first into the array, before the other...that's if
+                // `game_params.kicker_split`
+                // is true, if not, add only the kicker hand to the Array. For more than two
+                // kickers, arrange the array accordingly. might be implemented by someone else.
+                // here, hands have been changed, right?
                 Self::hands_changed(ref winning_players, ref winning_hands, true);
+                // do the necessary updates.
             }
         };
 
@@ -220,12 +225,20 @@ pub impl HandImpl of HandTrait {
     }
 
     // To be audited
-    fn hands_changed(ref winning_players: Array<Option<Player>>, ref winning_hands: Array<Hand>, hands_changed: bool) {
+    fn hands_changed(
+        ref winning_players: Array<Option<Player>>,
+        ref winning_hands: Array<Hand>,
+        hands_changed: bool
+    ) {
         if hands_changed {
-            for _ in 0..winning_hands.len() {
-                // discard all existing objects in `winning_hands`. A clean slate.
-                winning_hands.pop_front().unwrap();
-            };
+            assert(winning_hands.len() == winning_players.len(), 'HandImpl panicked.');
+            for _ in 0
+                ..winning_hands
+                    .len() {
+                        // discard all existing objects in `winning_hands`. A clean slate.
+                        winning_hands.pop_front().unwrap();
+                        winning_players.pop_front().unwrap().unwrap();
+                    };
         }
     }
 
@@ -233,10 +246,11 @@ pub impl HandImpl of HandTrait {
         Hand { player, cards: array![] }
     }
 
-    fn remove_card(position: u8, ref hand: Hand) {// ensure card is removed.
+    fn remove_card(position: u8, ref hand: Hand) { // ensure card is removed.
+    // though I haven't seen a need for this function.
     }
 
-    fn add_card(card: Card, ref hand: Hand) {// ensure card is added.
+    fn add_card(card: Card, ref hand: Hand) { // ensure card is added.
     }
 }
 
@@ -277,11 +291,11 @@ pub impl GameImpl of GameTrait {
         }
     }
 
-    fn leave_game(ref player: Player) {// here, all player params should be re-initialized
+    fn leave_game(ref player: Player) { // here, all player params should be re-initialized
     }
 }
 
-pub const DEFAULT_DECK_LENGTH: u32 = 52;    // move this up up
+pub const DEFAULT_DECK_LENGTH: u32 = 52; // move this up up
 
 #[generate_trait]
 pub impl DeckImpl of DeckTrait {
