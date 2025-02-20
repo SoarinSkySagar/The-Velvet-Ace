@@ -79,7 +79,7 @@ pub mod Suits {
     pub const CLUBS: u8 = 3;
 }
 
-#[derive(Serde, Drop, Default, Introspect, PartialEq)]
+#[derive(Serde, Drop, Clone, Default, Introspect, PartialEq)]
 #[dojo::model]
 pub struct Deck {
     #[key]
@@ -297,9 +297,15 @@ pub impl GameImpl of GameTrait {
 
 pub const DEFAULT_DECK_LENGTH: u32 = 52; // move this up up
 
-#[generate_trait]
-pub impl DeckImpl of DeckTrait {
-    fn new_deck(game_id: felt252) -> Deck {
+fn generate_random(span: u32) -> u32 {
+    let seed = starknet::get_block_timestamp();
+    let hash: u256 = PoseidonTrait::new().update_with(seed).finalize().into();
+
+    (hash % span.into()).try_into().unwrap()
+}
+
+pub impl DeckImpl of DeckTrait<Deck> {
+    fn new_deck(ref self: Deck, game_id: felt252) -> Deck {
         let mut cards: Array<Card> = array![];
         for suit in 0_u8
             ..4_u8 {
@@ -313,36 +319,29 @@ pub impl DeckImpl of DeckTrait {
         Deck { game_id, cards }
     }
 
-    fn shuffle(ref deck: Deck) {
-        let mut cards: Array<Card> = deck.cards;
+    fn shuffle(ref self: Deck) {
+        let mut cards: Array<Card> = self.cards;
         let mut new_cards: Array<Card> = array![];
         let mut verifier: Felt252Dict<bool> = Default::default();
         for _ in cards.len()
             ..0 {
-                let mut rand = Self::_generate_random(DEFAULT_DECK_LENGTH);
+                let mut rand = generate_random(DEFAULT_DECK_LENGTH);
                 while !verifier.get(rand.into()) {
-                    rand = Self::_generate_random(DEFAULT_DECK_LENGTH);
+                    rand = generate_random(DEFAULT_DECK_LENGTH);
                 };
                 let temp: Card = *cards.at(rand);
                 new_cards.append(temp);
                 verifier.insert(rand.into(), true);
             };
 
-        deck.cards = new_cards.clone();
+        self.cards = new_cards.clone();
         // deck
     }
 
-    fn _generate_random(span: u32) -> u32 {
-        let seed = starknet::get_block_timestamp();
-        let hash: u256 = PoseidonTrait::new().update_with(seed).finalize().into();
-
-        (hash % span.into()).try_into().unwrap()
-    }
-
-    fn deal_card(ref deck: Deck) -> Card {
-        let previous_size = deck.cards.len();
+    fn deal_card(ref self: Deck) -> Card {
+        let previous_size = self.cards.len();
         // assert_ne(previous_size, 0);
-        let card: Card = deck.cards.pop_front().unwrap();
+        let card: Card = self.cards.pop_front().unwrap();
         // assert_gt!(previous_size, deck.cards.len());
 
         card
@@ -360,4 +359,9 @@ pub mod GameErrors {
 // assert after shuffling, that all cards remain distinct, and the deck is still 52 cards
 // #[derive(Serde, Copy, Drop, Introspect, PartialEq, Debug)]
 
+pub trait DeckTrait<T> {
+    fn new_deck(ref self: T, game_id: felt252) -> Deck;
+    fn shuffle(ref self: T);
+    fn deal_card(ref self: T) -> Card;
+}
 
