@@ -8,6 +8,7 @@
   <img src="https://media.giphy.com/media/l0HU7jjG5O8cOG6xW/giphy.gif" width="400">
 </p>
 
+
 ---
 
 ## 🔥 Have you ever played a game and wondered if the developers rigged it in their favor—or worse, for someone else? 🃏  
