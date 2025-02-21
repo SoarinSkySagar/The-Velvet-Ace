@@ -5,7 +5,7 @@
 
 <!-- Casino GIF -->
 <p align="center">
-  <img src="https://media.giphy.com/media/l0HU7jjG5O8cOG6xW/giphy.gif" width="400">
+  <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYW0zZ2JzZXN1emRrYXo1czRianlwdXRyMHJqd2tndmd6cXpsZWx0bCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/3o6MbqNPaatT8nnEmk/giphy.gif" width="400">
 </p>
 
 
