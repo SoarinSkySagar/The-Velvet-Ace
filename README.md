@@ -75,13 +75,4 @@ Join our **Telegram TVA group** for discussions and updates.
 </p>
 
 <!-- Animated SVG (Optional) -->
-<p align="center">
-  <img src="https://upload.wikimedia.org/wikipedia/commons/4/48/Markdown-mark.svg" width="80" style="animation: pulse 1.5s infinite;">
-</p>
-<style>
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
-}
-</style>
+
