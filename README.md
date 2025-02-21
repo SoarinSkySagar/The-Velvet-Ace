@@ -29,14 +29,14 @@ Just pure, provably fair gaming.
 ## 👥 Contributors  
 
 A huge shoutout to all the amazing contributors who made this project possible! 💖  
-[List contributors here or link to the contributors page]  
+
 
 ---
 
 ## 📖 Resources  
 
 📚 **Essential docs & guides**  
-- [📖 Internal README](./README.md) – Detailed project setup & instructions  
+- [📖 Internal README](https://github.com/Prometheus-A/The-Velvet-Ace/blob/main/poker-texas-hold-em/GameREADME.md) – Detailed project setup & instructions  
 - [🤝 Contributing Guidelines](./CONTRIBUTING.md) – How to contribute to the project  
 
 ---
@@ -55,7 +55,7 @@ Join our **Telegram TVA group** for discussions and updates.
 
 <!-- Play Now Button -->
 <p align="center">
-  <a href="https://starknet.io" style="
+  <a href="#" style="
     background-color: #ff00ff;
     color: white;
     padding: 10px 20px;
