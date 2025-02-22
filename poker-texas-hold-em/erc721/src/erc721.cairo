@@ -2,7 +2,7 @@
 // Compatible with OpenZeppelin Contracts for Cairo ^0.20.0
 
 #[starknet::contract]
-mod MyToken {
+mod ERC721 {
     use openzeppelin::access::ownable::OwnableComponent;
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::token::erc721::{ERC721Component, ERC721HooksEmptyImpl};
@@ -52,15 +52,43 @@ mod MyToken {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, owner: ContractAddress, token_name: ByteArray, token_symbol: ByteArray, token_uri: ByteArray) {
+    fn constructor(
+        ref self: ContractState,
+        owner: ContractAddress,
+        token_name: ByteArray,
+        token_symbol: ByteArray,
+        token_uri: ByteArray,
+    ) {
         self.erc721.initializer(token_name, token_symbol, token_uri);
         self.ownable.initializer(owner);
+    }
+
+    #[generate_trait]
+    #[abi(per_item)]
+    impl ExternalImpl of ExternalTrait {
+        #[external(v0)]
+        fn safe_mint(
+            ref self: ContractState,
+            recipient: ContractAddress,
+            token_id: u256,
+            data: Span<felt252>,
+        ) {
+            self.ownable.assert_only_owner();
+            self.erc721.safe_mint(recipient, token_id, data);
+        }
+
+        #[external(v0)]
+        fn safeMint(
+            ref self: ContractState, recipient: ContractAddress, tokenId: u256, data: Span<felt252>,
+        ) {
+            self.safe_mint(recipient, tokenId, data);
+        }
     }
 
     //
     // Upgradeable
     //
-    
+
     #[abi(embed_v0)]
     impl UpgradeableImpl of IUpgradeable<ContractState> {
         fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
