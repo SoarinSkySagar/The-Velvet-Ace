@@ -77,11 +77,7 @@ A huge shoutout to all the amazing contributors who made this project possible! 
 
 Join our **Telegram group** for discussions and updates.  
 📩 For any questions, drop a message in the group or reach out to  
-<p align="center" style="
-  display: flex;
-  align-items: center;
-  justify-content: center;
-">
+
   <a href="https://t.me/lemonade46" style="
     display: flex;
     align-items: center;
@@ -93,7 +89,7 @@ Join our **Telegram group** for discussions and updates.
     <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQI3NggajOa9dgV-nL57KDNxJgXVF_enFf8mg&s" width="40" style="margin-right: 8px;">
     @lemonade
   </a>
-</p>
+
 
  
 
