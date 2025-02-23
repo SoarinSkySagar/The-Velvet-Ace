@@ -8,7 +8,6 @@
   <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYW0zZ2JzZXN1emRrYXo1czRianlwdXRyMHJqd2tndmd6cXpsZWx0bCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/3o6MbqNPaatT8nnEmk/giphy.gif" width="400">
 </p>
 
-
 ---
 
 ## 🔥 Have you ever played a game and wondered if the developers rigged it in their favor—or worse, for someone else? 🃏  
@@ -24,6 +23,7 @@ Just pure, provably fair gaming.
 🚀 This project is built using:  
 - **Frontend:** Vite + React ⚛️  
 - **Smart Contracts:** Cairo 🐺 (on Starknet)  
+- **Game Engine:** Dojo 🎮  
 
 ---
 
@@ -31,6 +31,9 @@ Just pure, provably fair gaming.
 
 A huge shoutout to all the amazing contributors who made this project possible! 💖  
 
+<a href="https://github.com/your-repo/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=your-repo" />
+</a>
 
 ---
 
@@ -73,7 +76,6 @@ Join our **Telegram TVA group** for discussions and updates.
 <p align="center">
   <img src="https://img.shields.io/badge/Built%20on-Starknet-purple?style=for-the-badge">
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge">
+  <img src="https://img.shields.io/badge/-React-black?style=for-the-badge&flat&logo=react" alt="React">
+  <img src="https://img.shields.io/badge/-Cairo-black?style=for-the-badge&flat&logo=Cairo" alt="Cairo">
 </p>
-
-<!-- Animated SVG (Optional) -->
-
