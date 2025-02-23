@@ -77,9 +77,35 @@ Join our **Telegram group** for discussions and updates.
 ---
 
 <!-- Scrolling Marquee Text -->
-<marquee behavior="alternate" direction="left" style="font-size: 20px; color: #f39c12;">
-🚀 The future of online gaming is here. Play fair, play on-chain! 
-</marquee>
+<p align="center">
+  <span style="
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    width: 100%;
+  ">
+    <span style="
+      display: inline-block;
+      animation: marquee 10s linear infinite;
+      font-size: 20px;
+      color: #f39c12;
+    ">
+      🚀 The future of online gaming is here. Play fair, play on-chain!
+    </span>
+  </span>
+</p>
+
+<style>
+  @keyframes marquee {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(-100%);
+    }
+  }
+</style>
+
 
 <!-- Play Now Button -->
 <p align="center">
