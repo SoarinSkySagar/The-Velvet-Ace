@@ -76,19 +76,13 @@ A huge shoutout to all the amazing contributors who made this project possible! 
 ## ❓ Need Help?  
 
 Join our **Telegram group** for discussions and updates.  
-📩 For any questions, drop a message in the group or reach out to  
+📩 For any questions, drop a message in the group or reach out to   <a href="https://t.me/lemonade46" style="display: inline-flex; align-items: center; text-decoration: none; font-weight: bold; font-size: 18px; color: #0088cc;">
+  <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQI3NggajOa9dgV-nL57KDNxJgXVF_enFf8mg&s" width="30" style="margin-right: 5px;">
+  @lemonade
+</a>
 
-  <a href="https://t.me/lemonade46" style="
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-    font-weight: bold;
-    font-size: 18px;
-    color: #0088cc;
-  ">
-    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQI3NggajOa9dgV-nL57KDNxJgXVF_enFf8mg&s" width="40" style="margin-right: 8px;">
-    @lemonade
-  </a>
+
+
 
 
  
