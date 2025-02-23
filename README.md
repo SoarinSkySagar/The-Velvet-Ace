@@ -1,7 +1,4 @@
 <!-- Logo -->
-<p align="center">
-  <img src="./logo.jpg" width='200' />
-</p>
 
 <!-- Animated Header -->
 <h1 align="center" style="background: linear-gradient(to right, #ff00cc, #3333ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
@@ -12,9 +9,7 @@
 <p align="center">
   <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYW0zZ2JzZXN1emRrYXo1czRianlwdXRyMHJqd2tndmd6cXpsZWx0bCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/3o6MbqNPaatT8nnEmk/giphy.gif" width="400">
 </p>
-<p align="center">
-  <img src="./logo.jpg" width='200' />
-</p>
+
 
 
 <p align="center">
@@ -33,12 +28,12 @@
 </p>
 
 <p align="center">
-  <a href="https://t.me/starktictactoe">
+  <a href="https://t.me/+tqBpITsr5mllZDQ0">
     <img src="https://img.shields.io/badge/-Telegram-blue?style=for-the-badge&flat&logo=telegram" alt="Telegram">
   </a>
 </p>
----
 
+---
 ## 🔥 Have you ever played a game and wondered if the developers rigged it in their favor—or worse, for someone else? 🃏  
 
 In traditional casinos, cheating comes in many forms, but **this is different**.  
@@ -52,7 +47,7 @@ Just pure, provably fair gaming.
 🚀 This project is built using:  
 - **Frontend:** Vite + React ⚛️  
 - **Smart Contracts:** Cairo 🐺 (on Starknet)  
-- **Game Engine:** Dojo 🎮  
+
 
 ---
 
@@ -77,7 +72,7 @@ A huge shoutout to all the amazing contributors who made this project possible! 
 ## ❓ Need Help?  
 
 Join our **Telegram group** for discussions and updates.  
-📩 For any questions, drop a message in the group or reach out to **[@your-username](https://t.me/your-username)**.  
+📩 For any questions, drop a message in the group or reach out to **[@your-username](https://t.me/@lemonade46)**.  
 
 ---
 
