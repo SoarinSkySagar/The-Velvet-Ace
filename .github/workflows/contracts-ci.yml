@@ -17,6 +17,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Install asdf
+        uses: asdf-vm/actions/install@v3.0.2
+
       - name: Install plugins
         run: |
           asdf plugin add scarb
@@ -33,17 +36,17 @@ jobs:
 
       - name: Build contracts
         run: |
-          cd contract
+          cd poker-texas-hold-em/contract
           sozo build
 
       - name: Run tests
         run: |
-          cd contract
+          cd poker-texas-hold-em/contract
           sozo test
 
       - name: Check formatting
         run: |
-          cd contract
+          cd poker-texas-hold-em/contract
           scarb fmt --check
 
       # - name: ERC20
