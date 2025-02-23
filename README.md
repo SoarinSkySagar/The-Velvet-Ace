@@ -1,4 +1,7 @@
 <!-- Logo -->
+<p align="center">
+  <img src="https://images.app.goo.gl/S3HWs8k854uUTgQV9" width="200">
+</p>
 
 <!-- Animated Header -->
 <h1 align="center" style="background: linear-gradient(to right, #ff00cc, #3333ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
