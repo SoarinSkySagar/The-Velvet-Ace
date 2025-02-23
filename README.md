@@ -1,3 +1,8 @@
+<!-- Logo -->
+<p align="center">
+  <img src="./logo.jpg" width='200' />
+</p>
+
 <!-- Animated Header -->
 <h1 align="center" style="background: linear-gradient(to right, #ff00cc, #3333ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
 🎲 On-Chain Casino
@@ -47,8 +52,8 @@ A huge shoutout to all the amazing contributors who made this project possible! 
 
 ## ❓ Need Help?  
 
-Join our **Telegram TVA group** for discussions and updates.  
-📩 For any questions, drop a message in the group or reach out to **[@lemonade46](https://t.me/lemonade46)**.  
+Join our **Telegram group** for discussions and updates.  
+📩 For any questions, drop a message in the group or reach out to **[@your-username](https://t.me/your-username)**.  
 
 ---
 
