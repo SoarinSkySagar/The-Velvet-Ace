@@ -29,8 +29,8 @@ jobs:
           asdf install dojo 1.0.11 
           asdf global dojo 1.0.11
           asdf plugin add starknet-foundry
-          asdf install starknet-foundry 0.33.0
-          asdf global starknet-foundry 0.33.0
+          asdf install starknet-foundry 0.35.0
+          asdf global starknet-foundry 0.35.0
 
       - name: Build contracts
         run: |
