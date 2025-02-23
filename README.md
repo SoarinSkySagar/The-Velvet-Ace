@@ -93,6 +93,8 @@ Join our **Telegram group** for discussions and updates.
     font-weight: bold;
     font-size: 46px;
     text-decoration: none;
+    width: 100px;
+    height: 100px;
   ">🎮 </a>
 </p>
 
