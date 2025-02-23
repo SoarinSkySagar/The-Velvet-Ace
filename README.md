@@ -76,9 +76,13 @@ A huge shoutout to all the amazing contributors who made this project possible! 
 ## ❓ Need Help?  
 
 Join our **Telegram group** for discussions and updates.  
-📩 For any questions, drop a message in the group or reach out to **[<p align="center">
-  <img src="https://avatars.githubusercontent.com/u/95439583?v=4" width="40">
-</p>](https://t.me/lemonade46)**. 
+📩 For any questions, drop a message in the group or reach out to  
+<p align="center">
+  <a href="https://t.me/lemonade46">
+    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQI3NggajOa9dgV-nL57KDNxJgXVF_enFf8mg&s" width="40">
+  </a>
+</p>
+ 
 
 ---
 
