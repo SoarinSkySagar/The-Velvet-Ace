@@ -101,13 +101,3 @@ Join our **Telegram group** for discussions and updates.
 
 ---
 
-<!-- Badges -->
-<p align="center">
-  <img src="https://img.shields.io/badge/Built%20on-Starknet-purple?style=for-the-badge">
-  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge">
-  <img src="https://img.shields.io/badge/-React-black?style=for-the-badge&flat&logo=react" alt="React">
-  <img src="https://img.shields.io/badge/-Cairo-black?style=for-the-badge&flat&logo=Cairo" alt="Cairo">
-</p>
-
-please study this
-i want some upgrades
