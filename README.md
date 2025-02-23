@@ -42,11 +42,13 @@ Just pure, provably fair gaming.
 
 ---
 
-## 🛠 Tech Stack  
+## Features
 
-🚀 This project is built using:  
-- **Frontend:** Vite + React ⚛️  
-- **Smart Contracts:** Cairo 🐺 (on Starknet)  
+
+- 🖥️ **Cairo Language**: Written in Cairo for Starknet deployment
+- ⚛️ **React Frontend**: Modern React-based UI for playing the game
+ - 🎮 **Onchain Gaming**: Fully onchain game logic 
+
 
 
 ---
@@ -63,9 +65,8 @@ A huge shoutout to all the amazing contributors who made this project possible! 
 
 ## 📖 Resources  
 
-📚 **Essential docs & guides**  
-- [📖 Internal README](https://github.com/Prometheus-A/The-Velvet-Ace/blob/main/poker-texas-hold-em/GameREADME.md) – Detailed project setup & instructions  
-- [🤝 Contributing Guidelines](./CONTRIBUTING.md) – How to contribute to the project  
+  ###  [Contributor's guide](https://github.com/Prometheus-A/The-Velvet-Ace/blob/main/poker-texas-hold-em/GameREADME.md) >
+### [Setting up the Project](./CONTRIBUTING.md) >
 
 ---
 
