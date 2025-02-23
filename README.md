@@ -55,7 +55,7 @@ Just pure, provably fair gaming.
 
 A huge shoutout to all the amazing contributors who made this project possible! 💖  
 
-<a href="https://github.com/your-repo/graphs/contributors">
+<a href="https://github.com/chiscookeke11/The-Velvet-Ace--fork--/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=your-repo" />
 </a>
 
