@@ -48,20 +48,9 @@ jobs:
           cd poker-texas-hold-em/contract
           scarb fmt --check
 
-      # - name: ERC20
-      #   run: |
-      #     cd erc/erc20
-      #     asdf global scarb 2.10.1
-      #     asdf global starknet-foundry 0.37.0
-      #     scarb build
-      #     scarb test
-      #     scarb fmt --check
-
-      # - name: ERC721
-      #   run: |
-      #     cd erc/erc721
-      #     asdf global scarb 2.10.1
-      #     asdf global starknet-foundry 0.37.0
-      #     scarb build
-      #     scarb test
-      #     scarb fmt --check
+      - name: ERC721
+        run: |
+          cd poker-texas-hold-em/erc721
+          scarb build
+          scarb test
+          scarb fmt --check
