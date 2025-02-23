@@ -1,6 +1,6 @@
 <!-- Logo -->
 <p align="center">
-  <img src="https://images.app.goo.gl/S3HWs8k854uUTgQV9" width="200">
+  <img src="https://data.inpi.fr/image/marques/FR4873300" width="200">
 </p>
 
 <!-- Animated Header -->
