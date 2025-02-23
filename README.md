@@ -12,7 +12,32 @@
 <p align="center">
   <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYW0zZ2JzZXN1emRrYXo1czRianlwdXRyMHJqd2tndmd6cXpsZWx0bCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/3o6MbqNPaatT8nnEmk/giphy.gif" width="400">
 </p>
+<p align="center">
+  <img src="./logo.jpg" width='200' />
+</p>
 
+<h1 align="center">Onchain Tic-Tac-Toe Game Utilizing Dojo Engine</h1>
+
+<p align="center">
+  <a href="https://your-build-link-here">
+    <img src="https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge&flat" alt="Build Status">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://cairo-lang.org">
+    <img src="https://img.shields.io/badge/-%F0%9F%90%AB%20%20Cairo-black?style=for-the-badge&flat&logo=Cairo" alt="Cairo">
+  </a>
+  <a href="https://reactjs.org">
+    <img src="https://img.shields.io/badge/-React-black?style=for-the-badge&flat&logo=react" alt="React">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://t.me/starktictactoe">
+    <img src="https://img.shields.io/badge/-Telegram-blue?style=for-the-badge&flat&logo=telegram" alt="Telegram">
+  </a>
+</p>
 ---
 
 ## 🔥 Have you ever played a game and wondered if the developers rigged it in their favor—or worse, for someone else? 🃏  
