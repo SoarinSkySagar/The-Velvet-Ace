@@ -97,18 +97,4 @@ Join our **Telegram group** for discussions and updates.
 ---
 
 
-<!-- Play Now Button -->
-<p align="center">
-  <a href="#" style="
-    background-color: #ff00ff;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 5px;
-    text-decoration: none;
-    font-weight: bold;
-    font-size: 18px;
-  ">🎮 Play Now</a>
-</p>
-
----
 
