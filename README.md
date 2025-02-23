@@ -91,6 +91,7 @@ Join our **Telegram group** for discussions and updates.
     text-decoration: none;
     font-weight: bold;
     font-size: 18px;
+    text-decoration: none;
   ">🎮 </a>
 </p>
 
