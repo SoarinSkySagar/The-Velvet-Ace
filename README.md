@@ -90,7 +90,7 @@ Join our **Telegram group** for discussions and updates.
     border-radius: 5px;
     text-decoration: none;
     font-weight: bold;
-    font-size: 18px;
+    font-size: 46px;
     text-decoration: none;
   ">🎮 </a>
 </p>
