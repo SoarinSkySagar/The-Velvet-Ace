@@ -78,7 +78,7 @@ Join our **Telegram group** for discussions and updates.
 
 <!-- Scrolling Marquee Text -->
 <marquee behavior="alternate" direction="left" style="font-size: 20px; color: #f39c12;">
-🚀 The future of online gaming is here. Play fair, play on-chain! 🎰
+🚀 The future of online gaming is here. Play fair, play on-chain! 
 </marquee>
 
 <!-- Play Now Button -->
