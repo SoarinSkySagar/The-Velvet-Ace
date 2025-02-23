@@ -16,7 +16,6 @@
   <img src="./logo.jpg" width='200' />
 </p>
 
-<h1 align="center">Onchain Tic-Tac-Toe Game Utilizing Dojo Engine</h1>
 
 <p align="center">
   <a href="https://your-build-link-here">
