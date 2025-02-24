@@ -129,9 +129,29 @@ pub mod actions {
         fn player_in_game(
             self: @ContractState, caller: ContractAddress,
         ) { // Check if player is already in the game
-        // Check if player is locked (already in a game), check the player struct.
-        // The above two checks seem similar, but they differ in the error messages they return.
-        // Check if player has enough chips to join the game
+            // Check if player is locked (already in a game), check the player struct.
+            // The above two checks seem similar, but they differ in the error messages they return.
+            // Check if player has enough chips to join the game
+
+            let world: dojo::world::WorldStorage = self.world_default();
+            let player: Player = world.read_model(caller);
+            let (is_locked, game_id) = player.locked;
+            let game: Game = world.read_model(game_id);
+            let mut in_game: bool = false;
+            for p in game.players {
+                match (p) {
+                    Option::Some(p) => if p.id == player.id {
+                        in_game = true;
+                        break;
+                    },
+                    Option::None => {},
+                }
+            };
+            assert(in_game, GameErrors::PLAYER_NOT_IN_GAME);
+            assert(!is_locked, GameErrors::PLAYER_ALREADY_LOCKED);
+            assert(
+                player.chips >= game.params.min_amount_of_chips, GameErrors::PLAYER_OUT_OF_CHIPS,
+            );
         }
 
         fn after_play(
