@@ -254,9 +254,9 @@ pub impl HandImpl of HandTrait {
 
 #[generate_trait]
 pub impl GameImpl of GameTrait {
-    fn initialize_game(player: Option<Player>, game_params: Option<GameParams>, id: u64) -> Game {
-        let mut game: Game = Default::default();
-
+    fn initialize_game(
+        ref player: Option<Player>, game_params: Option<GameParams>, id: u64,
+    ) -> Game {
         // Set game parameters (either custom or default)
         let params = match game_params {
             Option::Some(params) => {
@@ -380,9 +380,9 @@ pub mod GameErrors {
     pub const PLAYER_NOT_IN_GAME: felt252 = 'PLAYER NOT IN GAME';
     pub const PLAYER_ALREADY_IN_GAME: felt252 = 'PLAYER ALREADY IN GAME';
     pub const PLAYER_OUT_OF_CHIPS: felt252 = 'PLAYER OUT OF CHIPS';
-    pub const MIN_PLAYER: felt252 = 'Min 2 players required';
-    pub const INVALID_BLIND_PLAYER: felt252 = 'Invalid blind values';
-    pub const INSUFFICIENT_CHIP: felt252 = 'Insufficient chips';
+    pub const MIN_PLAYER: felt252 = 'MIN 2 PLAYERS REQUIRED';
+    pub const INVALID_BLIND_PLAYER: felt252 = 'INVALID BLIND VALUES';
+    pub const INSUFFICIENT_CHIP: felt252 = 'INSUFFICIENT CHIPS';
 }
 // assert after shuffling, that all cards remain distinct, and the deck is still 52 cards
 // #[derive(Serde, Copy, Drop, Introspect, PartialEq, Debug)]
