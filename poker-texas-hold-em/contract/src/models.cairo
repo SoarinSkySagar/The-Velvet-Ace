@@ -265,12 +265,12 @@ pub impl GameImpl of GameTrait {
                 assert(params.big_blind > params.small_blind, GameErrors::INVALID_BLIND_PLAYER);
                 params
             },
-            Option::None => Self::get_default_game_params()
+            Option::None => Self::get_default_game_params(),
         };
 
-        let mut deck = Deck { game_id: id.into(), cards: array![] };
-        deck = DeckTrait::new_deck(ref deck, id.into());
-        DeckTrait::shuffle(ref deck);
+        let mut deck: Deck = Default::default();
+        deck.new_deck(id);
+        deck.shuffle();
 
         let mut players: Array<Option<Player>> = array![];
         let mut community_cards: Array<Card> = array![];
@@ -280,7 +280,7 @@ pub impl GameImpl of GameTrait {
             // Ensure player has enough chips for the game
             assert(
                 initial_player.chips >= (params.big_blind * 20).into(),
-                GameErrors::INSUFFICIENT_CHIP
+                GameErrors::INSUFFICIENT_CHIP,
             );
 
             // Set initial player as dealer
@@ -333,7 +333,7 @@ fn generate_random(span: u32) -> u32 {
 }
 
 pub impl DeckImpl of DeckTrait<Deck> {
-    fn new_deck(ref self: Deck, game_id: felt252) -> Deck {
+    fn new_deck(ref self: Deck, game_id: u64) -> Deck {
         let mut cards: Array<Card> = array![];
         for suit in 0_u8..4_u8 {
             for value in 1_u16..14_u16 {
@@ -342,7 +342,7 @@ pub impl DeckImpl of DeckTrait<Deck> {
             };
         };
 
-        Deck { game_id, cards }
+        Deck { game_id: game_id.into(), cards }
     }
 
     fn shuffle(ref self: Deck) {
@@ -388,7 +388,7 @@ pub mod GameErrors {
 // #[derive(Serde, Copy, Drop, Introspect, PartialEq, Debug)]
 
 pub trait DeckTrait<T> {
-    fn new_deck(ref self: T, game_id: felt252) -> Deck;
+    fn new_deck(ref self: T, game_id: u64) -> Deck;
     fn shuffle(ref self: T);
     fn deal_card(ref self: T) -> Card;
 }
