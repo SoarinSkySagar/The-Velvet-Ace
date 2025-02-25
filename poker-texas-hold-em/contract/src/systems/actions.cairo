@@ -1,4 +1,4 @@
-use poker::models::{Card, Hand, Deck, Suits, GameMode, GameParams, Player, DeckTrait, HandTrait, DeckImpl, HandImpl};
+use poker::models::{Card, Hand, Deck, Suits, GameMode, GameParams, Player};
 
 /// TODO: Read the GameREADME.md file to understand the rules of coding this game.
 /// TODO: What should happen when everyone leaves the game? Well, the pot should be
@@ -38,7 +38,7 @@ pub mod actions {
     use dojo::event::EventStorage;
     // use dojo::world::{WorldStorage, WorldStorageTrait};
     use poker::models::{GameId, GameMode, Game, GameParams};
-    use poker::models::{GameTrait};
+    use poker::models::{GameTrait, DeckTrait, HandTrait};
     use poker::models::{Player, Card, Hand, Deck, GameErrors};
 
     pub const ID: felt252 = 'id';
@@ -150,11 +150,10 @@ pub mod actions {
             Option::None
         }
 
-        fn _deal_hands(self: @ContractState,ref players: Array<Player>) { // deal hands for each player in the array
+        fn _deal_hands(ref self: @ContractState,ref players: Array<Player>) { // deal hands for each player in the array
 
-                if players.is_empty() {
-                    return;
-                }
+               
+                assert(!players.is_empty(), 'Players cannot be empty');
 
                 let first_player = players.at(0);
                 let game_id = self.extract_current_game_id(first_player);
@@ -165,15 +164,17 @@ pub mod actions {
                 };
 
                 let mut world = self.world_default();
-                let mut deck = world.read_model::<Deck>(game_id.into());
+                let mut deck: Deck  = world.read_model::<Deck>(game_id.into());
 
                 for mut player in players.span() {
 
-                    let card1 = DeckTrait::deal_card();
-                    HandTrait::add_card(card1, ref player.hand);
+                    let mut hand = world.read_model::<Hand>(player.id.into());
+
+                    let card1 = deck.deal_card();
+                    HandTrait::add_card(card1, ref hand);
 
                     let card2 = deck.deal_card();
-                    HandTrait::add_card(card2, ref player.hand);
+                    HandTrait::add_card(card2, ref hand);
 
                     world.write_model(@player);
                 };
@@ -188,6 +189,10 @@ pub mod actions {
             ref players: Array<Player>,
         ) { // after each round, resolve all players hands by removing all cards from each hand
         // and perhaps re-initialize and shuffle the deck.
+        }
+
+        fn u64_to_felt(value: u64) -> felt252 {
+            value.into()
         }
     }
 }

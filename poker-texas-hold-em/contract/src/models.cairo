@@ -232,11 +232,13 @@ pub impl HandImpl of HandTrait {
     ) {
         if hands_changed {
             assert(winning_hands.len() == winning_players.len(), 'HandImpl panicked.');
-            for _ in 0..winning_hands.len() {
-                // discard all existing objects in `winning_hands`. A clean slate.
-                winning_hands.pop_front().unwrap();
-                winning_players.pop_front().unwrap().unwrap();
-            };
+            for _ in 0
+                ..winning_hands
+                    .len() {
+                        // discard all existing objects in `winning_hands`. A clean slate.
+                        winning_hands.pop_front().unwrap();
+                        winning_players.pop_front().unwrap().unwrap();
+                    };
         }
     }
 
@@ -249,6 +251,7 @@ pub impl HandImpl of HandTrait {
     }
 
     fn add_card(card: Card, ref hand: Hand) { // ensure card is added.
+        hand.cards.append(card);
     }
 }
 
@@ -305,12 +308,14 @@ fn generate_random(span: u32) -> u32 {
 pub impl DeckImpl of DeckTrait<Deck> {
     fn new_deck(ref self: Deck, game_id: felt252) -> Deck {
         let mut cards: Array<Card> = array![];
-        for suit in 0_u8..4_u8 {
-            for value in 1_u16..14_u16 {
-                let card: Card = Card { suit, value };
-                cards.append(card);
+        for suit in 0_u8
+            ..4_u8 {
+                for value in 1_u16
+                    ..14_u16 {
+                        let card: Card = Card { suit, value };
+                        cards.append(card);
+                    };
             };
-        };
 
         Deck { game_id, cards }
     }
@@ -319,15 +324,16 @@ pub impl DeckImpl of DeckTrait<Deck> {
         let mut cards: Array<Card> = self.cards;
         let mut new_cards: Array<Card> = array![];
         let mut verifier: Felt252Dict<bool> = Default::default();
-        for _ in cards.len()..0 {
-            let mut rand = generate_random(DEFAULT_DECK_LENGTH);
-            while !verifier.get(rand.into()) {
-                rand = generate_random(DEFAULT_DECK_LENGTH);
+        for _ in cards.len()
+            ..0 {
+                let mut rand = generate_random(DEFAULT_DECK_LENGTH);
+                while !verifier.get(rand.into()) {
+                    rand = generate_random(DEFAULT_DECK_LENGTH);
+                };
+                let temp: Card = *cards.at(rand);
+                new_cards.append(temp);
+                verifier.insert(rand.into(), true);
             };
-            let temp: Card = *cards.at(rand);
-            new_cards.append(temp);
-            verifier.insert(rand.into(), true);
-        };
 
         self.cards = new_cards.clone();
         // deck
