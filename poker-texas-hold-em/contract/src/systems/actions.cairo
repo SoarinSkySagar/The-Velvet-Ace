@@ -1,4 +1,4 @@
-use poker::models::{Card, Hand, Deck, Suits, GameMode, GameParams, Player};
+use poker::models::{Card, Hand, Deck, Suits, GameMode, GameParams, Player, DeckTrait, HandTrait, DeckImpl, HandImpl};
 
 /// TODO: Read the GameREADME.md file to understand the rules of coding this game.
 /// TODO: What should happen when everyone leaves the game? Well, the pot should be
@@ -150,7 +150,38 @@ pub mod actions {
             Option::None
         }
 
-        fn _deal_hands(ref players: Array<Player>) { // deal hands for each player in the array
+        fn _deal_hands(self: @ContractState,ref players: Array<Player>) { // deal hands for each player in the array
+
+                if players.is_empty() {
+                    return;
+                }
+
+                let first_player = players.at(0);
+                let game_id = self.extract_current_game_id(first_player);
+
+                for player in players.span() {
+                    let current_game_id = self.extract_current_game_id(player);
+                    assert(current_game_id == game_id, 'Players in different games');
+                };
+
+                let mut world = self.world_default();
+                let mut deck = world.read_model::<Deck>(game_id.into());
+
+                for mut player in players.span() {
+
+                    let card1 = DeckTrait::deal_card();
+                    HandTrait::add_card(card1, ref player.hand);
+
+                    let card2 = deck.deal_card();
+                    HandTrait::add_card(card2, ref player.hand);
+
+                    world.write_model(@player);
+                };
+
+                world.write_model(@deck);
+
+            
+
         }
 
         fn _resolve_hands(
