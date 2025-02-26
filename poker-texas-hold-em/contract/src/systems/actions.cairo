@@ -137,18 +137,10 @@ pub mod actions {
             let player: Player = world.read_model(caller);
             let (is_locked, game_id) = player.locked;
             let game: Game = world.read_model(game_id);
-            let mut in_game: bool = false;
-            for p in game.players {
-                match (p) {
-                    Option::Some(p) => if p.id == player.id {
-                        in_game = true;
-                        break;
-                    },
-                    Option::None => {},
-                }
-            };
-            assert(in_game, GameErrors::PLAYER_NOT_IN_GAME);
-            assert(!is_locked, GameErrors::PLAYER_ALREADY_LOCKED);
+
+            // Player can't be locked and not in a game
+            // true is serialized as 1 => a non existing player can't be locked
+            assert(is_locked, GameErrors::PLAYER_NOT_IN_GAME);
             assert(
                 player.chips >= game.params.min_amount_of_chips, GameErrors::PLAYER_OUT_OF_CHIPS,
             );
