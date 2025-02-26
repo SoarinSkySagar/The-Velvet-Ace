@@ -151,34 +151,32 @@ pub mod actions {
         }
 
         fn _deal_hands(
-            ref self: @ContractState, ref players: Array<Player>
+            ref self: @ContractState, ref players: Array<Player>,
         ) { // deal hands for each player in the array
             assert(!players.is_empty(), 'Players cannot be empty');
 
             let first_player = players.at(0);
             let game_id = self.extract_current_game_id(first_player);
 
-            for player in players
-                .span() {
-                    let current_game_id = self.extract_current_game_id(player);
-                    assert(current_game_id == game_id, 'Players in different games');
-                };
+            for player in players.span() {
+                let current_game_id = self.extract_current_game_id(player);
+                assert(current_game_id == game_id, 'Players in different games');
+            };
 
             let mut world = self.world_default();
             let mut deck: Deck = world.read_model(game_id);
 
-            for mut player in players
-                .span() {
-                    let card1 = deck.deal_card();
-                    let mut hand = HandTrait::new_hand(*players.at(0).id);
-                    HandTrait::add_card(card1, ref hand);
+            for mut player in players.span() {
+                let card1 = deck.deal_card();
+                let mut hand = HandTrait::new_hand(*players.at(0).id);
+                HandTrait::add_card(card1, ref hand);
 
-                    let card2 = deck.deal_card();
-                    let mut hand2 = HandTrait::new_hand(*players.at(1).id);
-                    HandTrait::add_card(card2, ref hand2);
+                let card2 = deck.deal_card();
+                let mut hand2 = HandTrait::new_hand(*players.at(1).id);
+                HandTrait::add_card(card2, ref hand2);
 
-                    world.write_model(player);
-                };
+                world.write_model(player);
+            };
 
             world.write_model(@deck);
         }
