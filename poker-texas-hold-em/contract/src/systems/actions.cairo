@@ -38,7 +38,7 @@ pub mod actions {
     use dojo::event::EventStorage;
     // use dojo::world::{WorldStorage, WorldStorageTrait};
     use poker::models::{GameId, GameMode, Game, GameParams};
-    use poker::models::{GameTrait};
+    use poker::models::{GameTrait, DeckTrait, HandTrait};
     use poker::models::{Player, Card, Hand, Deck, GameErrors};
 
     pub const ID: felt252 = 'id';
@@ -129,9 +129,21 @@ pub mod actions {
         fn player_in_game(
             self: @ContractState, caller: ContractAddress,
         ) { // Check if player is already in the game
-        // Check if player is locked (already in a game), check the player struct.
-        // The above two checks seem similar, but they differ in the error messages they return.
-        // Check if player has enough chips to join the game
+            // Check if player is locked (already in a game), check the player struct.
+            // The above two checks seem similar, but they differ in the error messages they return.
+            // Check if player has enough chips to join the game
+
+            let world: dojo::world::WorldStorage = self.world_default();
+            let player: Player = world.read_model(caller);
+            let (is_locked, game_id) = player.locked;
+            let game: Game = world.read_model(game_id);
+
+            // Player can't be locked and not in a game
+            // true is serialized as 1 => a non existing player can't be locked
+            assert(is_locked, GameErrors::PLAYER_NOT_IN_GAME);
+            assert(
+                player.chips >= game.params.min_amount_of_chips, GameErrors::PLAYER_OUT_OF_CHIPS,
+            );
         }
 
         fn after_play(
@@ -150,13 +162,45 @@ pub mod actions {
             Option::None
         }
 
-        fn _deal_hands(ref players: Array<Player>) { // deal hands for each player in the array
+        fn _deal_hands(
+            ref self: @ContractState, ref players: Array<Player>,
+        ) { // deal hands for each player in the array
+            assert(!players.is_empty(), 'Players cannot be empty');
+
+            let first_player = players.at(0);
+            let game_id = self.extract_current_game_id(first_player);
+
+            for player in players.span() {
+                let current_game_id = self.extract_current_game_id(player);
+                assert(current_game_id == game_id, 'Players in different games');
+            };
+
+            let mut world = self.world_default();
+            let mut deck: Deck = world.read_model(game_id);
+
+            for mut player in players.span() {
+                let mut hand = HandTrait::new_hand(*player.id);
+
+                for _ in 0_u8..2_u8 {
+                    let card = deck.deal_card();
+                    HandTrait::add_card(card, ref hand);
+                };
+
+                world.write_model(@hand);
+                world.write_model(player);
+            };
+
+            world.write_model(@deck);
         }
 
         fn _resolve_hands(
             ref players: Array<Player>,
         ) { // after each round, resolve all players hands by removing all cards from each hand
         // and perhaps re-initialize and shuffle the deck.
+        }
+
+        fn u64_to_felt(value: u64) -> felt252 {
+            value.into()
         }
     }
 }
