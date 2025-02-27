@@ -36,6 +36,7 @@ pub struct GameParams {
     big_blind: u64,
     no_of_decks: u8,
     kicker_split: bool,
+    min_amount_of_chips: u256,
 }
 
 /// id - the game id
@@ -287,6 +288,7 @@ pub impl GameImpl of GameTrait {
             big_blind: 20,
             no_of_decks: 1,
             kicker_split: true,
+            min_amount_of_chips: 10,
         }
     }
 
@@ -350,6 +352,7 @@ pub mod GameErrors {
     pub const GAME_ALREADY_ENDED: felt252 = 'GAME ALREADY ENDED';
     pub const PLAYER_NOT_IN_GAME: felt252 = 'PLAYER NOT IN GAME';
     pub const PLAYER_ALREADY_IN_GAME: felt252 = 'PLAYER ALREADY IN GAME';
+    pub const PLAYER_ALREADY_LOCKED: felt252 = 'PLAYER ALREADY LOCKED';
     pub const PLAYER_OUT_OF_CHIPS: felt252 = 'PLAYER OUT OF CHIPS';
 }
 // assert after shuffling, that all cards remain distinct, and the deck is still 52 cards
