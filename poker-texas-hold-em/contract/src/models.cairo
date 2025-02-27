@@ -256,9 +256,7 @@ pub impl HandImpl of HandTrait {
 
 #[generate_trait]
 pub impl GameImpl of GameTrait {
-    fn initialize_game(
-        ref player: Option<Player>, game_params: Option<GameParams>, id: u64,
-    ) -> Game {
+    fn initialize_game(player: Option<Player>, game_params: Option<GameParams>, id: u64) -> Game {
         // Set game parameters (either custom or default)
         let params = match game_params {
             Option::Some(params) => {
