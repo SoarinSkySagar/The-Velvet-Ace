@@ -167,14 +167,14 @@ pub mod actions {
             let mut deck: Deck = world.read_model(game_id);
 
             for mut player in players.span() {
-                let card1 = deck.deal_card();
-                let mut hand = HandTrait::new_hand(*players.at(0).id);
-                HandTrait::add_card(card1, ref hand);
+                let mut hand = HandTrait::new_hand(*player.id);
 
-                let card2 = deck.deal_card();
-                let mut hand2 = HandTrait::new_hand(*players.at(1).id);
-                HandTrait::add_card(card2, ref hand2);
+                for _ in 0_u8..2_u8 {
+                    let card = deck.deal_card();
+                    HandTrait::add_card(card, ref hand);
+                };
 
+                world.write_model(@hand);
                 world.write_model(player);
             };
 
