@@ -151,11 +151,25 @@ pub mod actions {
         ) { // check if player has more chips, prompt 'OUT OF CHIPS'
         }
 
+        // fn extract_current_game_id(self: @ContractState, player: @Player) -> u64 {
+        //     // extract current game id from the player
+        //     // make an assertion that the id isn't zero, 'Player not in game'
+        //     // returns the id.
+        //     0
+        // }
+
         fn extract_current_game_id(self: @ContractState, player: @Player) -> u64 {
-            // extract current game id from the player
-            // make an assertion that the id isn't zero, 'Player not in game'
-            // returns the id.
-            0
+            // Extract current game id from the player
+            let (is_locked, game_id) = player.locked;
+
+            // Assert player is actually locked in a game
+            assert(is_locked, GameErrors::PLAYER_NOT_IN_GAME);
+
+            // Make an assertion that the id isn't zero
+            assert(game_id != 0, GameErrors::PLAYER_NOT_IN_GAME);
+
+            // Return the id
+            game_id
         }
 
         fn _get_dealer() -> Option<Player> {
