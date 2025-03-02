@@ -47,13 +47,26 @@ pub mod actions {
     #[abi(embed_v0)]
     impl ActionsImpl of super::IActions<ContractState> {
         fn initialize_game(ref self: ContractState, game_params: Option<GameParams>) -> u64 {
-            // Check if the player exists, if not, create a new player.
-            // If caller exists, call the player_in_game function.
-            // Check the game mode. each format should have different rules
+            // Get the caller address
+            let caller = get_caller_address();
+
             let game_id: u64 = self.generate_game_id();
-            // send initialized player into this function
-            // send in the initialized player
-            let game: Game = GameTrait::initialize_game(Option::None, game_params, game_id);
+
+            // Initialize a new player or get existing player
+            let mut world = self.world_default();
+            let mut player: Player = world.read_model(caller);
+
+            // Ensure the player is not already in a game
+            let (is_locked, _) = player.locked;
+            assert(!is_locked, GameErrors::PLAYER_ALREADY_LOCKED);
+
+            // Create the game with the player
+            let game: Game = GameTrait::initialize_game(ref player, game_params, game_id);
+
+            // Save updated player and game state
+            world.write_model(@player);
+            world.write_model(@game);
+
             game_id
         }
 

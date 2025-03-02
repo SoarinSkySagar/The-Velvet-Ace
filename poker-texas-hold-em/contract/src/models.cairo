@@ -256,7 +256,7 @@ pub impl HandImpl of HandTrait {
 
 #[generate_trait]
 pub impl GameImpl of GameTrait {
-    fn initialize_game(player: Option<Player>, game_params: Option<GameParams>, id: u64) -> Game {
+    fn initialize_game(ref player: Player, game_params: Option<GameParams>, id: u64) -> Game {
         // Set game parameters (either custom or default)
         let params = match game_params {
             Option::Some(params) => {
@@ -275,22 +275,20 @@ pub impl GameImpl of GameTrait {
         let mut players: Array<Option<Player>> = array![];
         let mut community_cards: Array<Card> = array![];
 
-        // Add initial player only if provided
-        if let Option::Some(mut initial_player) = player {
-            // Ensure player has enough chips for the game
-            assert(
-                initial_player.chips >= (params.big_blind * 20).into(),
-                GameErrors::INSUFFICIENT_CHIP,
-            );
+        // Ensure player has enough chips for the game
+        assert(
+            player.chips >= (params.big_blind * 20).into(),
+            GameErrors::INSUFFICIENT_CHIP,
+        );
 
-            // Set initial player as dealer
-            initial_player.is_dealer = true;
+        // Set initial player as dealer
+        player.is_dealer = true;
 
-            // Lock player to this game
-            initial_player.locked = (true, id);
+        // Lock player to this game
+        player.locked = (true, id);
 
-            players.append(Option::Some(initial_player));
-        }
+        // Add player to players array 
+        players.append(Option::Some(player.clone()));
 
         // Create game instance
         Game {
