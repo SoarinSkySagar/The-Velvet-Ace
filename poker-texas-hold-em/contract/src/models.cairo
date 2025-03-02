@@ -276,10 +276,7 @@ pub impl GameImpl of GameTrait {
         let mut community_cards: Array<Card> = array![];
 
         // Ensure player has enough chips for the game
-        assert(
-            player.chips >= (params.big_blind * 20).into(),
-            GameErrors::INSUFFICIENT_CHIP,
-        );
+        assert(player.chips >= (params.big_blind * 20).into(), GameErrors::INSUFFICIENT_CHIP);
 
         // Set initial player as dealer
         player.is_dealer = true;
@@ -287,7 +284,7 @@ pub impl GameImpl of GameTrait {
         // Lock player to this game
         player.locked = (true, id);
 
-        // Add player to players array 
+        // Add player to players array
         players.append(Option::Some(player.clone()));
 
         // Create game instance
