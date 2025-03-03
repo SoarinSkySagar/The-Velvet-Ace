@@ -41,7 +41,7 @@ pub mod actions {
     use poker::models::{GameTrait, DeckTrait, HandTrait};
     use poker::models::{Player, Card, Hand, Deck, GameErrors};
 
-    pub const ID: felt252 = 'id';
+    pub const GAME_ID: felt252 = 'GAME_ID';
     pub const MAX_NO_OF_CHIPS: u128 = 100000; /// for test, 1 chip = 10 strk.
 
     #[abi(embed_v0)]
@@ -121,7 +121,7 @@ pub mod actions {
 
         fn generate_game_id(self: @ContractState) -> u64 {
             let mut world = self.world_default();
-            let mut game_id: GameId = world.read_model(ID);
+            let mut game_id: GameId = world.read_model(GAME_ID);
             let mut id = game_id.nonce + 1;
             game_id.nonce = id;
             world.write_model(@game_id);
@@ -173,7 +173,7 @@ pub mod actions {
 
         fn extract_current_game_id(self: @ContractState, player: @Player) -> u64 {
             // Extract current game id from the player
-            let (is_locked, game_id) = player.locked;
+            let (is_locked, game_id) = *player.locked;
 
             // Assert player is actually locked in a game
             assert(is_locked, GameErrors::PLAYER_NOT_IN_GAME);
