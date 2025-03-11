@@ -16,3 +16,7 @@ pub struct Player {
     locked: (bool, u64),
     is_dealer: bool,
 }
+/// Write struct for player stats
+/// Include an alias, if necessary, and add it as key.
+
+

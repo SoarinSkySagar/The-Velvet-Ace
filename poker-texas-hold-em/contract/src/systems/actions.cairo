@@ -1,4 +1,5 @@
-use poker::models::{Card, Hand, Deck, Suits, GameMode, GameParams, Player};
+use poker::models::game::GameParams;
+use poker::models::player::Player;
 
 /// TODO: Read the GameREADME.md file to understand the rules of coding this game.
 /// TODO: What should happen when everyone leaves the game? Well, the pot should be
@@ -11,6 +12,8 @@ use poker::models::{Card, Hand, Deck, Suits, GameMode, GameParams, Player};
 trait IActions<TContractState> {
     /// Initializes the game with a game format. Returns a unique game id.
     /// game_params as Option::None initializes a default game.
+    ///
+    /// TODO: Might require a function that lets and admin eject a player
     fn initialize_game(ref self: TContractState, game_params: Option<GameParams>) -> u64;
     fn join_game(ref self: TContractState, game_id: u64);
     fn leave_game(ref self: TContractState);
@@ -37,20 +40,25 @@ pub mod actions {
     use dojo::model::{ModelStorage, ModelValueStorage};
     use dojo::event::EventStorage;
     // use dojo::world::{WorldStorage, WorldStorageTrait};
-    use poker::models::{GameId, GameMode, Game, GameParams};
-    use poker::models::{GameTrait, DeckTrait, HandTrait};
-    use poker::models::{Player, Card, Hand, Deck, GameErrors};
 
-    pub const GAME_ID: felt252 = 'GAME_ID';
-    pub const MAX_NO_OF_CHIPS: u128 = 100000; /// for test, 1 chip = 10 strk.
+    use poker::models::{
+        base::{GameErrors, Id}, card::Card, deck::Deck, game::{Game, GameMode, GameParams},
+        hand::{Hand}, player::Player,
+    };
+
+    use poker::traits::{deck::DeckTrait, game::GameTrait, hand::HandTrait};
+
+    pub const GAME: felt252 = 'GAME';
+    pub const DECK: felt252 = 'DECK';
+    pub const MAX_NO_OF_CHIPS: u128 = 100000; /// for test, 1 chip = 1 usd.
 
     #[abi(embed_v0)]
     impl ActionsImpl of super::IActions<ContractState> {
         fn initialize_game(ref self: ContractState, game_params: Option<GameParams>) -> u64 {
             // Get the caller address
-            let caller = get_caller_address();
+            let caller: ContractAddress = get_caller_address();
 
-            let game_id: u64 = self.generate_game_id();
+            let game_id: u64 = self.generate_id(GAME);
 
             // Initialize a new player or get existing player
             let mut world = self.world_default();
@@ -59,20 +67,39 @@ pub mod actions {
             // Ensure the player is not already in a game
             let (is_locked, _) = player.locked;
             assert(!is_locked, GameErrors::PLAYER_ALREADY_LOCKED);
-
+            let mut deck_ids: Array<u64> = array![self.generate_id(DECK)];
+            if let Option::Some(params) = game_params {
+                // say the maximum number of decks is 10.
+                let deck_len = params.no_of_decks;
+                assert(deck_len > 0 && deck_len <= 10, GameErrors::INVALID_GAME_PARAMS);
+                for _ in 0..deck_len - 1 {
+                    deck_ids.append(self.generate_id(DECK));
+                };
+            }
             // Create the game with the player
-            let game: Game = GameTrait::initialize_game(ref player, game_params, game_id);
+            let (game, decks) = GameTrait::initialize_game(
+                ref player, game_params, game_id, deck_ids,
+            );
 
             // Save updated player and game state
             world.write_model(@player);
             world.write_model(@game);
+
+            // Save available decks
+            for deck in decks {
+                world.write_model(@deck);
+            };
 
             game_id
         }
 
         fn join_game(
             ref self: ContractState, game_id: u64,
-        ) { // init a player (check if the player exists, if not, create a new one)
+        ) { // check the game in_progress and has_ended values
+        // if has_ended, panic
+        // if in progress, then further checks in the gameparams are done, based on the game mode
+        // and round in progress. optimize code as good as possible
+        // init a player (check if the player exists, if not, create a new one)
         // call the internal function player_in_game
         // check the number of chips
         // for each join, check the max no. of players allowed in the game params of the game_id, if
@@ -119,9 +146,9 @@ pub mod actions {
             self.world(@"poker")
         }
 
-        fn generate_game_id(self: @ContractState) -> u64 {
+        fn generate_id(self: @ContractState, target: felt252) -> u64 {
             let mut world = self.world_default();
-            let mut game_id: GameId = world.read_model(GAME_ID);
+            let mut game_id: Id = world.read_model(target);
             let mut id = game_id.nonce + 1;
             game_id.nonce = id;
             world.write_model(@game_id);
@@ -203,31 +230,35 @@ pub mod actions {
             };
 
             let mut world = self.world_default();
-            let mut deck: Deck = world.read_model(game_id);
+            let game: Game = world.read_model(game_id);
+            // TODO: Check the number of decks, and deal card from each deck equally
+            let deck_ids: Array<u64> = game.deck;
 
+            // let mut deck: Deck = world.read_model(game_id);
+            let mut current_index: usize = 0;
             for mut player in players.span() {
-                let mut hand = HandTrait::new_hand(*player.id);
+                let mut hand: Hand = world.read_model(*player.id);
+                hand.new_hand();
 
                 for _ in 0_u8..2_u8 {
-                    let card = deck.deal_card();
-                    HandTrait::add_card(card, ref hand);
+                    let index = current_index % deck_ids.len();
+                    let deck_id: u64 = *deck_ids.at(index);
+                    let mut deck: Deck = world.read_model(deck_id);
+                    hand.add_card(deck.deal_card());
+
+                    world.write_model(@deck); // should work, ;)
+                    current_index += 1;
                 };
 
                 world.write_model(@hand);
                 world.write_model(player);
             };
-
-            world.write_model(@deck);
         }
 
         fn _resolve_hands(
             ref players: Array<Player>,
         ) { // after each round, resolve all players hands by removing all cards from each hand
         // and perhaps re-initialize and shuffle the deck.
-        }
-
-        fn u64_to_felt(value: u64) -> felt252 {
-            value.into()
         }
     }
 }

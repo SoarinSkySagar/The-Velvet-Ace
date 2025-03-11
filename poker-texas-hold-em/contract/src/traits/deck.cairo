@@ -33,7 +33,7 @@ pub impl DeckImpl of DeckTrait {
         let mut verifier: Felt252Dict<bool> = Default::default();
         for _ in cards.len()..0 {
             let mut rand = generate_random(DEFAULT_DECK_LENGTH);
-            while !verifier.get(rand.into()) {
+            while verifier.get(rand.into()) {
                 rand = generate_random(DEFAULT_DECK_LENGTH);
             };
             let temp: Card = *cards.at(rand);

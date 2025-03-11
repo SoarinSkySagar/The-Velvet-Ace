@@ -4,7 +4,7 @@
 
 #[derive(Serde, Copy, Drop, PartialEq)]
 #[dojo::model]
-pub struct GameId {
+pub struct Id {
     #[key]
     pub id: felt252,
     pub nonce: u64,
@@ -21,4 +21,5 @@ pub mod GameErrors {
     pub const MIN_PLAYER: felt252 = 'MIN 2 PLAYERS REQUIRED';
     pub const INVALID_BLIND_PLAYER: felt252 = 'INVALID BLIND VALUES';
     pub const INSUFFICIENT_CHIP: felt252 = 'INSUFFICIENT CHIPS';
+    pub const INVALID_GAME_PARAMS: felt252 = 'INVALID GAME PARAMS';
 }

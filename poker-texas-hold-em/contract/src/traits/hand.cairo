@@ -14,6 +14,8 @@ pub trait HandTrait {
     fn remove_card(ref self: Hand, pos: usize) -> Card;
     fn reveal(self: @Hand) -> Span<Card>;
     fn add_card(ref self: Hand, card: Card);
+    // TODO, add function that shows cards in bytearray, array of tuple (suit, and value)
+// add to card trait.
 }
 
 pub impl HandImpl of HandTrait {

@@ -23,6 +23,7 @@ pub struct GameParams {
     no_of_decks: u8,
     kicker_split: bool,
     min_amount_of_chips: u256,
+    blind_spacing: u16,
 }
 
 /// id - the game id
