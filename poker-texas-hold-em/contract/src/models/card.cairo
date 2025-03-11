@@ -15,3 +15,9 @@ pub mod Royals {
 }
 // IMPLEMENT A CARD TRAIT HERE, REMOVES A CARD BY SETTING THE SUIT AND VALUE TO ZERO OR SOMETHING
 
+pub trait CardTrait {
+    fn get_suit(self: @Card) -> ByteArray;
+    fn get_value_bytearray(self: @Card) -> ByteArray;
+}
+// Should implement into?
+
