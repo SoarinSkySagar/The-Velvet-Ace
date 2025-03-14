@@ -17,7 +17,10 @@ pub mod Royals {
 
 pub trait CardTrait {
     fn get_suit(self: @Card) -> ByteArray;
-    fn get_value_bytearray(self: @Card) -> ByteArray;
+    fn get_value_byte_array(self: @Card) -> ByteArray;
+    fn resolve_card(ref self: Card) -> ByteArray;
+    fn is_valid_card(self: @Card) -> bool;
 }
 // Should implement into?
+
 

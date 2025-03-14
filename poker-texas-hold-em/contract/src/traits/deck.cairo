@@ -15,7 +15,7 @@ fn generate_random(span: u32) -> u32 {
 }
 
 pub impl DeckImpl of DeckTrait {
-    fn new_deck(ref self: Deck, id: u64) -> Deck {
+    fn new_deck(ref self: Deck) -> Deck {
         let mut cards: Array<Card> = array![];
         for suit in 0_u8..4_u8 {
             for value in 1_u16..14_u16 {
@@ -24,7 +24,7 @@ pub impl DeckImpl of DeckTrait {
             };
         };
 
-        Deck { id, cards }
+        Deck { id: self.id, cards }
     }
 
     fn shuffle(ref self: Deck) {
@@ -59,7 +59,7 @@ pub impl DeckImpl of DeckTrait {
 // #[derive(Serde, Copy, Drop, Introspect, PartialEq, Debug)]
 
 pub trait DeckTrait {
-    fn new_deck(ref self: Deck, id: u64) -> Deck;
+    fn new_deck(ref self: Deck) -> Deck;
     fn shuffle(ref self: Deck);
     fn deal_card(ref self: Deck) -> Card;
 }

@@ -28,7 +28,7 @@ trait IActions<TContractState> {
     fn fold(ref self: TContractState);
     fn raise(ref self: TContractState, no_of_chips: u256);
     fn all_in(ref self: TContractState);
-    fn buy_chips(ref self: TContractState, no_of_chips: u256);
+    fn buy_chips(ref self: TContractState, no_of_chips: u256); // will call
     fn get_dealer(self: @TContractState) -> Option<Player>;
 }
 
@@ -81,6 +81,7 @@ pub mod actions {
                 ref player, game_params, game_id, deck_ids,
             );
 
+            player.in_round = true;
             // Save updated player and game state
             world.write_model(@player);
             world.write_model(@game);
@@ -106,6 +107,7 @@ pub mod actions {
         // reached, start the session.
         // starting the session involves changing some variables in the game and dealing cards,
         // basically initializing the game.
+        // set player_in_round to true
         }
 
         fn leave_game(ref self: ContractState) { // assert if the player exists
@@ -162,6 +164,7 @@ pub mod actions {
         // check if player is locked to a session
         // check if the player is even in the game (might have left along the way)...call the below
         // function
+        // check if it's player's turn
         }
 
         /// This function performs all default actions immediately a player joins the game.
@@ -189,14 +192,12 @@ pub mod actions {
         fn after_play(
             self: @ContractState, caller: ContractAddress,
         ) { // check if player has more chips, prompt 'OUT OF CHIPS'
+        // resolve players -- set the next player in game
+        // but before setting the next player, check the player you wish to set, if the player is
+        // still in round.
+        // This after play has more to do -- it keeps close track of each round, and when it should
+        // call the `resolve_round()` function
         }
-
-        // fn extract_current_game_id(self: @ContractState, player: @Player) -> u64 {
-        //     // extract current game id from the player
-        //     // make an assertion that the id isn't zero, 'Player not in game'
-        //     // returns the id.
-        //     0
-        // }
 
         fn extract_current_game_id(self: @ContractState, player: @Player) -> u64 {
             // Extract current game id from the player
@@ -260,6 +261,7 @@ pub mod actions {
         ) { // after each round, resolve all players hands by removing all cards from each hand
             // and perhaps re-initialize and shuffle the deck.
             // Extract current game_id from each player (ensuring all players are in the same game)
+            // TODO: Fix this function
             let mut game_id: u64 = 0;
             let players_len = players.len();
 
@@ -271,7 +273,7 @@ pub mod actions {
 
             // Assert the first player is in a game
             assert(*is_locked, GameErrors::PLAYER_NOT_IN_GAME);
-            assert(player_game_id != 0, GameErrors::PLAYER_NOT_IN_GAME);
+            assert(*player_game_id != 0, GameErrors::PLAYER_NOT_IN_GAME);
 
             game_id = *player_game_id;
 
@@ -296,14 +298,15 @@ pub mod actions {
             let mut game: Game = world.read_model(game_id);
 
             // Read and reset the deck from the game
-            let mut deck = game.deck;
-            // Re-initialize the deck with the same game_id
-            deck = deck.new_deck(game_id.into());
-            // Shuffle the deck
-            deck.shuffle();
+            let mut decks: Array<u64> = game.deck;
 
-            // Update the game's deck
-            game.deck = deck;
+            // Re-initialize the deck with the same game_id, for each deck in decks
+            for deck_id in decks {
+                let mut deck: Deck = world.read_model(deck_id);
+                deck.new_deck();
+                deck.shuffle();
+                world.write_model(@deck); // should work, I guess.
+            };
 
             // Clear each player's hand and update it in the world
             let mut j: u32 = 0;
@@ -313,16 +316,20 @@ pub mod actions {
 
                 // Clear the player's hand by creating a new empty hand
                 let player_address = player.id;
-                player.hand = HandTrait::new_hand(player_address);
+                let mut hand: Hand = world.read_model(player_address);
+                hand.new_hand();
 
-                // Update the player in the world
-                world.write_model(@player);
-
+                world.write_model(@hand);
                 j += 1;
             };
+        }
 
-            // Update the game in the world
-            world.write_model(@game);
+        fn _resolve_round(ref self: ContractState, game_id: u64) { // should call resolve_hands()
+        // should write back the player and the game to the world
+        // all players should be set back in the next round
+        // increment number of rounds,
+        // emit an event that a game_id round is open for others to join, only if necessary game
+        // param checks have been cleared.
         }
     }
 }
