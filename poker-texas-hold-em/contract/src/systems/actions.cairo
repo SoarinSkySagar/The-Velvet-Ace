@@ -324,7 +324,7 @@ pub mod actions {
             };
         }
 
-        fn _resolve_round(ref self: ContractState, game_id: u64) {// should call resolve_hands()
+        fn _resolve_round(ref self: ContractState, game_id: u64) { // should call resolve_hands()
         // should write back the player and the game to the world
         // all players should be set back in the next round
         // increment number of rounds,
