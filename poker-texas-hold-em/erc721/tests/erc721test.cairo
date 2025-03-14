@@ -97,7 +97,7 @@ mod tests {
 
     //== Should NOT allow users to mint tokens ==//
     #[test]
-    #[should_panic] 
+    #[should_panic]
     fn test_users_cannot_mint() {
         // - Step 1: Initializing
         let contract_address = deploy_contract();
@@ -137,29 +137,29 @@ mod tests {
         // Step 4: Upgrade the contract using the upgrade function
         dispatcher.upgrade(new_class_hash);
     }
-
     //== Should prevent non-owners from upgrading the contract ==/
-    // #[test]
-    // #[should_panic]
-    // fn test_users_cannot_upgrade() {
-    //     // Step 1: Deploy the initial contract
-    //     let contract_address = deploy_contract();
-    //     let dispatcher = IERC721TestDispatcher { contract_address };
+// #[test]
+// #[should_panic]
+// fn test_users_cannot_upgrade() {
+//     // Step 1: Deploy the initial contract
+//     let contract_address = deploy_contract();
+//     let dispatcher = IERC721TestDispatcher { contract_address };
 
     //     // Step 2: New contract setup
-    //     let new_contract_class = declare("ERC721").unwrap().contract_class();
+//     let new_contract_class = declare("ERC721").unwrap().contract_class();
 
     //     let mut constructor_calldata: Array::<felt252> = array![];
-    //     Serde::serialize(@OWNER(), ref constructor_calldata);
-    //     Serde::serialize(@NAME(), ref constructor_calldata);
-    //     Serde::serialize(@SYMBOL(), ref constructor_calldata);
-    //     Serde::serialize(@URI(), ref constructor_calldata);
+//     Serde::serialize(@OWNER(), ref constructor_calldata);
+//     Serde::serialize(@NAME(), ref constructor_calldata);
+//     Serde::serialize(@SYMBOL(), ref constructor_calldata);
+//     Serde::serialize(@URI(), ref constructor_calldata);
 
-    //     let (new_contract_address, _) = new_contract_class.deploy(@constructor_calldata).unwrap();
-    //     let new_class_hash = get_class_hash(new_contract_address);
+    //     let (new_contract_address, _) =
+//     new_contract_class.deploy(@constructor_calldata).unwrap();
+//     let new_class_hash = get_class_hash(new_contract_address);
 
     //     // Step 3: Upgrade the contract using the upgrade function (fails)
-    //     // expect_revert!(dispatcher.upgrade(new_class_hash));
-    // }
+//     // expect_revert!(dispatcher.upgrade(new_class_hash));
+// }
 }
 
