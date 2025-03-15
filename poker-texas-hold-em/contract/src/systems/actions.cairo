@@ -1,5 +1,6 @@
-use poker::models::game::GameParams;
+use poker::models::game::{Game, GameParams};
 use poker::models::player::Player;
+use starknet::ContractAddress;
 
 /// TODO: Read the GameREADME.md file to understand the rules of coding this game.
 /// TODO: What should happen when everyone leaves the game? Well, the pot should be
@@ -30,6 +31,12 @@ trait IActions<TContractState> {
     fn all_in(ref self: TContractState);
     fn buy_chips(ref self: TContractState, no_of_chips: u256); // will call
     fn get_dealer(self: @TContractState) -> Option<Player>;
+
+
+    /// All functions here might be extracted into a separate contract
+    fn get_player(self: @TContractState, player_id: ContractAddress) -> Player;
+    fn get_game(self: @TContractState, game_id: u64) -> Game;
+    fn set_alias(self: @TContractState, alias: felt252);
 }
 
 
@@ -41,12 +48,12 @@ pub mod actions {
     use dojo::event::EventStorage;
     // use dojo::world::{WorldStorage, WorldStorageTrait};
 
-    use poker::models::{
-        base::{GameErrors, Id}, card::Card, deck::Deck, game::{Game, GameMode, GameParams},
-        hand::{Hand}, player::Player,
-    };
-
-    use poker::traits::{deck::DeckTrait, game::GameTrait, hand::HandTrait};
+    use poker::models::base::{GameErrors, Id};
+    use poker::models::card::{Card, CardTrait};
+    use poker::models::deck::{Deck, DeckTrait};
+    use poker::models::game::{Game, GameMode, GameParams, GameTrait};
+    use poker::models::hand::{Hand, HandTrait};
+    use poker::models::player::{Player, PlayerTrait, get_default_player};
 
     pub const GAME: felt252 = 'GAME';
     pub const DECK: felt252 = 'DECK';
@@ -57,16 +64,15 @@ pub mod actions {
         fn initialize_game(ref self: ContractState, game_params: Option<GameParams>) -> u64 {
             // Get the caller address
             let caller: ContractAddress = get_caller_address();
-
-            let game_id: u64 = self.generate_id(GAME);
-
-            // Initialize a new player or get existing player
             let mut world = self.world_default();
             let mut player: Player = world.read_model(caller);
 
             // Ensure the player is not already in a game
             let (is_locked, _) = player.locked;
             assert(!is_locked, GameErrors::PLAYER_ALREADY_LOCKED);
+
+            let game_id: u64 = self.generate_id(GAME);
+
             let mut deck_ids: Array<u64> = array![self.generate_id(DECK)];
             if let Option::Some(params) = game_params {
                 // say the maximum number of decks is 10.
@@ -76,12 +82,12 @@ pub mod actions {
                     deck_ids.append(self.generate_id(DECK));
                 };
             }
-            // Create the game with the player
-            let (game, decks) = GameTrait::initialize_game(
-                ref player, game_params, game_id, deck_ids,
-            );
 
-            player.in_round = true;
+            // Create new game
+            let mut game: Game = Default::default();
+            let decks = game.init(game_params, game_id, deck_ids);
+
+            player.enter(ref game);
             // Save updated player and game state
             world.write_model(@player);
             world.write_model(@game);
@@ -97,6 +103,7 @@ pub mod actions {
         fn join_game(
             ref self: ContractState, game_id: u64,
         ) { // check the game in_progress and has_ended values
+        // check the number
         // if has_ended, panic
         // if in progress, then further checks in the gameparams are done, based on the game mode
         // and round in progress. optimize code as good as possible
@@ -108,6 +115,8 @@ pub mod actions {
         // starting the session involves changing some variables in the game and dealing cards,
         // basically initializing the game.
         // set player_in_round to true
+
+        // when max number of participants have been reached, emit a GameStarted event
         }
 
         fn leave_game(ref self: ContractState) { // assert if the player exists
@@ -115,7 +124,8 @@ pub mod actions {
         // assert if the game exists
         // assert player.locked == true
         // Check if the player is in the game
-        // Check if the player has enough chips to leave the game
+
+        // Emit an event here
         }
 
         fn check(ref self: ContractState) {}
@@ -136,6 +146,28 @@ pub mod actions {
 
         fn get_dealer(self: @ContractState) -> Option<Player> {
             Option::None
+        }
+
+        fn get_player(self: @ContractState, player_id: ContractAddress) -> Player {
+            let world = self.world_default();
+            world.read_model(player_id)
+        }
+
+        fn get_game(self: @ContractState, game_id: u64) -> Game {
+            let world = self.world_default();
+            world.read_model(game_id)
+        }
+
+        fn set_alias(self: @ContractState, alias: felt252) {
+            let caller: ContractAddress = get_caller_address();
+            assert(caller.is_non_zero(), 'ZERO CALLER');
+            let mut world = self.world_default();
+            let mut player: Player = world.read_model(caller);
+            let check: Player = world.read_model(alias.clone());
+            assert(check.id.is_zero(), 'ALIAS UPDATE FAILED');
+            player.alias = alias;
+
+            world.write_model(@player);
         }
     }
 
@@ -197,23 +229,15 @@ pub mod actions {
         // still in round.
         // This after play has more to do -- it keeps close track of each round, and when it should
         // call the `resolve_round()` function
-        }
-
-        fn extract_current_game_id(self: @ContractState, player: @Player) -> u64 {
-            // Extract current game id from the player
-            let (is_locked, game_id) = *player.locked;
-
-            // Assert player is actually locked in a game
-            assert(is_locked, GameErrors::PLAYER_NOT_IN_GAME);
-
-            // Make an assertion that the id isn't zero
-            assert(game_id != 0, GameErrors::PLAYER_NOT_IN_GAME);
-
-            // Return the id
-            game_id
+        // Keep track of Gmae's current bet, and pot
+        // This function deals the community cards.
+        // match each player's current bet with the game's current bet, and act accordingly.
+        // only works for the "next player". When matched, check the number of community cards.
+        // deal card if len() < 5, else call resolve_round().
         }
 
         fn _get_dealer() -> Option<Player> {
+            // for the game, if player is in game only
             Option::None
         }
 
@@ -223,15 +247,15 @@ pub mod actions {
             assert(!players.is_empty(), 'Players cannot be empty');
 
             let first_player = players.at(0);
-            let game_id = self.extract_current_game_id(first_player);
+            let game_id = first_player.extract_current_game_id();
 
             for player in players.span() {
-                let current_game_id = self.extract_current_game_id(player);
+                let current_game_id = player.extract_current_game_id();
                 assert(current_game_id == game_id, 'Players in different games');
             };
 
             let mut world = self.world_default();
-            let game: Game = world.read_model(game_id);
+            let game: Game = world.read_model(*game_id);
             // TODO: Check the number of decks, and deal card from each deck equally
             let deck_ids: Array<u64> = game.deck;
 
@@ -312,10 +336,10 @@ pub mod actions {
             let mut j: u32 = 0;
             while j < players_len {
                 // Get player reference and create a mutable copy
-                let mut player = *players.at(j);
+                let mut player = players.at(j);
 
                 // Clear the player's hand by creating a new empty hand
-                let player_address = player.id;
+                let player_address = *player.id;
                 let mut hand: Hand = world.read_model(player_address);
                 hand.new_hand();
 
@@ -330,6 +354,11 @@ pub mod actions {
         // increment number of rounds,
         // emit an event that a game_id round is open for others to join, only if necessary game
         // param checks have been cleared.
+        }
+
+        fn _deal_community_card(
+            ref self: ContractState, game_id: u64,
+        ) { // Should return the array of cards?
         }
     }
 }

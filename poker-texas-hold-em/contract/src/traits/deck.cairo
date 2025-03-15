@@ -14,6 +14,7 @@ fn generate_random(span: u32) -> u32 {
     (hash % span.into()).try_into().unwrap()
 }
 
+#[generate_trait]
 pub impl DeckImpl of DeckTrait {
     fn new_deck(ref self: Deck) -> Deck {
         let mut cards: Array<Card> = array![];
@@ -54,12 +55,7 @@ pub impl DeckImpl of DeckTrait {
         card
     }
 }
-
 // assert after shuffling, that all cards remain distinct, and the deck is still 52 cards
 // #[derive(Serde, Copy, Drop, Introspect, PartialEq, Debug)]
 
-pub trait DeckTrait {
-    fn new_deck(ref self: Deck) -> Deck;
-    fn shuffle(ref self: Deck);
-    fn deal_card(ref self: Deck) -> Card;
-}
+

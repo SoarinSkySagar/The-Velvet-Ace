@@ -7,3 +7,6 @@ pub struct Deck {
     id: u64,
     cards: Array<Card>,
 }
+
+#[cfg(test)]
+mod tests {}

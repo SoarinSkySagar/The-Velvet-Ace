@@ -23,11 +23,11 @@ jobs:
       - name: Install plugins
         run: |
           asdf plugin add scarb
-          asdf install scarb 2.9.1
-          asdf global scarb 2.9.1
+          asdf install scarb 2.9.2
+          asdf global scarb 2.9.2
           asdf plugin add dojo https://github.com/dojoengine/asdf-dojo
-          asdf install dojo 1.0.11 
-          asdf global dojo 1.0.11
+          asdf install dojo 1.1.0 
+          asdf global dojo 1.1.0
           asdf plugin add starknet-foundry
           asdf install starknet-foundry 0.35.0
           asdf global starknet-foundry 0.35.0

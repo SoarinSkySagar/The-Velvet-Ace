@@ -20,3 +20,9 @@ The all-in player can only win the main pot, as they have no chips left to match
 
 // Make Deck have it's own id
 // store only references of models in models, and refactor the whole code
+
+
+// Add banning options from games, and creators.
+
+
+
