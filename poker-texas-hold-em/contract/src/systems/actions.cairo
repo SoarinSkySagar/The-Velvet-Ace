@@ -36,7 +36,7 @@ trait IActions<TContractState> {
     /// All functions here might be extracted into a separate contract
     fn get_player(self: @TContractState, player_id: ContractAddress) -> Player;
     fn get_game(self: @TContractState, game_id: u64) -> Game;
-    fn set_alias(self: @TContractState, alias: ByteArray);
+    fn set_alias(self: @TContractState, alias: felt252);
 }
 
 
@@ -158,7 +158,7 @@ pub mod actions {
             world.read_model(game_id)
         }
 
-        fn set_alias(self: @ContractState, alias: ByteArray) {
+        fn set_alias(self: @ContractState, alias: felt252) {
             let caller: ContractAddress = get_caller_address();
             assert(caller.is_non_zero(), 'ZERO CALLER');
             let mut world = self.world_default();
@@ -255,7 +255,7 @@ pub mod actions {
             };
 
             let mut world = self.world_default();
-            let game: Game = world.read_model(game_id);
+            let game: Game = world.read_model(*game_id);
             // TODO: Check the number of decks, and deal card from each deck equally
             let deck_ids: Array<u64> = game.deck;
 
@@ -336,10 +336,10 @@ pub mod actions {
             let mut j: u32 = 0;
             while j < players_len {
                 // Get player reference and create a mutable copy
-                let mut player = *players.at(j);
+                let mut player = players.at(j);
 
                 // Clear the player's hand by creating a new empty hand
-                let player_address = player.id;
+                let player_address = *player.id;
                 let mut hand: Hand = world.read_model(player_address);
                 hand.new_hand();
 
