@@ -22,4 +22,5 @@ pub mod GameErrors {
     pub const INVALID_BLIND_PLAYER: felt252 = 'INVALID BLIND VALUES';
     pub const INSUFFICIENT_CHIP: felt252 = 'INSUFFICIENT CHIPS';
     pub const INVALID_GAME_PARAMS: felt252 = 'INVALID GAME PARAMS';
+    pub const ENTRY_DISALLOWED: felt252 = 'ENTRY DISALLOWED';
 }

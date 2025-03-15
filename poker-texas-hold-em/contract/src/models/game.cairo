@@ -42,8 +42,9 @@ pub struct GameParams {
 /// next_player - the next player to take a turn
 /// community - cards - the available community cards in the game
 /// pot - the pot returning the pot size
+/// current_bet - The current bet (current highest bet, targeted for a raise or call.)
 /// params - the gameparams used to initialize the game.
-#[derive(Drop, Default, Serde)]
+#[derive(Drop, Default, Clone, Serde)]
 #[dojo::model]
 pub struct Game {
     #[key]
@@ -52,10 +53,12 @@ pub struct Game {
     has_ended: bool,
     current_round: u8,
     round_in_progress: bool,
+    current_player_count: usize,
     players: Array<ContractAddress>,
     deck: Array<u64>,
     next_player: Option<ContractAddress>,
     community_cards: Array<Card>,
     pot: u256,
+    current_bet: u256,
     params: GameParams,
 }
