@@ -53,7 +53,7 @@ pub struct Game {
     has_ended: bool,
     current_round: u8,
     round_in_progress: bool,
-    current_player_count: usize,
+    current_player_count: u32,
     players: Array<ContractAddress>,
     deck: Array<u64>,
     next_player: Option<ContractAddress>,
