@@ -10,15 +10,12 @@ sierra-replace-ids = true
 migrate = "sozo build && sozo migrate"                      # scarb run migrate
 spawn = "sozo execute dojo_starter-actions spawn --wait"    # scarb run spawn
 move = "sozo execute dojo_starter-actions move -c 1 --wait" # scarb run move
-test = "snforge test"
 
 [dependencies]
 dojo = { git = "https://github.com/dojoengine/dojo", tag = "v1.3.0" }
-starknet = "2.9.2"
 
 [[target.starknet-contract]]
 build-external-contracts = ["dojo::world::world_contract::world"]
 
 [dev-dependencies]
 dojo_cairo_test = { git = "https://github.com/dojoengine/dojo", tag = "v1.3.0" }
-cairo_test = "=2.9.2"
