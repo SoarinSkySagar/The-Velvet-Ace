@@ -237,15 +237,13 @@ pub mod actions {
         // deal card if len() < 5, else call resolve_round().
         }
 
+
         fn _get_dealer(self: @ContractState, player: @Player) -> Option<Player> {
-            // for the game, if player is in game only
             let mut world = self.world_default();
-            let caller: ContractAddress = get_caller_address();
-            let player: Player = world.read_model(caller);
-            let game_id: u64 = *player.extract_current_game_id(); 
+            let game_id: u64 = *player.extract_current_game_id();
             let game: Game = world.read_model(game_id);
             let players: Array<ContractAddress> = game.players;
-            let num_players: usize  = players.len();
+            let num_players: usize = players.len();
 
             // Find the index of the current dealer
             let mut current_dealer_index: usize = 0;
@@ -255,7 +253,7 @@ pub mod actions {
             while i < num_players {
                 let player_address: ContractAddress = *players.at(i);
                 let player_data: Player = world.read_model(player_address);
-        
+
                 if player_data.is_dealer {
                     current_dealer_index = i;
                     found = true;
@@ -270,27 +268,48 @@ pub mod actions {
             };
 
             // Calculate the index of the next dealer
-            let next_dealer_index: usize = (current_dealer_index + 1) % num_players;
+            let mut next_dealer_index: usize = (current_dealer_index + 1) % num_players;
+            // save initial dealer index to prevent infinite loop
+            let mut initial_dealer_index: usize = current_dealer_index;
 
-            // Get the address of the next dealer
-            let next_dealer_address: ContractAddress = *players.at(next_dealer_index); 
+            let result = loop {
+                // Get the address of the next dealer
+                let next_dealer_address: ContractAddress = *players.at(next_dealer_index);
 
-            // Remove the is_dealer from the current dealer
-            let mut current_dealer: Player = world.read_model(*players.at(current_dealer_index));
-            current_dealer.is_dealer = false;
-            world.write_model(@current_dealer);
+                // Load the next dealer's data
+                let mut next_dealer: Player = world.read_model(next_dealer_address);
 
-            // Set the next dealer to is_dealer
-            let mut next_dealer: Player = world.read_model(next_dealer_address);
-            next_dealer.is_dealer = true;
-            world.write_model(@next_dealer);
+                // Check if the next dealer is in the round (assuming 'in_round' is a field in the
+                // Player struct)
+                if next_dealer.in_round {
+                    // Remove the is_dealer from the current dealer
+                    let mut current_dealer: Player = world
+                        .read_model(*players.at(current_dealer_index));
+                    current_dealer.is_dealer = false;
+                    world.write_model(@current_dealer);
 
-            // Return the next dealer
-            Option::Some(next_dealer)
+                    // Set the next dealer to is_dealer
+                    next_dealer.is_dealer = true;
+                    world.write_model(@next_dealer);
+
+                    // Return the next dealer
+                    break Option::Some(next_dealer);
+                }
+
+                // Move to the next player
+                next_dealer_index = (next_dealer_index + 1) % num_players;
+
+                // If we've come full circle, panic
+                if next_dealer_index == initial_dealer_index {
+                    assert(false, 'ONLY ONE PLAYER IN GAME');
+                    break Option::None;
+                }
+            };
+            result
         }
 
         fn _deal_hands(
-            ref self: @ContractState, ref players: Array<Player>,
+            ref self: ContractState, ref players: Array<Player>,
         ) { // deal hands for each player in the array
             assert(!players.is_empty(), 'Players cannot be empty');
 
@@ -329,7 +348,7 @@ pub mod actions {
         }
 
         fn _resolve_hands(
-            self: @ContractState, ref players: Array<Player>,
+            ref self: ContractState, ref players: Array<Player>,
         ) { // after each round, resolve all players hands by removing all cards from each hand
             // and perhaps re-initialize and shuffle the deck.
             // Extract current game_id from each player (ensuring all players are in the same game)
@@ -397,9 +416,11 @@ pub mod actions {
         }
 
         fn _resolve_round(ref self: ContractState, game_id: u64) { // should call resolve_hands()
+        // remember to call resolve_hands and pass an array of players that are in_round
         // should write back the player and the game to the world
         // all players should be set back in the next round
         // increment number of rounds,
+        // resolve the game variables
         // emit an event that a game_id round is open for others to join, only if necessary game
         // param checks have been cleared.
         }
