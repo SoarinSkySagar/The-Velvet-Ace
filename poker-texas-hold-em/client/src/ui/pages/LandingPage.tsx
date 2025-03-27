@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom';
 import Button from '../components/LandingPage/Button';
 import { useEffect, useState } from 'react';
+import WalletConnectModal from '../components/WalletConnectModal';
 
 const LandingPage = () => {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -75,7 +77,13 @@ const LandingPage = () => {
 
         {/* Buttons Container */}
         <div className='flex flex-col items-center md:flex-row gap-y-6 lg:gap-4 mt-8'>
-          <Button variant='gradient' radius='lg'>Connect Wallet to Play</Button>
+          <Button 
+            variant='gradient' 
+            radius='lg'
+            onClick={() => setIsWalletModalOpen(true)}
+            >
+              Connect Wallet to Play
+          </Button>
           <Button variant='outline-green' radius='lg'>How to Play</Button>
         </div>
 
@@ -86,6 +94,12 @@ const LandingPage = () => {
           <Link to=""><span className='cursor-pointer hover:text-yellow-300 transition-colors'>[ Privacy Policy ]</span></Link>
         </div>
       </div>
+
+       {/* Wallet Connect Modal */}
+       <WalletConnectModal 
+        isOpen={isWalletModalOpen} 
+        onClose={() => setIsWalletModalOpen(false)} 
+      />
     </section>
   )
 }
