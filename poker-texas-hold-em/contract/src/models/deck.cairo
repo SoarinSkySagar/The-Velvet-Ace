@@ -73,7 +73,7 @@ mod tests {
     #[test]
     fn test_new_deck() {
         let mut deck: Deck = Deck { id: 1, cards: array![] };
-        deck = deck.new_deck();
+        deck.new_deck();
 
         // Test 1: Verify the deck has exactly 52 cards
         assert(deck.cards.len() == 52, 'Deck should have 52 cards');
@@ -126,7 +126,7 @@ mod tests {
     #[ignore]
     fn test_shuffle() {
         let mut deck: Deck = Deck { id: 1, cards: array![] };
-        deck = deck.new_deck();
+        deck.new_deck();
 
         let initial_deck: Deck = deck.clone();
         println!("deck len no shuffle: {}", deck.cards.len());
@@ -155,7 +155,7 @@ mod tests {
     #[test]
     fn test_deal_card() {
         let mut deck = Deck { id: 1, cards: array![] };
-        deck = deck.new_deck();
+        deck.new_deck();
 
         // Test 1: Deal one card and verify deck size reduces
         let initial_size: u32 = deck.cards.len();
@@ -189,15 +189,15 @@ mod tests {
         let mut deck1: Deck = Deck { id: 1, cards: array![] };
         let mut deck2: Deck = Deck { id: 42, cards: array![] };
 
-        deck1 = deck1.new_deck();
-        deck2 = deck2.new_deck();
+        deck1.new_deck();
+        deck2.new_deck();
 
         assert(deck1.id == 1, 'ID should be preserved');
         assert(deck2.id == 42, 'ID should be preserved');
 
         // Verify idempotence, calling new_deck twice should give same result
         let first_deck: Deck = deck1.clone();
-        deck1 = deck1.new_deck();
+        deck1.new_deck();
         assert(!is_shuffled(@first_deck, @deck1), 'deck should be in same order');
 
         assert(!is_shuffled(@deck1, @deck2), 'decks should have same order');
@@ -210,8 +210,8 @@ mod tests {
         let mut deck1: Deck = Deck { id: 1, cards: array![] };
         let mut deck2: Deck = Deck { id: 2, cards: array![] };
 
-        deck1 = deck1.new_deck();
-        deck2 = deck2.new_deck();
+        deck1.new_deck();
+        deck2.new_deck();
 
         // Deal from deck1 and verify deck2 is unchanged
         let initial_deck2_count: u32 = deck2.cards.len();
