@@ -38,7 +38,7 @@ pub fn get_default_player() -> Player {
         locked: (false, 0),
         is_dealer: false,
         in_round: false,
-        out: (0, 0)
+        out: (0, 0),
     }
 }
 

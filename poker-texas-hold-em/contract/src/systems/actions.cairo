@@ -89,7 +89,7 @@ pub mod actions {
 
             player.enter(ref game);
             // Save updated player and game state
-            world.write_model(@player);     
+            world.write_model(@player);
             world.write_model(@game);
 
             // Save available decks
