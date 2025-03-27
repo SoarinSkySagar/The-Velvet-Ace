@@ -9,4 +9,7 @@ pub struct Deck {
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+    #[test]
+    fn test_deck() {}
+}
