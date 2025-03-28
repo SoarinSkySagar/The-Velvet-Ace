@@ -54,7 +54,7 @@ pub impl GameImpl of GameTrait {
     }
 }
 
-fn get_default_game_params() -> GameParams {
+pub fn get_default_game_params() -> GameParams {
     GameParams {
         game_mode: Default::default(),
         max_no_of_players: 5,
