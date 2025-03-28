@@ -237,7 +237,7 @@ fn extract_kicker(hands: Array<Hand>, hand_rank: u16) -> (Array<Hand>, Array<Car
 fn generate_combinations(cards: Array<Card>, k: usize) -> Array<Array<Card>> {
     let n = cards.len();
     let mut result: Array<Array<Card>> = array![];
-    let total = pow(2, n.try_into().unwrap()); // 2^n subsets
+    let total: u32 = pow(2, n.try_into().unwrap()); // 2^n subsets
     let mut i: u32 = 0;
 
     while i < total {
@@ -349,7 +349,7 @@ fn evaluate_five_cards(cards: Array<Card>) -> (Array<Card>, u16) {
     };
 
     // Sort by poker_value descending
-    let mut sorted = bubble_sort(card_data.clone());
+    let mut sorted: Array<(u16, u16, u8)> = bubble_sort(card_data.clone());
 
     // Extract all tuple elements for each card
     let (orig_val0, poker_val0, suit0) = *sorted.at(0);
@@ -395,7 +395,7 @@ fn evaluate_five_cards(cards: Array<Card>) -> (Array<Card>, u16) {
         };
         k += 1;
     };
-    let sorted_counts = bubble_sort_u8(counts.clone());
+    let sorted_counts: Array<u8> = bubble_sort_u8(counts.clone());
 
     // Evaluate hand rank
     if is_flush && is_straight {
