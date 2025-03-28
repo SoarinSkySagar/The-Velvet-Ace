@@ -49,7 +49,9 @@ pub mod actions {
     use dojo::event::EventStorage;
     // use dojo::world::{WorldStorage, WorldStorageTrait};
 
-    use poker::models::base::{GameErrors, Id};
+    use poker::models::base::{
+        GameErrors, Id, GameInitialized, CardDealt, HandCreated, HandResolved,
+    };
     use poker::models::card::{Card, CardTrait};
     use poker::models::deck::{Deck, DeckTrait};
     use poker::models::game::{Game, GameMode, GameParams, GameTrait};
@@ -61,42 +63,6 @@ pub mod actions {
     pub const DECK: felt252 = 'DECK';
     pub const MAX_NO_OF_CHIPS: u128 = 100000; /// for test, 1 chip = 1 usd.
 
-    #[derive(Copy, Drop, Serde)]
-    #[dojo::event]
-    pub struct GameInitialized {
-        #[key]
-        pub game_id: u64, 
-        pub player: ContractAddress,
-        pub game_params: GameParams,
-        pub time_stamp: u64,
-    }
-
-    #[derive(Copy, Drop, Serde)]
-    #[dojo::event]
-    pub struct CardDealt {
-        #[key]
-        pub game_id: u64,
-        pub player_id: ContractAddress,
-        pub deck_id: u64,
-        pub time_stamp: u64,
-    }
-
-    #[derive(Copy, Drop, Serde)]
-    #[dojo::event]
-    pub struct HandCreated {
-        #[key]
-        pub game_id: u64,
-        pub player_id: ContractAddress,
-        pub time_stamp: u64,
-    }
-
-    #[derive(Drop, Serde)]
-    #[dojo::event]
-    pub struct HandResolved {
-        #[key]
-        pub game_id: u64,
-        pub players: Array<ContractAddress>,
-    }
 
     #[abi(embed_v0)]
     impl ActionsImpl of super::IActions<ContractState> {
@@ -138,8 +104,8 @@ pub mod actions {
 
             world
                 .emit_event(
-                    @GameInitialized { 
-                        game_id: game_id, 
+                    @GameInitialized {
+                        game_id: game_id,
                         player: caller,
                         game_params: game.params,
                         time_stamp: starknet::get_block_timestamp(),
@@ -151,21 +117,17 @@ pub mod actions {
 
             // match game_params {
             //     Option::Some(value) => {
-            //     world.emit_event(@GameInitialized { 
-            //         game_id: game_id, 
+            //     world.emit_event(@GameInitialized {
+            //         game_id: game_id,
             //         player: caller,
             //         game_params: value,
             //     })},
             //     Option::None => world.emit_event(@GameInitialized{
-            //         game_id: game_id, 
+            //         game_id: game_id,
             //         player: caller,
             //         game_params: default_param,
             //     }),
             // };
-
-            
-
-            
 
             game_id
         }
@@ -347,7 +309,7 @@ pub mod actions {
 
                     world
                         .emit_event(
-                            @CardDealt{
+                            @CardDealt {
                                 game_id: *game_id,
                                 player_id: *player.id,
                                 deck_id: deck.id,
@@ -364,13 +326,12 @@ pub mod actions {
 
                 world
                     .emit_event(
-                        @HandCreated{
+                        @HandCreated {
                             game_id: *game_id,
                             player_id: *player.id,
                             time_stamp: starknet::get_block_timestamp(),
                         },
                     );
-
             };
         }
 
@@ -449,13 +410,7 @@ pub mod actions {
                 j += 1;
             };
 
-            world
-                .emit_event(
-                    @HandResolved{
-                        game_id: game_id,
-                        players: resolved_players,
-                    },
-                );
+            world.emit_event(@HandResolved { game_id: game_id, players: resolved_players });
         }
 
         fn _resolve_round(ref self: ContractState, game_id: u64) { // should call resolve_hands()
