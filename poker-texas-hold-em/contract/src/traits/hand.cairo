@@ -117,3 +117,21 @@ pub impl HandImpl of HandTrait {
     }
 }
 
+/// Take in a HandRank::<const>, a u16 value
+/// Takes in an array of hands of equal HandRank
+/// To increase optimization, the ranks of each hand are never checked here, 
+/// but are assumed to be equal
+/// 
+/// returns a tuple of an array of the winning hands, and an array of the cards that did the kicking
+/// The card in the winning hands are always equal
+fn extract_kicker(hands: Array<Hand>, hand_rank: u16) -> (Array<Hand>, Array<Card>) {
+
+    // Implement kicker based on hand_rank
+    // some hand_ranks have a different kicker implementation from the rest
+    (array![], array![])
+
+}
+
+// for the test
+// assert that the array of kicking cards are present in the winning hands
+    // .. or make

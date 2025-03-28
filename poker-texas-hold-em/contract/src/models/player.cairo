@@ -44,17 +44,20 @@ pub fn get_default_player() -> Player {
 
 #[generate_trait]
 pub impl PlayerImpl of PlayerTrait {
-    fn exit(ref self: Player, out: Option<(u64, u64)>) {
-        let (is_locked, _) = self.locked;
+    fn exit(ref self: Player, game: @Game, out: bool) {
+        let (is_locked, id) = self.locked;
         assert(is_locked, 'CANNOT EXIT, PLAYER NOT LOCKED');
+        if out {
+            // check game id
+            assert(id == *game.id, 'BAD REQUEST');
+            self.out = (*game.id, *game.reshuffled);
+        }
+
         self.current_bet = 0;
         self.is_dealer = false;
         self.in_round = false;
         self.locked = (false, 0);
         self.out = (0, 0);
-        if let Option::Some(val) = out {
-            self.out = val;
-        }
     }
 
     fn enter(ref self: Player, ref game: Game) {
