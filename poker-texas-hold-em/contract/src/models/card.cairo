@@ -55,7 +55,7 @@ pub impl CardImpl of CardTrait {
         } else {
             return "UNKNOWN";
         }
-        
+
         str.append(@format!(" of {}", self.get_suit()));
         str
     }
