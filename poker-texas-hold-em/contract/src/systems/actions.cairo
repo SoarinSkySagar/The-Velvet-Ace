@@ -225,7 +225,7 @@ pub mod actions {
         fn after_play(
             self: @ContractState, caller: ContractAddress,
         ) { 
-            
+            //@Reentrancy
             let mut world = self.world_default();
             let mut player: Player = world.read_model(caller);
             let (is_locked, game_id) = player.locked;
