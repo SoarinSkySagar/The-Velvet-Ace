@@ -32,15 +32,15 @@ pub impl DeckImpl of DeckTrait {
         // Clone the cards
         let original_cards: Array<Card> = self.cards.clone();
         let length = original_cards.len();
-        
+
         // Handle edge case
         if length <= 1 {
             return;
         }
-        
+
         // Create a new array for shuffled cards
         let mut shuffled_cards: Array<Card> = array![];
-        
+
         // Create an array of available indices
         let mut remaining_indices: Array<u32> = array![];
         let mut i: u32 = 0;
@@ -48,16 +48,16 @@ pub impl DeckImpl of DeckTrait {
             remaining_indices.append(i);
             i += 1;
         };
-        
+
         // Select random cards until we've used all indices
         while remaining_indices.len() > 0 {
             // Get random position within remaining indices
             let random_pos = generate_random(remaining_indices.len());
             let card_index = *remaining_indices.at(random_pos);
-            
+
             // Add the selected card to our shuffled deck
             shuffled_cards.append(*original_cards.at(card_index));
-            
+
             // Remove the used index by rebuilding the array without it
             let mut new_remaining = array![];
             let mut j: u32 = 0;
@@ -69,12 +69,12 @@ pub impl DeckImpl of DeckTrait {
             };
             remaining_indices = new_remaining;
         };
-        
+
         // Update the deck
         self.cards = shuffled_cards;
     }
-    
-        fn deal_card(ref self: Deck) -> Card {
+
+    fn deal_card(ref self: Deck) -> Card {
         self.cards.pop_front().unwrap()
     }
 }
