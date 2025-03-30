@@ -1,6 +1,7 @@
 use poker::models::game::{Game, GameParams};
 use poker::models::player::Player;
 use starknet::ContractAddress;
+use poker::traits::game::get_default_game_params;
 
 /// TODO: Read the GameREADME.md file to understand the rules of coding this game.
 /// TODO: What should happen when everyone leaves the game? Well, the pot should be
@@ -48,16 +49,20 @@ pub mod actions {
     use dojo::event::EventStorage;
     // use dojo::world::{WorldStorage, WorldStorageTrait};
 
-    use poker::models::base::{GameErrors, Id};
+    use poker::models::base::{
+        GameErrors, Id, GameInitialized, CardDealt, HandCreated, HandResolved,
+    };
     use poker::models::card::{Card, CardTrait};
     use poker::models::deck::{Deck, DeckTrait};
     use poker::models::game::{Game, GameMode, GameParams, GameTrait};
     use poker::models::hand::{Hand, HandTrait};
     use poker::models::player::{Player, PlayerTrait, get_default_player};
+    use poker::traits::game::get_default_game_params;
 
     pub const GAME: felt252 = 'GAME';
     pub const DECK: felt252 = 'DECK';
     pub const MAX_NO_OF_CHIPS: u128 = 100000; /// for test, 1 chip = 1 usd.
+
 
     #[abi(embed_v0)]
     impl ActionsImpl of super::IActions<ContractState> {
@@ -97,6 +102,33 @@ pub mod actions {
                 world.write_model(@deck);
             };
 
+            world
+                .emit_event(
+                    @GameInitialized {
+                        game_id: game_id,
+                        player: caller,
+                        game_params: game.params,
+                        time_stamp: starknet::get_block_timestamp(),
+                    },
+                );
+
+            // extracted default GameParams from traits::game
+            // let default_param = get_default_game_params();
+
+            // match game_params {
+            //     Option::Some(value) => {
+            //     world.emit_event(@GameInitialized {
+            //         game_id: game_id,
+            //         player: caller,
+            //         game_params: value,
+            //     })},
+            //     Option::None => world.emit_event(@GameInitialized{
+            //         game_id: game_id,
+            //         player: caller,
+            //         game_params: default_param,
+            //     }),
+            // };
+
             game_id
         }
 
@@ -117,6 +149,8 @@ pub mod actions {
         // set player_in_round to true
 
         // when max number of participants have been reached, emit a GameStarted event
+        // who joined event
+        // world.emit_event(@PlayerJoined{game_id, player})
         }
 
         fn leave_game(ref self: ContractState) { // assert if the player exists
@@ -126,6 +160,7 @@ pub mod actions {
         // Check if the player is in the game
 
         // Emit an event here
+        // world.emit_event(@PlayerLeft{game_id, player})
         }
 
         fn check(ref self: ContractState) {}
@@ -142,6 +177,7 @@ pub mod actions {
 
         fn buy_chips(ref self: ContractState, no_of_chips: u256) { // use a crate here
         // a package would be made for all transactions and nfts out of this contract package.
+        // world.emit_event(@BoughtChip{game_id, no_of_chips})
         }
 
         fn get_dealer(self: @ContractState) -> Option<Player> {
@@ -222,21 +258,93 @@ pub mod actions {
             );
         }
 
-        fn after_play(
-            self: @ContractState, caller: ContractAddress,
-        ) { // check if player has more chips, prompt 'OUT OF CHIPS'
-        // resolve players -- set the next player in game
-        // but before setting the next player, check the player you wish to set, if the player is
-        // still in round.
-        // This after play has more to do -- it keeps close track of each round, and when it should
-        // call the `resolve_round()` function
-        // Keep track of Gmae's current bet, and pot
-        // This function deals the community cards.
-        // match each player's current bet with the game's current bet, and act accordingly.
-        // only works for the "next player". When matched, check the number of community cards.
-        // deal card if len() < 5, else call resolve_round().
+        fn after_play(ref self: ContractState, caller: ContractAddress) {
+            //@Reentrancy
+            let mut world = self.world_default();
+            let mut player: Player = world.read_model(caller);
+            let (is_locked, game_id) = player.locked;
+
+            // Ensure the player is in a game
+            assert(is_locked, 'Player not in game');
+
+            let mut game: Game = world.read_model(game_id);
+
+            // Check if all community cards are dealt (5 cards in Texas Hold'em)
+            if game.community_cards.len() == 5 {
+                return self._resolve_round(game_id);
+            }
+
+            let players: Array<ContractAddress> = game.players;
+
+            // Find the caller's index in the players array
+            let current_index_option: Option<usize> = self.find_player_index(@players, caller);
+            assert(current_index_option.is_some(), 'Caller not in game');
+            let current_index: usize = OptionTrait::unwrap(current_index_option);
+
+            // Update game state with the player's action
+
+            if player.current_bet > game.current_bet {
+                game.current_bet = player.current_bet; // Raise updates the current bet
+            }
+
+            world.write_model(@player);
+
+            // Determine the next active player or resolve the round
+            let next_player_option: Option<ContractAddress> = self
+                .find_next_active_player(@players, current_index, @world);
+
+            if next_player_option.is_none() {
+                // No active players remain, resolve the round
+                self._resolve_round(game_id);
+            } else {
+                game.next_player = next_player_option;
+            }
+
+            // Use ref consistently for mutable access
+            let mut game: Game = world.read_model(game_id);
+            world.write_model(@game);
         }
 
+        fn find_player_index(
+            self: @ContractState, players: @Array<ContractAddress>, player_address: ContractAddress,
+        ) -> Option<usize> {
+            let mut i = 0;
+            let mut result: Option<usize> = Option::None;
+            while i < players.len() {
+                if *players.at(i) == player_address {
+                    result = Option::Some(i);
+                    break;
+                }
+                i += 1;
+            };
+            result
+        }
+
+        fn find_next_active_player(
+            self: @ContractState,
+            players: @Array<ContractAddress>,
+            current_index: usize,
+            world: @dojo::world::WorldStorage,
+        ) -> Option<ContractAddress> {
+            let num_players = players.len();
+            let mut next_index = (current_index + 1) % num_players;
+            let mut attempts = 0;
+            let mut result: Option<ContractAddress> = Option::None;
+
+            while attempts < num_players {
+                let player_address = *players.at(next_index);
+                let p: Player = world.read_model(player_address);
+                let (is_locked, _) = p
+                    .locked; // Adjusted to check locked status instead of is_in_game
+                if is_locked && p.in_round {
+                    result = Option::Some(player_address);
+                    break;
+                }
+                next_index = (next_index + 1) % num_players;
+                attempts += 1;
+            };
+            result
+        }
 
         fn _get_dealer(self: @ContractState, player: @Player) -> Option<Player> {
             let mut world = self.world_default();
@@ -338,12 +446,31 @@ pub mod actions {
                     let mut deck: Deck = world.read_model(deck_id);
                     hand.add_card(deck.deal_card());
 
+                    world
+                        .emit_event(
+                            @CardDealt {
+                                game_id: *game_id,
+                                player_id: *player.id,
+                                deck_id: deck.id,
+                                time_stamp: starknet::get_block_timestamp(),
+                            },
+                        );
+
                     world.write_model(@deck); // should work, ;)
                     current_index += 1;
                 };
 
                 world.write_model(@hand);
                 world.write_model(player);
+
+                world
+                    .emit_event(
+                        @HandCreated {
+                            game_id: *game_id,
+                            player_id: *player.id,
+                            time_stamp: starknet::get_block_timestamp(),
+                        },
+                    );
             };
         }
 
@@ -396,6 +523,9 @@ pub mod actions {
                 world.write_model(@deck); // should work, I guess.
             };
 
+            // Array of all the players
+            let mut resolved_players = ArrayTrait::new();
+
             // Clear each player's hand and update it in the world
             let mut j: u32 = 0;
             while j < players_len {
@@ -403,13 +533,20 @@ pub mod actions {
                 let mut player = players.at(j);
 
                 // Clear the player's hand by creating a new empty hand
-                let player_address = *player.id;
+                let mut player_address = *player.id;
+
+                // Added each player
+                resolved_players.append(player_address);
+
                 let mut hand: Hand = world.read_model(player_address);
+
                 hand.new_hand();
 
                 world.write_model(@hand);
                 j += 1;
             };
+
+            world.emit_event(@HandResolved { game_id: game_id, players: resolved_players });
         }
 
         fn _resolve_round(ref self: ContractState, game_id: u64) { // should call resolve_hands()
@@ -419,6 +556,7 @@ pub mod actions {
         // increment number of rounds,
         // resolve the game variables
         // emit an event that a game_id round is open for others to join, only if necessary game
+        // world.emit_event(@RoundResolved{game_id, is_open: true})
         // param checks have been cleared.
         // set next player too here?
         }
