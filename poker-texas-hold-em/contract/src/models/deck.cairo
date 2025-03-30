@@ -138,6 +138,7 @@ mod tests {
 
         // Test 2: Verify all cards are still unique
         let unique_count: u32 = count_unique_cards(@deck);
+        println!("unique count: {}", unique_count);
         assert(unique_count == 52, 'All cards should be unique');
 
         // Test 3: Verify the order has changed
