@@ -223,64 +223,85 @@ pub mod actions {
         }
 
         fn after_play(
-            self: @ContractState, caller: ContractAddress,
+           ref self: ContractState, caller: ContractAddress,
         ) { 
             //@Reentrancy
             let mut world = self.world_default();
             let mut player: Player = world.read_model(caller);
             let (is_locked, game_id) = player.locked;
-            
-            // Verify player state
-            assert(is_locked, GameErrors::PLAYER_NOT_IN_GAME);
-            assert(player.chips > 0, GameErrors::PLAYER_OUT_OF_CHIPS);
-            
+    
+            // Ensure the player is in a game
+            assert(is_locked, 'Player not in game');
+    
             let mut game: Game = world.read_model(game_id);
             let players: Array<ContractAddress> = game.players;
-            
-            // Find current player index and calculate next player index
-            let mut current_index: usize = players.find_index(caller).expect('Caller not in game');
-            let next_index: usize = (current_index + 1) % players.len();
-            let next_player_address: ContractAddress = *players.at(next_index);
-            let mut next_player: Player = world.read_model(next_player_address);
     
-            // Verify next player is still in round before proceeding
-            if !next_player.in_round {
-                // Skip to next active player
-                let mut attempts: usize = 0;
-                loop {
-                    if attempts >= players.len() {
-                        break;
-                    }
-                    let candidate_index: usize = (next_index + attempts) % players.len();
-                    let candidate: Player = world.read_model(*players.at(candidate_index));
-                    if candidate.in_round {
-                        next_player = candidate;
-                        break;
-                    }
-                    attempts += 1;
-                }
-            }
+            // Find the caller's index
+            let current_index_option = self.find_player_index(@players, caller);
+            assert(current_index_option.is_some(), 'Caller not in game');
+            let current_index = OptionTrait::unwrap(current_index_option);
     
-            // Update game state with current betting information
+            // Update game state
             game.pot += player.current_bet;
             if player.current_bet > game.current_bet {
                 game.current_bet = player.current_bet;
             }
+            world.write_model(@player);
     
-            // Handle community card dealing based on betting status
-            let community_cards_count: usize = game.community_cards.len();
-            if next_player.current_bet == game.current_bet && community_cards_count < 5 {
-                self._deal_community_card(game_id);
-            } else if community_cards_count == 5 {
+            // Find the next active player
+            let next_player_option = self.find_next_active_player(@players, current_index, @world);
+    
+            if next_player_option.is_none() {
                 self._resolve_round(game_id);
+            } else {
+                game.next_player = next_player_option;
             }
     
-            // Persist updated state
-            world.write_model(@player);
+            // Use ref consistently for mutable access
+            let mut game: Game = world.read_model(game_id); 
             world.write_model(@game);
-            world.write_model(@next_player);
+            
         }
-
+    
+        fn find_player_index(
+            self: @ContractState, players: @Array<ContractAddress>, player_address: ContractAddress
+        ) -> Option<usize> {
+            let mut i = 0;
+            let mut result: Option<usize> = Option::None;
+            while i < players.len() {
+                if *players.at(i) == player_address {
+                    result = Option::Some(i);
+                    break;
+                }
+                i += 1;
+            };
+            result
+        }
+    
+        fn find_next_active_player(
+            self: @ContractState,
+            players: @Array<ContractAddress>,
+            current_index: usize,
+            world: @dojo::world::WorldStorage
+        ) -> Option<ContractAddress> {
+            let num_players = players.len();
+            let mut next_index = (current_index + 1) % num_players;
+            let mut attempts = 0;
+            let mut result: Option<ContractAddress> = Option::None;
+    
+            while attempts < num_players {
+                let player_address = *players.at(next_index);
+                let p: Player = world.read_model(player_address);
+                let (is_locked, _) = p.locked; // Adjusted to check locked status instead of is_in_game
+                if is_locked && p.in_round {
+                    result = Option::Some(player_address);
+                    break;
+                }
+                next_index = (next_index + 1) % num_players;
+                attempts += 1;
+            };
+            result
+        }
 
         fn _get_dealer(self: @ContractState, player: @Player) -> Option<Player> {
             let mut world = self.world_default();
