@@ -274,10 +274,8 @@ pub mod actions {
                 return self._resolve_round(game_id);
             }
 
-            let players: Array<ContractAddress> = game.players;
-
             // Find the caller's index in the players array
-            let current_index_option: Option<usize> = self.find_player_index(@players, caller);
+            let current_index_option: Option<usize> = self.find_player_index(@game.players, caller);
             assert(current_index_option.is_some(), 'Caller not in game');
             let current_index: usize = OptionTrait::unwrap(current_index_option);
 
@@ -291,7 +289,7 @@ pub mod actions {
 
             // Determine the next active player or resolve the round
             let next_player_option: Option<ContractAddress> = self
-                .find_next_active_player(@players, current_index, @world);
+                .find_next_active_player(@game.players, current_index, @world);
 
             if next_player_option.is_none() {
                 // No active players remain, resolve the round
@@ -300,8 +298,6 @@ pub mod actions {
                 game.next_player = next_player_option;
             }
 
-            // Use ref consistently for mutable access
-            let mut game: Game = world.read_model(game_id);
             world.write_model(@game);
         }
 
