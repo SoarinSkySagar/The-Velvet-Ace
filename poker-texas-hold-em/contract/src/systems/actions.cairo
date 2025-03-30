@@ -258,21 +258,93 @@ pub mod actions {
             );
         }
 
-        fn after_play(
-            self: @ContractState, caller: ContractAddress,
-        ) { // check if player has more chips, prompt 'OUT OF CHIPS'
-        // resolve players -- set the next player in game
-        // but before setting the next player, check the player you wish to set, if the player is
-        // still in round.
-        // This after play has more to do -- it keeps close track of each round, and when it should
-        // call the `resolve_round()` function
-        // Keep track of Gmae's current bet, and pot
-        // This function deals the community cards.
-        // match each player's current bet with the game's current bet, and act accordingly.
-        // only works for the "next player". When matched, check the number of community cards.
-        // deal card if len() < 5, else call resolve_round().
+        fn after_play(ref self: ContractState, caller: ContractAddress) {
+            //@Reentrancy
+            let mut world = self.world_default();
+            let mut player: Player = world.read_model(caller);
+            let (is_locked, game_id) = player.locked;
+
+            // Ensure the player is in a game
+            assert(is_locked, 'Player not in game');
+
+            let mut game: Game = world.read_model(game_id);
+
+            // Check if all community cards are dealt (5 cards in Texas Hold'em)
+            if game.community_cards.len() == 5 {
+                return self._resolve_round(game_id);
+            }
+
+            let players: Array<ContractAddress> = game.players;
+
+            // Find the caller's index in the players array
+            let current_index_option: Option<usize> = self.find_player_index(@players, caller);
+            assert(current_index_option.is_some(), 'Caller not in game');
+            let current_index: usize = OptionTrait::unwrap(current_index_option);
+
+            // Update game state with the player's action
+
+            if player.current_bet > game.current_bet {
+                game.current_bet = player.current_bet; // Raise updates the current bet
+            }
+
+            world.write_model(@player);
+
+            // Determine the next active player or resolve the round
+            let next_player_option: Option<ContractAddress> = self
+                .find_next_active_player(@players, current_index, @world);
+
+            if next_player_option.is_none() {
+                // No active players remain, resolve the round
+                self._resolve_round(game_id);
+            } else {
+                game.next_player = next_player_option;
+            }
+
+            // Use ref consistently for mutable access
+            let mut game: Game = world.read_model(game_id);
+            world.write_model(@game);
         }
 
+        fn find_player_index(
+            self: @ContractState, players: @Array<ContractAddress>, player_address: ContractAddress,
+        ) -> Option<usize> {
+            let mut i = 0;
+            let mut result: Option<usize> = Option::None;
+            while i < players.len() {
+                if *players.at(i) == player_address {
+                    result = Option::Some(i);
+                    break;
+                }
+                i += 1;
+            };
+            result
+        }
+
+        fn find_next_active_player(
+            self: @ContractState,
+            players: @Array<ContractAddress>,
+            current_index: usize,
+            world: @dojo::world::WorldStorage,
+        ) -> Option<ContractAddress> {
+            let num_players = players.len();
+            let mut next_index = (current_index + 1) % num_players;
+            let mut attempts = 0;
+            let mut result: Option<ContractAddress> = Option::None;
+
+            while attempts < num_players {
+                let player_address = *players.at(next_index);
+                let p: Player = world.read_model(player_address);
+                let (is_locked, _) = p
+                    .locked; // Adjusted to check locked status instead of is_in_game
+                if is_locked && p.in_round {
+                    result = Option::Some(player_address);
+                    break;
+                }
+                next_index = (next_index + 1) % num_players;
+                attempts += 1;
+            };
+            result
+        }
 
         fn _get_dealer(self: @ContractState, player: @Player) -> Option<Player> {
             let mut world = self.world_default();
