@@ -32,7 +32,7 @@ pub impl DeckImpl of DeckTrait {
         let mut cards: Array<Card> = self.cards;
         let mut new_cards: Array<Card> = array![];
         let mut verifier: Felt252Dict<bool> = Default::default();
-        for _ in cards.len()..0 {
+        for _ in 0..cards.len() {
             let mut rand = generate_random(DEFAULT_DECK_LENGTH);
             while verifier.get(rand.into()) {
                 rand = generate_random(DEFAULT_DECK_LENGTH);
