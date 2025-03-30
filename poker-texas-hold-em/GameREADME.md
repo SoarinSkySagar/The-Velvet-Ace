@@ -24,5 +24,11 @@ The all-in player can only win the main pot, as they have no chips left to match
 
 // Add banning options from games, and creators.
 
+// remove 279
 
+// Test for highest straight
+// e.g
+player's hand = 1, 2
+community card = 3, 4, 5, 6, 7
 
+then the hand rank should return 3, 4, 5, 6, 7

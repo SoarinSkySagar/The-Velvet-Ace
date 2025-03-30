@@ -382,10 +382,7 @@ pub mod actions {
                 i += 1;
             };
 
-            // Get the world storage
             let mut world = self.world_default();
-
-            // Read the game from the world using game_id
             let mut game: Game = world.read_model(game_id);
 
             // Read and reset the deck from the game
@@ -423,6 +420,7 @@ pub mod actions {
         // resolve the game variables
         // emit an event that a game_id round is open for others to join, only if necessary game
         // param checks have been cleared.
+        // set next player too here?
         }
 
         fn _deal_community_card(
