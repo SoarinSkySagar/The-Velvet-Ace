@@ -123,7 +123,7 @@ mod tests {
     // 3. The order of cards has changed (deck is actually shuffled)
     // TODO: Fix the DeckTrait [`shuffle()`] function to make the test pass
     #[test]
-    #[ignore]
+    // #[ignore]
     fn test_shuffle() {
         let mut deck: Deck = Deck { id: 1, cards: array![] };
         deck.new_deck();
