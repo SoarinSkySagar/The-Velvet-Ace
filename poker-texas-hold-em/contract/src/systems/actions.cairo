@@ -268,24 +268,33 @@ pub mod actions {
             assert(is_locked, 'Player not in game');
 
             let mut game: Game = world.read_model(game_id);
+
+            // Check if all community cards are dealt (5 cards in Texas Hold'em)
+            if game.community_cards.len() == 5 {
+                return self._resolve_round(game_id);
+            }
+
             let players: Array<ContractAddress> = game.players;
 
-            // Find the caller's index
-            let current_index_option = self.find_player_index(@players, caller);
+            // Find the caller's index in the players array
+            let current_index_option: Option<usize> = self.find_player_index(@players, caller);
             assert(current_index_option.is_some(), 'Caller not in game');
-            let current_index = OptionTrait::unwrap(current_index_option);
+            let current_index: usize = OptionTrait::unwrap(current_index_option);
 
-            // Update game state
-            game.pot += player.current_bet;
+            // Update game state with the player's action
+
             if player.current_bet > game.current_bet {
-                game.current_bet = player.current_bet;
+                game.current_bet = player.current_bet; // Raise updates the current bet
             }
+
             world.write_model(@player);
 
-            // Find the next active player
-            let next_player_option = self.find_next_active_player(@players, current_index, @world);
+            // Determine the next active player or resolve the round
+            let next_player_option: Option<ContractAddress> = self
+                .find_next_active_player(@players, current_index, @world);
 
             if next_player_option.is_none() {
+                // No active players remain, resolve the round
                 self._resolve_round(game_id);
             } else {
                 game.next_player = next_player_option;
