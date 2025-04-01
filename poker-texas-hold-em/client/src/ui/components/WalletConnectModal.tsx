@@ -10,6 +10,7 @@ const wallets = [
 type Props = {
   isOpen: boolean;
   onClose: () => void; 
+  connect: (x: boolean) => void; // simulate connect wallet
 }
 
 type Wallet = {
@@ -17,7 +18,7 @@ type Wallet = {
   icon: string;
 }
 
-const WalletConnectModal = ({ isOpen, onClose }: Props) => {
+const WalletConnectModal = ({ isOpen, onClose, connect }: Props) => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isWalletLoading, setIsWalletLoading] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null);
@@ -34,7 +35,9 @@ const WalletConnectModal = ({ isOpen, onClose }: Props) => {
     setTimeout(() => {
       setIsWalletLoading(false);
       onClose();
+      connect(true);
     }, 2000);
+
   };
 
   return (
@@ -90,6 +93,7 @@ const WalletConnectModal = ({ isOpen, onClose }: Props) => {
                     )}
                     <span className="font-medium text-white">{wallet.name}</span>
                   </div>
+                  <div className="w-[7px] h-[7px] rounded-full bg-[#B7860F]"></div>
                 </button>
               ))}
             </div>
