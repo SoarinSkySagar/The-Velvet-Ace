@@ -84,6 +84,30 @@ curl -L https://install.dojoengine.org | bash
 ```sh 
 dojoup
 ```
+## Install Dojo Using `asdf` 
+#### Step 1 - Add the asdf-dojo plugin
+This plugin allows `asdf` to manage Dojo versions.
+
+```sh
+asdf plugin add dojo https://github.com/dojoengine/asdf-dojo
+```
+
+#### Step 2 - Install the latest or a specific version
+
+```sh 
+asdf install dojo latest      # For the latest version
+asdf install dojo 1.0.0       # For a specific version
+``` 
+#### Step 3 - Set the global or local version
+After installation, you need to tell `asdf` which version of Dojo to use. There are two ways to do this:
+
+```sh 
+asdf global dojo latest       # Set globally
+asdf local dojo 1.0.0        # Set locally in your project directory
+```
+  The global version makes the latest Dojo version the default across your system.
+  The local version makes **version 1.0.0** active only within the directory where you run the command. This is useful when different projects require different Dojo versions.
+
 ## How to Setup & Run a Dojo Project 
 
 * ### **Check for Installed Dojo Tools** 
