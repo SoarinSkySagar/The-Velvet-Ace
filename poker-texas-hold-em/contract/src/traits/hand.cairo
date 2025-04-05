@@ -44,7 +44,6 @@ pub impl HandImpl of HandTrait {
     /// # Author
     /// [@pope-h]
     fn rank(self: @Hand, community_cards: Array<Card>) -> (Hand, u16) {
-
         // this function can be called externally in the future.
         // (Self::default(), 0) // Temporary return value
 
