@@ -1,6 +1,7 @@
 use poker::models::hand::Hand;
 use poker::models::card::Card;
 use poker::models::game::GameParams;
+use super::handimpl::HandImpl;
 
 pub trait HandTrait {
     /// Returns a default empty hand with a zero player address

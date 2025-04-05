@@ -1,6 +1,6 @@
 use starknet::ContractAddress;
 use super::card::Card;
-use poker::traits::handimpl::HandImpl;
+use poker::traits::handtrait::HandTrait;
 
 /// Created once and for all for every available player.
 #[derive(Serde, Drop, Clone, Debug)]
