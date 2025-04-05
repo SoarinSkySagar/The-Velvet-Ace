@@ -65,3 +65,6 @@ then the hand rank should return 3, 4, 5, 6, 7
                 // is true, if not, add only the kicker hand to the Array. For more than two
                 // kickers, arrange the array accordingly. might be implemented by someone else.
                 // here, hands have been changed, right?
+
+// for a two pair, or a rank that doesn't meet all five card requirements, 
+// the remaining cards in the hand must be of the highest values.
