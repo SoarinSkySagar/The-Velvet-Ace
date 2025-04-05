@@ -71,23 +71,6 @@ pub mod actions {
                     },
                 );
 
-            // extracted default GameParams from traits::game
-            // let default_param = get_default_game_params();
-
-            // match game_params {
-            //     Option::Some(value) => {
-            //     world.emit_event(@GameInitialized {
-            //         game_id: game_id,
-            //         player: caller,
-            //         game_params: value,
-            //     })},
-            //     Option::None => world.emit_event(@GameInitialized{
-            //         game_id: game_id,
-            //         player: caller,
-            //         game_params: default_param,
-            //     }),
-            // };
-
             game_id
         }
 
