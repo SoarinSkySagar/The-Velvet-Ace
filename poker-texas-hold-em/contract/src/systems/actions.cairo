@@ -13,7 +13,7 @@ pub mod actions {
     use poker::models::card::{Card, CardTrait};
     use poker::models::deck::{Deck, DeckTrait};
     use poker::models::game::{Game, GameMode, GameParams, GameTrait};
-    use poker::models::hand::{Hand, HandTrait};
+    use poker::models::hand::{Hand, HandImpl};
     use poker::models::player::{Player, PlayerTrait, get_default_player};
     use poker::traits::game::get_default_game_params;
     use super::super::interface::IActions;
@@ -70,23 +70,6 @@ pub mod actions {
                         time_stamp: starknet::get_block_timestamp(),
                     },
                 );
-
-            // extracted default GameParams from traits::game
-            // let default_param = get_default_game_params();
-
-            // match game_params {
-            //     Option::Some(value) => {
-            //     world.emit_event(@GameInitialized {
-            //         game_id: game_id,
-            //         player: caller,
-            //         game_params: value,
-            //     })},
-            //     Option::None => world.emit_event(@GameInitialized{
-            //         game_id: game_id,
-            //         player: caller,
-            //         game_params: default_param,
-            //     }),
-            // };
 
             game_id
         }

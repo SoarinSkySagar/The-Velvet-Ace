@@ -41,3 +41,27 @@ player's hand = 1, 2
 community card = 3, 4, 5, 6, 7
 
 then the hand rank should return 3, 4, 5, 6, 7
+
+
+// fn extract_kicker(hands: Array<Hand>, hand_rank: u16) -> (Array<Hand>,
+// Array<Card>)
+// implement kicker. Only works for the current_winner variable
+// retrieve the former current_winner already stored and the current player,
+// and compare both hands. This should be done in another internal function and be
+                // called here.
+                // The function should take in both `hand` and `current_winning_hand`, should return
+                // the winning hand Implementation would be left to you
+                // compare the player's CA in the returned hand to the current `winning_hand`
+                // If not equal, update both `current_winner` and `winning_hand`
+
+                // TODO: Check for a straight. The kicker is different for a straight. The person
+                // with the highest straight wins (compare only the last straight.) The function
+                // called here might take in a `hand_rank` u16 variable to check for this.
+
+                // in rare case scenarios, a pot can be split based on the game params
+                // here, an array shall be used. check kicker_split, if true, add two same hands in
+                // the array Add the kicker hand first into the array, before the other...that's if
+                // `game_params.kicker_split`
+                // is true, if not, add only the kicker hand to the Array. For more than two
+                // kickers, arrange the array accordingly. might be implemented by someone else.
+                // here, hands have been changed, right?

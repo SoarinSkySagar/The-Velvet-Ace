@@ -13,9 +13,11 @@ mod models {
 }
 
 mod traits {
+    mod handtrait;
     mod game;
-    mod hand;
+    mod handimpl;
     mod deck;
+    mod player;
 }
 
 mod tests {
