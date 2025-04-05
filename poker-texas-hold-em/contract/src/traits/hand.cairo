@@ -1,6 +1,6 @@
 use starknet::ContractAddress;
 use poker::models::hand::{Hand, HandRank};
-use poker::models::card::{Card, DEFAULT_NO_OF_CARDS, Royals};
+use poker::models::card::{Card, DEFAULT_NO_OF_CARDS, Royals, CardTrait};
 use poker::models::game::GameParams;
 use core::num::traits::{Zero, One};
 use core::dict::Felt252DictTrait;
@@ -13,10 +13,11 @@ pub trait HandTrait {
     fn rank(self: @Hand, community_cards: Array<Card>) -> (Hand, u16);
     fn compare_hands(
         hands: Array<Hand>, community_cards: Array<Card>, game_params: GameParams,
-    ) -> Span<Hand>;
+    ) -> Span<(Hand, Card)>;
     fn remove_card(ref self: Hand, pos: usize) -> Card;
     fn reveal(self: @Hand) -> Span<Card>;
     fn add_card(ref self: Hand, card: Card);
+    fn get_hand_bytearray(self: @Hand) -> ByteArray;
     // TODO, add function that shows cards in bytearray, array of tuple (suit, and value)
 // add to card trait.
 }
@@ -43,12 +44,6 @@ pub impl HandImpl of HandTrait {
     /// # Author
     /// [@pope-h]
     fn rank(self: @Hand, community_cards: Array<Card>) -> (Hand, u16) {
-        // use HandRank to get the rank for a hand of one player
-        // return using the HandRank::<the const>, and not the raw u16 value
-        // compute the hand that makes up this rank you have computed
-        // set the player value (a CA) to the player's CA with the particular hand
-        // return both values in a tuple
-        // document the function.
 
         // this function can be called externally in the future.
         // (Self::default(), 0) // Temporary return value
@@ -126,16 +121,18 @@ pub impl HandImpl of HandTrait {
     /// this is only possible if the `kick_split` in game_params is true
     fn compare_hands(
         hands: Array<Hand>, community_cards: Array<Card>, game_params: GameParams,
-    ) -> Span<Hand> {
+    ) -> Span<(Hand, Card)> {
         // for hand comparisons, there should be a kicker
         // kicker there-in that there are times two or more players have the same hand rank, so we
         // check the value of each card in hand.
+
+        // add ratio to the returned span
 
         // TODO: Ace might be changed to a higher value.
         let mut highest_rank: u16 = 0;
         let mut current_winning_hand: Hand = Self::default();
         // let mut winning_players: Array<Option<Player>> = array![];
-        let mut winning_hands: Array<Hand> = array![];
+        let mut winning_hands: Array<(Hand, Card)> = array![];
         for hand in hands {
             let (new_hand, current_rank) = hand.rank(community_cards.clone());
             if current_rank > highest_rank {
@@ -201,6 +198,19 @@ pub impl HandImpl of HandTrait {
 
     fn default() -> Hand {
         Hand { player: Zero::zero(), cards: array![] }
+    }
+
+    fn get_hand_bytearray(self: @Hand) -> ByteArray {
+        let mut count = 1;
+        let mut str: ByteArray = format!("Owner: {:?}\n", self.player);
+
+        for i in 0..self.cards.len() {
+            let card = self.cards[i];
+            let word: ByteArray = format!("{}. {}\n", count, card.to_byte_array());
+            str.append(@word);
+        };
+
+        str
     }
 }
 
