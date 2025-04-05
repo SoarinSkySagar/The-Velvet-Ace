@@ -120,7 +120,7 @@ pub impl HandImpl of HandTrait {
                 winning_new_hands, highest_rank,
             );
 
-            if game_params.kicker_split == true {
+            if game_params.kicker_split {
                 // the player address of each hand should be valid
                 for hand in kicker_hands {
                     // the hand.player should be valid
