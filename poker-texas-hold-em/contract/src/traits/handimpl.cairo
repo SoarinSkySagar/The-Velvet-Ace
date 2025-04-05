@@ -162,7 +162,7 @@ pub impl HandImpl of HandTrait {
         self.cards.append(card);
     }
 
-    fn get_hand_bytearray(self: @Hand) -> ByteArray {
+    fn to_bytearray(self: @Hand) -> ByteArray {
         let mut count = 1;
         let mut str: ByteArray = format!("Owner: {:?}\n", self.player);
 
@@ -170,6 +170,7 @@ pub impl HandImpl of HandTrait {
             let card = self.cards[i];
             let word: ByteArray = format!("{}. {}\n", count, card.to_byte_array());
             str.append(@word);
+            count += 1;
         };
 
         str

@@ -60,5 +60,5 @@ pub trait HandTrait {
     fn remove_card(ref self: Hand, pos: usize) -> Card;
     fn reveal(self: @Hand) -> Span<Card>;
     fn add_card(ref self: Hand, card: Card);
-    fn get_hand_bytearray(self: @Hand) -> ByteArray;
+    fn to_bytearray(self: @Hand) -> ByteArray;
 }

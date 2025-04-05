@@ -34,4 +34,79 @@ pub mod HandRank {
     pub const TWO_PAIR: u16 = 3;
     pub const ONE_PAIR: u16 = 2;
     pub const HIGH_CARD: u16 = 1;
+
+    pub fn to_bytearray(self: u16) -> ByteArray {
+        match self {
+            0 => "UNDEFINED",
+            1 => "HIGH CARD",
+            2 => "ONE PAIR",
+            3 => "TWO PAIR",
+            4 => "THREE OF A KIND",
+            5 => "STRAIGHT",
+            6 => "FLUSH",
+            7 => "FULL HOUSE",
+            8 => "FOUR OF A KIND",
+            9 => "STRAIGHT FLUSH",
+            10 => "ROYAL FLUSH",
+            _ => "UNDEFINED",
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Card, Hand, HandTrait, HandRank};
+    use crate::models::card::Suits;
+    use starknet::{contract_address_const, ContractAddress};
+
+    /// For check.
+    #[test]
+    fn test_rank_straight() {
+        let player_cards: Array<Card> = array![
+            Card { suit: Suits::CLUBS, value: 2 }, Card { suit: Suits::SPADES, value: 4 },
+        ];
+
+        let player: ContractAddress = contract_address_const::<'PLAYER'>();
+        let player_hand: Hand = Hand { player, cards: player_cards };
+
+        let community_cards = array![
+            Card { suit: Suits::HEARTS, value: 5 },
+            Card { suit: Suits::SPADES, value: 3 },
+            Card { suit: Suits::SPADES, value: 12 },
+            Card { suit: Suits::CLUBS, value: 6 },
+            Card { suit: Suits::DIAMONDS, value: 13 },
+        ];
+
+        let (hand, hand_rank): (Hand, u16) = player_hand.rank(community_cards.clone());
+        println!("Player1 Hand rank is: {}", hand_rank);
+        assert(hand_rank == HandRank::STRAIGHT, 'NOT A STRAIGHT');
+        println!("Player1 new Hand to bytearray is:\n{}", hand.to_bytearray());
+
+        // feign a two pair
+        let player2: ContractAddress = contract_address_const::<'PLAYER2'>();
+        let player2_cards: Array<Card> = array![
+            Card { suit: Suits::CLUBS, value: 5 }, Card { suit: Suits::SPADES, value: 6 },
+        ];
+
+        let player2_hand: Hand = Hand { player: player2, cards: player2_cards };
+
+        let (hand, hand_rank): (Hand, u16) = player2_hand.rank(community_cards.clone());
+        println!("Player2 Hand rank is: {}", hand_rank);
+        assert(hand_rank == HandRank::TWO_PAIR, 'NOT A TWO PAIR');
+        println!("Player2 new Hand to byte array is:\n{}", hand.to_bytearray());
+
+        // NOTE: THIS IS WHEN THE VALUE OF KICKER_SPLIT IS FALSE.
+        let (hands, hand_rank, kickers): (Span<Hand>, u16, Span<Card>) = HandTrait::compare_hands(
+            array![player2_hand, player_hand], community_cards, Default::default(),
+        );
+
+        assert(kickers.len() == 0, 'KICKERS FOUND');
+        assert(hands.len() == 1, 'INVALID HAND COUNT');
+        assert(hand_rank == HandRank::STRAIGHT, 'INVALID RANK');
+
+        println!("Hand rank to bytearray: {}", HandRank::to_bytearray(hand_rank));
+
+        let winning_hand: @Hand = hands.at(0);
+        assert(*winning_hand.player == player, 'INCORRECT WINNER');
+    }
 }
