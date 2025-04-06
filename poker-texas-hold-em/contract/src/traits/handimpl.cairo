@@ -19,74 +19,67 @@ pub impl HandImpl of HandTrait {
 
     /// @pope-h
     fn rank(self: @Hand, community_cards: Array<Card>) -> (Hand, HandRank) {
-        // this function can be called externally in the future.
-        // (Self::default(), 0) // Temporary return value
-
-        // Combine player's hand cards with community cards for evaluation
+        // Combine player's hand cards with community cards
         let mut all_cards: Array<Card> = array![];
-
-        // Add player's hand cards
         let mut i = 0;
         while i < self.cards.len() {
             all_cards.append(*self.cards[i]);
             i += 1;
         };
-
-        // Add community cards
         let mut j = 0;
         while j < community_cards.len() {
             all_cards.append(*community_cards[j]);
             j += 1;
         };
-
         assert(all_cards.len() == 7, 'Invalid card count');
-
-        // Use Felt252Dict for value and suit counts
-        let mut value_counts: Felt252Dict<u8> = Default::default();
-        let mut suit_counts: Felt252Dict<u8> = Default::default();
-
-        // Initialize counts
-        let mut k: u16 = 1;
-        while k <= 14 {
-            value_counts.insert(k.into(), 0);
-            k += 1;
-        };
-        let mut s: u8 = 0;
-        while s < 4 {
-            suit_counts.insert(s.into(), 0);
-            s += 1;
-        };
-
-        // Fill value and suit counts
-        let mut c: usize = 0;
-        while c < all_cards.len() {
-            let card = *all_cards.at(c);
-            let value: u16 = card.value;
-            let suit: u8 = card.suit;
-            value_counts.insert(value.into(), value_counts.get(value.into()) + 1);
-            suit_counts.insert(suit.into(), suit_counts.get(suit.into()) + 1);
-            c += 1;
-        };
 
         // Generate all 5-card combinations (C(7,5) = 21)
         let combinations = generate_combinations(all_cards.clone(), 5);
 
-        // Evaluate each combination to find the best hand
-        let mut best_rank: u16 = HandRank::UNDEFINED.into();
-        let mut best_hand_cards: Array<Card> = array![];
-        let mut i: usize = 0;
+        // Track the best rank and collect hands with that rank
+        let mut best_rank: u16 = HandRank::HIGH_CARD.into();
+        let mut best_hands: Array<Hand> = array![];
 
+        let mut i: usize = 0;
         while i < combinations.len() {
             let combo = combinations.at(i);
             let (hand_cards, rank) = evaluate_five_cards(combo.clone());
-            if rank.into() > best_rank {
-                best_rank = rank.into();
-                best_hand_cards = hand_cards.clone();
-            };
+            let rank_u16: u16 = rank.into();
+            if rank_u16 > best_rank {
+                // New highest rank found; reset the collection
+                best_rank = rank_u16;
+                best_hands = array![];
+                let hand = Hand { player: *self.player, cards: hand_cards.clone() };
+                best_hands.append(hand);
+            } else if rank_u16 == best_rank {
+                // Equal rank; add to collection for tie-breaking
+                let hand = Hand { player: *self.player, cards: hand_cards.clone() };
+                best_hands.append(hand);
+            }
             i += 1;
         };
 
-        let best_hand = Hand { player: *self.player, cards: best_hand_cards };
+        // If only one hand has the best rank, return it directly
+        if best_hands.len() == 1 {
+            let best_hand = Hand {
+                player: *self.player,
+                cards: clone_array(best_hands.at(0).cards)
+            };
+            return (best_hand, best_rank.into());
+        }
+
+        // Multiple hands with the same rank; use extract_kicker to determine the best
+        let (winning_hands, _) = extract_kicker(best_hands, best_rank);
+        let best_hand = if winning_hands.len() > 0 {
+            Hand {
+                player: *self.player,
+                cards: clone_array(winning_hands.at(0).cards)
+            }
+        } else {
+            // Fallback: create a default hand
+            Hand { player: Zero::zero(), cards: array![] }
+        };
+
         (best_hand, best_rank.into())
     }
 
@@ -498,4 +491,29 @@ fn set_array_element<T, +Copy<T>, +Drop<T>>(mut arr: Array<T>, index: usize, val
         i += 1;
     };
     new_arr
+}
+
+/// Creates a duplicate of an array of cards
+///
+/// This function manually clones an input array of `Card` structs by iterating over its elements
+/// and appending them to a new array. It is used to convert a snapshot of an array (`@Array<Card>`)
+/// into an owned `Array<Card>`, which is necessary when constructing a new `Hand` struct from
+/// a snapshot reference, as `Array` does not implement the `Copy` trait in Cairo.
+///
+/// # Arguments
+/// * `cards` - A snapshot of an array of `Card` structs to be cloned
+///
+/// # Returns
+/// A new `Array<Card>` containing the same elements as the input array
+///
+/// # Author
+/// [@pope-h]
+fn clone_array(cards: @Array<Card>) -> Array<Card> {
+    let mut new_array: Array<Card> = array![];
+    let mut i: usize = 0;
+    while i < cards.len() {
+        new_array.append(*cards.at(i));
+        i += 1;
+    };
+    new_array
 }
