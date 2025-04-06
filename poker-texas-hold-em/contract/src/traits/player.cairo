@@ -24,7 +24,7 @@ pub impl PlayerImpl of PlayerTrait {
         game.current_player_count -= 1;
     }
 
-    fn enter(ref self: Player, ref game: Game) {
+    fn enter(ref self: Player, ref game: Game) -> bool {
         let (is_locked, _) = self.locked;
         assert(!is_locked, GameErrors::PLAYER_ALREADY_LOCKED);
         // Ensure player has enough chips for the game
@@ -40,6 +40,8 @@ pub impl PlayerImpl of PlayerTrait {
         self.locked = (true, game.id);
         self.in_round = true;
         game.current_player_count += 1;
+
+        game.current_player_count == game.params.max_no_of_players
     }
 
     fn extract_current_game_id(self: @Player) -> @u64 {

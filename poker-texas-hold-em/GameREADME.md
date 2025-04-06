@@ -68,3 +68,10 @@ then the hand rank should return 3, 4, 5, 6, 7
 
 // for a two pair, or a rank that doesn't meet all five card requirements, 
 // the remaining cards in the hand must be of the highest values.
+
+
+// Check the chips available in the player model
+            // check if player is locked to a session
+            // check if the player is even in the game (might have left along the way)...call the
+            // below function
+            // check if it's player's turn
