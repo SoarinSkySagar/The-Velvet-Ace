@@ -62,8 +62,7 @@ pub impl HandImpl of HandTrait {
         // If only one hand has the best rank, return it directly
         if best_hands.len() == 1 {
             let best_hand = Hand {
-                player: *self.player,
-                cards: clone_array(best_hands.at(0).cards)
+                player: *self.player, cards: clone_array(best_hands.at(0).cards),
             };
             return (best_hand, best_rank.into());
         }
@@ -71,10 +70,7 @@ pub impl HandImpl of HandTrait {
         // Multiple hands with the same rank; use extract_kicker to determine the best
         let (winning_hands, _) = extract_kicker(best_hands, best_rank);
         let best_hand = if winning_hands.len() > 0 {
-            Hand {
-                player: *self.player,
-                cards: clone_array(winning_hands.at(0).cards)
-            }
+            Hand { player: *self.player, cards: clone_array(winning_hands.at(0).cards) }
         } else {
             // Fallback: create a default hand
             Hand { player: Zero::zero(), cards: array![] }
