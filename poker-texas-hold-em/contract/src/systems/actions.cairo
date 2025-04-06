@@ -1,14 +1,12 @@
-/// CONTRACT HANDLING THE POKER GAME
-
+/// POKER CONTRACT
 #[dojo::contract]
 pub mod actions {
     use starknet::{ContractAddress, get_caller_address};
     use dojo::model::{ModelStorage, ModelValueStorage};
     use dojo::event::EventStorage;
-    // use dojo::world::{WorldStorage, WorldStorageTrait};
-
     use poker::models::base::{
         GameErrors, Id, GameInitialized, CardDealt, HandCreated, HandResolved, RoundResolved,
+        PlayerJoined,
     };
     use poker::models::card::{Card, CardTrait};
     use poker::models::deck::{Deck, DeckTrait};
@@ -61,38 +59,46 @@ pub mod actions {
                 world.write_model(@deck);
             };
 
-            world
-                .emit_event(
-                    @GameInitialized {
-                        game_id: game_id,
-                        player: caller,
-                        game_params: game.params,
-                        time_stamp: starknet::get_block_timestamp(),
-                    },
-                );
+            let init_event = GameInitialized {
+                game_id: game_id,
+                player: caller,
+                game_params: game.params,
+                time_stamp: starknet::get_block_timestamp(),
+            };
 
+            world.emit_event(@init_event);
             game_id
         }
 
-        fn join_game(
-            ref self: ContractState, game_id: u64,
-        ) { // check the game in_progress and has_ended values
-        // check the number
-        // if has_ended, panic
-        // if in progress, then further checks in the gameparams are done, based on the game mode
-        // and round in progress. optimize code as good as possible
-        // init a player (check if the player exists, if not, create a new one)
-        // call the internal function player_in_game
-        // check the number of chips
-        // for each join, check the max no. of players allowed in the game params of the game_id, if
-        // reached, start the session.
-        // starting the session involves changing some variables in the game and dealing cards,
-        // basically initializing the game.
-        // set player_in_round to true
+        /// @Birdmannn
+        fn join_game(ref self: ContractState, game_id: u64) {
+            let mut world = self.world_default();
+            let mut game: Game = world.read_model(game_id);
+            assert(game.is_allowable(), GameErrors::ENTRY_DISALLOWED);
 
-        // when max number of participants have been reached, emit a GameStarted event
-        // who joined event
-        // world.emit_event(@PlayerJoined{game_id, player})
+            let caller: ContractAddress = get_caller_address();
+            let mut player: Player = world.read_model(caller);
+            let can_start: bool = player.enter(ref game);
+
+            let joined_event = PlayerJoined {
+                game_id,
+                player_id: caller,
+                player_count: game.current_player_count,
+                expected_no_of_players: game.params.max_no_of_players,
+            };
+
+            world.emit_event(@joined_event);
+
+            // if can_start, then the game is ready to be started.
+            if can_start { // TODO:
+            // **************************************
+            //      CALL START ROUND FUNCTION
+            // **************************************
+            // ASSERT THAT THE START_ROUND EMITS A GAMESTARTED EVENT.
+            };
+
+            world.write_model(@game);
+            world.write_model(@player);
         }
 
         fn leave_game(ref self: ContractState) { // assert if the player exists
@@ -172,18 +178,8 @@ pub mod actions {
 
         // @LaGodxy
         /// This function makes all assertions on if player is meant to call this function.
-        fn before_play(
-            self: @ContractState, caller: ContractAddress,
-        ) { // Check the chips available in the player model
-            // check if player is locked to a session
-            // check if the player is even in the game (might have left along the way)...call the
-            // below function
-            // check if it's player's turn
-
-            // Initialize the world state
+        fn before_play(self: @ContractState, caller: ContractAddress) {
             let mut world = self.world_default();
-
-            // Retrieve the player model based on the caller (ContractAddress)
             let player: Player = world.read_model(caller);
             let (is_locked, game_id) = player.locked;
 
@@ -232,8 +228,8 @@ pub mod actions {
             );
         }
 
+        /// @Reentrancy
         fn after_play(ref self: ContractState, caller: ContractAddress) {
-            //@Reentrancy
             let mut world = self.world_default();
             let mut player: Player = world.read_model(caller);
             let (is_locked, game_id) = player.locked;
@@ -353,12 +349,8 @@ pub mod actions {
             let result = loop {
                 // Get the address of the next dealer
                 let next_dealer_address: ContractAddress = *players.at(next_dealer_index);
-
-                // Load the next dealer's data
                 let mut next_dealer: Player = world.read_model(next_dealer_address);
 
-                // Check if the next dealer is in the round (assuming 'in_round' is a field in the
-                // Player struct)
                 if next_dealer.in_round {
                     // Remove the is_dealer from the current dealer
                     let mut current_dealer: Player = world
@@ -366,18 +358,14 @@ pub mod actions {
                     current_dealer.is_dealer = false;
                     world.write_model(@current_dealer);
 
-                    // Set the next dealer to is_dealer
                     next_dealer.is_dealer = true;
                     world.write_model(@next_dealer);
 
-                    // Return the next dealer
                     break Option::Some(next_dealer);
                 }
 
-                // Move to the next player
                 next_dealer_index = (next_dealer_index + 1) % num_players;
 
-                // If we've come full circle, panic
                 if next_dealer_index == initial_dealer_index {
                     assert(false, 'ONLY ONE PLAYER IN GAME');
                     break Option::None;
