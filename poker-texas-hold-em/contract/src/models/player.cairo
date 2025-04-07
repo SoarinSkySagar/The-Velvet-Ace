@@ -2,6 +2,7 @@ use starknet::ContractAddress;
 use core::num::traits::Zero;
 use super::base::GameErrors;
 use super::game::{Game, GameTrait, GameMode};
+use poker::traits::player::PlayerTrait;
 
 // the locked variable takes in a tuple of (is_locked, game_id) if the player is already
 // locked to a session.
@@ -22,6 +23,7 @@ pub struct Player {
     locked: (bool, u64),
     is_dealer: bool,
     in_round: bool,
+    out: (u64, u64),
 }
 /// Write struct for player stats
 /// Include an alias, if necessary, and add it as key.
@@ -37,51 +39,10 @@ pub fn get_default_player() -> Player {
         locked: (false, 0),
         is_dealer: false,
         in_round: false,
+        out: (0, 0),
     }
 }
 
-#[generate_trait]
-pub impl PlayerImpl of PlayerTrait {
-    fn exit(ref self: Player) {
-        let (is_locked, _) = self.locked;
-        assert(is_locked, 'CANNOT EXIT, PLAYER NOT LOCKED');
-        self.current_bet = 0;
-        self.is_dealer = false;
-        self.in_round = false;
-        self.locked = (false, 0);
-    }
-
-    fn enter(ref self: Player, ref game: Game) {
-        let (is_locked, _) = self.locked;
-        assert(!is_locked, GameErrors::PLAYER_ALREADY_LOCKED);
-        // Ensure player has enough chips for the game
-        assert(self.chips >= game.params.min_amount_of_chips, GameErrors::INSUFFICIENT_CHIP);
-        assert(game.is_initialized(), GameErrors::GAME_NOT_INITIALIZED);
-        assert(!game.has_ended, GameErrors::GAME_ALREADY_ENDED);
-        assert(!game.in_progress, GameErrors::GAME_ALREADY_STARTED);
-        assert(game.is_allowable(), GameErrors::ENTRY_DISALLOWED);
-
-        game.players.append(self.id);
-        self.locked = (true, game.id);
-        self.in_round = true;
-    }
-
-    fn extract_current_game_id(self: @Player) -> @u64 {
-        // Extract current game id from the player
-        let (is_locked, game_id) = self.locked;
-
-        // Assert player is actually locked in a game
-        assert(*is_locked, GameErrors::PLAYER_NOT_IN_GAME);
-
-        // Make an assertion that the id isn't zero
-        assert(*game_id != 0, GameErrors::PLAYER_NOT_IN_GAME);
-
-        // Return the id
-        game_id
-    }
-
-    fn is_in_game(self: @Player, game_id: u64) -> bool {
-        let (is_locked, id) = self.locked;
-        *is_locked && id == @game_id
-    }
-}
+/// TESTS ON PLAYER MODEL
+#[cfg(test)]
+mod tests {}
