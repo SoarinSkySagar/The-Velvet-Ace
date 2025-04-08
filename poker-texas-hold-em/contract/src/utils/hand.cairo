@@ -184,7 +184,7 @@ fn min_u32(val1: u32, val2: u32) -> u32 {
 fn ashura(arr: Array<(u16, u16, u8)>) -> (bool, bool) {
     let (mut is_flush, mut is_straight_high, mut is_straight_low): (bool, bool, bool) =
         Default::default();
-    
+
     // Proceed if combo contains the max required poker hand size
     if arr.len() == 5 {
         is_flush = true;
@@ -220,13 +220,12 @@ fn ashura(arr: Array<(u16, u16, u8)>) -> (bool, bool) {
 
 /// FOR KICKER, SORT ALL CARDS AND COMPARE THEIR FIRST VALUES (POKER_VAL)
 /// THE REST SHOULD BE HISTORY. :)
-/// 
-/// 
-/// 
-/// 
+///
+///
+///
+///
 /// **************************************************************************
 /// DOCS
-
 
 /// fn extract_kicker(hands: Array<Hand>, hand_rank: u16) -> (Array<Hand>, Array<Card>)
 /// @Birdmannn
@@ -240,8 +239,7 @@ fn ashura(arr: Array<(u16, u16, u8)>) -> (bool, bool) {
 /// The hand returned here is usually one...unless all hands taken in as the parameter were exactly
 /// equal.
 
-
-/// fn generate_combinations(cards: Array<Card>, k: usize) -> Array<Array<Card>> 
+/// fn generate_combinations(cards: Array<Card>, k: usize) -> Array<Array<Card>>
 /// @pope-h
 /// Generates all k-card combinations from a given array of cards
 ///
@@ -254,7 +252,6 @@ fn ashura(arr: Array<(u16, u16, u8)>) -> (bool, bool) {
 ///
 /// # Returns
 /// An array of arrays, where each inner array is a combination of `k` cards
-
 
 /// fn evaluate_cards(cards: Array<Card>) -> (Array<Card>, HandRank)
 /// @pope-h, @Birdmannn
@@ -274,7 +271,6 @@ fn ashura(arr: Array<(u16, u16, u8)>) -> (bool, bool) {
 /// # Panics
 /// Panics if the number of cards is not exactly 5
 
-
 /// fn bubble_sort(mut arr: Array<(u16, u16, u8)>) -> Array<(u16, u16, u8)>
 /// @pope-h
 /// Performs bubble sort on an array of card tuples
@@ -286,7 +282,6 @@ fn ashura(arr: Array<(u16, u16, u8)>) -> (bool, bool) {
 ///
 /// # Returns
 /// A sorted array of card tuples
-
 
 /// fn bubble_sort_u8(mut arr: Array<u8>) -> Array<u8>
 /// @pope-h
@@ -300,8 +295,8 @@ fn ashura(arr: Array<(u16, u16, u8)>) -> (bool, bool) {
 /// # Returns
 /// A sorted array of u8 values
 
-
-/// fn set_array_element<T, +Copy<T>, +Drop<T>>(mut arr: Array<T>, index: usize, value: T) -> Array<T> 
+/// fn set_array_element<T, +Copy<T>, +Drop<T>>(mut arr: Array<T>, index: usize, value: T) ->
+/// Array<T>
 /// @pope-h
 /// Immutably sets an element in an array
 ///
@@ -314,7 +309,6 @@ fn ashura(arr: Array<(u16, u16, u8)>) -> (bool, bool) {
 ///
 /// # Returns
 /// A new array with the specified element replaced
-
 
 /// Performs bitwise AND operation simulation
 ///
