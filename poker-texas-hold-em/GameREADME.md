@@ -75,3 +75,28 @@ then the hand rank should return 3, 4, 5, 6, 7
             // check if the player is even in the game (might have left along the way)...call the
             // below function
             // check if it's player's turn
+
+// Extract all tuple elements for each card
+    // let (orig_val0, poker_val0, suit0) = *sorted.at(0);
+    // let (orig_val1, poker_val1, suit1) = *sorted.at(1);
+    // let (orig_val2, poker_val2, suit2) = *sorted.at(2);
+    // let (orig_val3, poker_val3, suit3) = *sorted.at(3);
+    // let (orig_val4, poker_val4, suit4) = *sorted.at(4);
+    
+    // let is_straight: bool = is_straight_high || is_straight_low;
+    // Check for flush using suits (already fixed)
+    // let is_flush = suit0 == suit1 && suit1 == suit2 && suit2 == suit3 && suit3 == suit4;
+
+    // Check for high straight using poker_values
+    // let is_straight_high = poker_val0 == poker_val1
+    //     + 1 && poker_val1 == poker_val2
+    //     + 1 && poker_val2 == poker_val3
+    //     + 1 && poker_val3 == poker_val4
+    //     + 1;
+
+    // Check for Ace-low straight using original_values
+    // let is_straight_low = orig_val0 == Royals::ACE
+    //     && orig_val1 == 5
+    //     && orig_val2 == 4
+    //     && orig_val3 == 3
+    //     && orig_val4 == 2;
