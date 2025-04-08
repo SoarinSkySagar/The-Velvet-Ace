@@ -41,26 +41,21 @@ pub impl HandImpl of HandTrait {
         let mut suit_counts: Felt252Dict<u8> = Default::default();
 
         // Initialize counts
-        let mut k: u16 = 1;
-        while k <= 14 {
-            value_counts.insert(k.into(), 0);
-            k += 1;
+        for i in 1..14_u32 {
+            value_counts.insert(i.into(), 0);
         };
-        let mut s: u8 = 0;
-        while s < 4 {
+
+        for s in 0..4_u32 {
             suit_counts.insert(s.into(), 0);
-            s += 1;
         };
 
         // Fill value and suit counts
-        let mut c: usize = 0;
-        while c < all_cards.len() {
-            let card = *all_cards.at(c);
+        for i in 0..all_cards.len() {
+            let card = *all_cards.at(i);
             let value: u16 = card.value;
             let suit: u8 = card.suit;
             value_counts.insert(value.into(), value_counts.get(value.into()) + 1);
             suit_counts.insert(suit.into(), suit_counts.get(suit.into()) + 1);
-            c += 1;
         };
 
         // Generate all max 5-card combinations (C(7,k)), where  0 <= k <= 5
@@ -70,16 +65,13 @@ pub impl HandImpl of HandTrait {
         // Evaluate each combination to find the best hand
         let mut best_rank: u16 = HandRank::UNDEFINED.into();
         let mut best_hand_cards: Array<Card> = array![];
-        let mut i: usize = 0;
 
-        while i < combinations.len() {
-            let combo = combinations.at(i);
+        for combo in combinations {
             let (hand_cards, rank) = evaluate_cards(combo.clone());
             if rank.into() > best_rank {
                 best_rank = rank.into();
                 best_hand_cards = hand_cards.clone();
             };
-            i += 1;
         };
 
         let best_hand = Hand { player: *self.player, cards: best_hand_cards };
