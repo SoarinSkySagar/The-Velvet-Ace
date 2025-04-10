@@ -74,9 +74,8 @@ pub impl HandImpl of HandTrait {
             };
             return (best_hand, best_rank.into());
         }
-        let best_hand = Hand { 
-            player: *self.player, 
-            cards: clone_array(winning_hands.at(0).cards) 
+        let best_hand = Hand {
+            player: *self.player, cards: clone_array(winning_hands.at(0).cards),
         };
 
         (best_hand, best_rank.into())
@@ -336,7 +335,7 @@ fn evaluate_five_cards(cards: Array<Card>) -> (Array<Card>, HandRank) {
     // Count values for pairs, three of a kind, etc., using original_values
     let mut value_counts: Felt252Dict<u8> = Default::default();
     let values = array![orig_val0, orig_val1, orig_val2, orig_val3, orig_val4];
-   
+
     for i in 0..values.len() {
         let val = *values.at(i);
         value_counts.insert(val.into(), value_counts.get(val.into()) + 1);
