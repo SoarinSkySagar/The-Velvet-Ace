@@ -13,21 +13,17 @@ fn generate_combinations(cards: Array<Card>, k: usize) -> Array<Array<Card>> {
     let n = cards.len();
     let mut result: Array<Array<Card>> = array![];
     let total: u32 = pow(2, n.try_into().unwrap()); // 2^n subsets
-    let mut i: u32 = 0;
 
-    while i < total {
+    for i in 0..total {
         let mut subset: Array<Card> = array![];
-        let mut j: usize = 0;
-        while j < n {
+        for j in 0..n {
             if i & pow(2, j.try_into().unwrap()) != 0 {
                 subset.append(*cards.at(j));
             }
-            j += 1;
         };
         if subset.len() == k {
             result.append(subset);
         };
-        i += 1;
     };
     result
 }
@@ -36,8 +32,7 @@ fn generate_combinations(cards: Array<Card>, k: usize) -> Array<Array<Card>> {
 fn evaluate_cards(cards: Array<Card>) -> (Array<Card>, HandRank) {
     // Convert to array of (value, poker_value, suit) for Ace handling
     let mut card_data: Array<(u16, u16, u8)> = array![];
-    let mut i: usize = 0;
-    while i < cards.len() {
+    for i in 0..cards.len() {
         let card = *cards.at(i);
         let poker_value = if card.value == Royals::ACE {
             14_u16
@@ -45,7 +40,6 @@ fn evaluate_cards(cards: Array<Card>) -> (Array<Card>, HandRank) {
             card.value
         };
         card_data.append((card.value, poker_value, card.suit));
-        i += 1;
     };
 
     // Sort by poker_value descending
@@ -54,29 +48,23 @@ fn evaluate_cards(cards: Array<Card>) -> (Array<Card>, HandRank) {
 
     // Count values for pairs, three of a kind, etc., using original_values
     let mut value_counts: Felt252Dict<u8> = Default::default();
-    // let values = array![orig_val0, orig_val1, orig_val2, orig_val3, orig_val4];
-    // // new, REFACTOR: arr is sorted.
     let mut values = array![];
     for i in 0..sorted.len() {
         let (val, _, _) = *sorted[i];
         values.append(val);
     };
 
-    i = 0;
-    while i < values.len() {
+    for i in 0..values.len() {
         let val = *values.at(i);
         value_counts.insert(val.into(), value_counts.get(val.into()) + 1);
-        i += 1;
     };
 
     let mut counts: Array<u8> = array![];
-    let mut k: u16 = 1;
-    while k <= 14 {
-        let count = value_counts.get(k.into());
+    for i in 1..14_u32 {
+        let count = value_counts.get(i.into());
         if count > 0 {
             counts.append(count);
         };
-        k += 1;
     };
     let sorted_counts: Array<u8> = bubble_sort_u8(counts.clone());
 
@@ -117,8 +105,7 @@ fn bubble_sort(mut arr: Array<(u16, u16, u8)>) -> Array<(u16, u16, u8)> {
     let mut swapped = true;
     while swapped {
         swapped = false;
-        let mut i: usize = 0;
-        while i < arr.len() - 1 {
+        for i in 0..arr.len() -1 {
             // Destructure the tuples to access poker_value
             let (orig_val_curr, poker_val_curr, suit_curr) = *arr.at(i);
             let (orig_val_next, poker_val_next, suit_next) = *arr.at(i + 1);
@@ -130,7 +117,6 @@ fn bubble_sort(mut arr: Array<(u16, u16, u8)>) -> Array<(u16, u16, u8)> {
                 arr = set_array_element(arr, i + 1, (orig_val_curr, poker_val_curr, suit_curr));
                 swapped = true;
             };
-            i += 1;
         };
     };
     arr
@@ -191,7 +177,7 @@ fn ashura(arr: Array<(u16, u16, u8)>) -> (bool, bool) {
         is_straight_high = true;
         let mut n = 5;
         let (val_ref, mut pval_ref, suit_ref) = *arr[0];
-        is_straight_low = val_ref == Royals::ACE; // start only if orignal val is the original ACE
+        is_straight_low = val_ref == Royals::ACE;
         for i in 1..arr.len() {
             let (val, pval, suit) = *arr[i];
             if is_straight_low {
@@ -227,6 +213,8 @@ fn ashura(arr: Array<(u16, u16, u8)>) -> (bool, bool) {
 /// **************************************************************************
 /// DOCS
 
+
+
 /// fn extract_kicker(hands: Array<Hand>, hand_rank: u16) -> (Array<Hand>, Array<Card>)
 /// @Birdmannn
 /// Take in a HandRank::<const>, a u16 value
@@ -238,6 +226,8 @@ fn ashura(arr: Array<(u16, u16, u8)>) -> (bool, bool) {
 /// The card in the winning hands are always equal
 /// The hand returned here is usually one...unless all hands taken in as the parameter were exactly
 /// equal.
+
+
 
 /// fn generate_combinations(cards: Array<Card>, k: usize) -> Array<Array<Card>>
 /// @pope-h
@@ -252,6 +242,8 @@ fn ashura(arr: Array<(u16, u16, u8)>) -> (bool, bool) {
 ///
 /// # Returns
 /// An array of arrays, where each inner array is a combination of `k` cards
+
+
 
 /// fn evaluate_cards(cards: Array<Card>) -> (Array<Card>, HandRank)
 /// @pope-h, @Birdmannn
@@ -271,6 +263,9 @@ fn ashura(arr: Array<(u16, u16, u8)>) -> (bool, bool) {
 /// # Panics
 /// Panics if the number of cards is not exactly 5
 
+
+
+
 /// fn bubble_sort(mut arr: Array<(u16, u16, u8)>) -> Array<(u16, u16, u8)>
 /// @pope-h
 /// Performs bubble sort on an array of card tuples
@@ -283,6 +278,9 @@ fn ashura(arr: Array<(u16, u16, u8)>) -> (bool, bool) {
 /// # Returns
 /// A sorted array of card tuples
 
+
+
+
 /// fn bubble_sort_u8(mut arr: Array<u8>) -> Array<u8>
 /// @pope-h
 /// Performs bubble sort on an array of u8 values
@@ -294,6 +292,9 @@ fn ashura(arr: Array<(u16, u16, u8)>) -> (bool, bool) {
 ///
 /// # Returns
 /// A sorted array of u8 values
+
+
+
 
 /// fn set_array_element<T, +Copy<T>, +Drop<T>>(mut arr: Array<T>, index: usize, value: T) ->
 /// Array<T>
@@ -309,6 +310,9 @@ fn ashura(arr: Array<(u16, u16, u8)>) -> (bool, bool) {
 ///
 /// # Returns
 /// A new array with the specified element replaced
+
+
+
 
 /// Performs bitwise AND operation simulation
 ///

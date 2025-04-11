@@ -100,3 +100,27 @@ then the hand rank should return 3, 4, 5, 6, 7
     //     && orig_val2 == 4
     //     && orig_val3 == 3
     //     && orig_val4 == 2;
+
+
+    /// Creates a duplicate of an array of cards
+///
+/// This function manually clones an input array of `Card` structs by iterating over its elements
+/// and appending them to a new array. It is used to convert a snapshot of an array (`@Array<Card>`)
+/// into an owned `Array<Card>`, which is necessary when constructing a new `Hand` struct from
+/// a snapshot reference, as `Array` does not implement the `Copy` trait in Cairo.
+///
+/// # Arguments
+/// * `cards` - A snapshot of an array of `Card` structs to be cloned
+///
+/// # Returns
+/// A new `Array<Card>` containing the same elements as the input array
+///
+/// # Author
+/// [@pope-h]
+fn clone_array(cards: @Array<Card>) -> Array<Card> {
+    let mut new_array: Array<Card> = array![];
+    for i in 0..cards.len() {
+        new_array.append(*cards.at(i));
+    };
+    new_array
+}
