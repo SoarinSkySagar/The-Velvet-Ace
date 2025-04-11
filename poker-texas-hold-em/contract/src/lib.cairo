@@ -20,6 +20,10 @@ mod traits {
     mod player;
 }
 
+mod utils {
+    mod hand;
+}
+
 mod tests {
     mod test_world;
 }
