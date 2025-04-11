@@ -20,7 +20,7 @@ pub impl HandImpl of HandTrait {
 
     /// @pope-h, @Birdmannn
     fn rank(self: @Hand, community_cards: Array<Card>) -> (Hand, HandRank) {
-        // Combine player's hand cards with community cards for evaluation
+        // Combine player's hand cards with community cards
         let mut all_cards: Array<Card> = array![];
         if self.cards.len() == 0 && community_cards.len() == 0 {
             let mut hand: Hand = Self::default();
@@ -36,26 +36,33 @@ pub impl HandImpl of HandTrait {
             all_cards.append(*community_cards[i]);
         };
 
+        assert(all_cards.len() == 7, 'Invalid card count');
+
         // Use Felt252Dict for value and suit counts
         let mut value_counts: Felt252Dict<u8> = Default::default();
         let mut suit_counts: Felt252Dict<u8> = Default::default();
 
         // Initialize counts
-        for i in 1..14_u32 {
-            value_counts.insert(i.into(), 0);
+        let mut k: u16 = 1;
+        while k <= 14 {
+            value_counts.insert(k.into(), 0);
+            k += 1;
         };
-
-        for s in 0..4_u32 {
+        let mut s: u8 = 0;
+        while s < 4 {
             suit_counts.insert(s.into(), 0);
+            s += 1;
         };
 
         // Fill value and suit counts
-        for i in 0..all_cards.len() {
-            let card = *all_cards.at(i);
+        let mut c: usize = 0;
+        while c < all_cards.len() {
+            let card = *all_cards.at(c);
             let value: u16 = card.value;
             let suit: u8 = card.suit;
             value_counts.insert(value.into(), value_counts.get(value.into()) + 1);
             suit_counts.insert(suit.into(), suit_counts.get(suit.into()) + 1);
+            c += 1;
         };
 
         // Generate all max 5-card combinations (C(7,k)), where  0 <= k <= 5
@@ -66,15 +73,45 @@ pub impl HandImpl of HandTrait {
         let mut best_rank: u16 = HandRank::UNDEFINED.into();
         let mut best_hand_cards: Array<Card> = array![];
 
-        for combo in combinations {
-            let (hand_cards, rank) = evaluate_cards(combo.clone());
-            if rank.into() > best_rank {
-                best_rank = rank.into();
-                best_hand_cards = hand_cards.clone();
-            };
+        for i in 0..combinations.len() {
+            let combo = combinations.at(i);
+            let (hand_cards, rank) = evaluate_five_cards(combo.clone());
+            let rank_u16: u16 = rank.into();
+            if rank_u16 > best_rank {
+                // New highest rank found; reset the collection
+                best_rank = rank_u16;
+                best_hands = array![];
+                let hand = Hand { player: *self.player, cards: hand_cards.clone() };
+                best_hands.append(hand);
+            } else if rank_u16 == best_rank {
+                // Equal rank; add to collection for tie-breaking
+                let hand = Hand { player: *self.player, cards: hand_cards.clone() };
+                best_hands.append(hand);
+            }
         };
 
-        let best_hand = Hand { player: *self.player, cards: best_hand_cards };
+        // If only one hand has the best rank, return it directly
+        if best_hands.len() == 1 {
+            let best_hand = Hand {
+                player: *self.player, cards: clone_array(best_hands.at(0).cards),
+            };
+            return (best_hand, best_rank.into());
+        }
+
+        // Multiple hands with the same rank; use extract_kicker to determine the best
+        let cloned_hands = best_hands.clone();
+        let (winning_hands, _) = extract_kicker(cloned_hands, best_rank);
+        if winning_hands.len() == 0 {
+            // Fallback to the first best hand if extract_kicker fails to return a hand
+            let best_hand = Hand {
+                player: *self.player, cards: clone_array(best_hands.at(0).cards),
+            };
+            return (best_hand, best_rank.into());
+        }
+        let best_hand = Hand {
+            player: *self.player, cards: clone_array(winning_hands.at(0).cards),
+        };
+
         (best_hand, best_rank.into())
     }
 
@@ -161,4 +198,327 @@ pub impl HandImpl of HandTrait {
 
         str
     }
+}
+
+/// Take in a HandRank::<const>, a u16 value
+/// Takes in an array of hands of equal HandRank
+/// To increase optimization, the ranks of each hand are never checked here,
+/// but are assumed to be equal
+///
+/// returns a tuple of an array of the winning hands, and an array of the cards that did the kicking
+/// The card in the winning hands are always equal
+/// The hand returned here is usually one...unless all hands taken in as the parameter were exactly
+/// equal.
+fn extract_kicker(hands: Array<Hand>, hand_rank: u16) -> (Array<Hand>, Array<Card>) {
+    // Implement kicker based on hand_rank
+    // some hand_ranks have a different kicker implementation from the rest
+    (array![], array![])
+}
+
+// for the test
+// assert that the array of kicking cards are present in the winning hands
+// .. or make
+/// Generates all k-card combinations from a given array of cards
+///
+/// This function creates all possible combinations of `k` cards from the input array
+/// using a bitwise subset generation approach.
+///
+/// # Arguments
+/// * `cards` - An array of cards to generate combinations from
+/// * `k` - The number of cards in each combination
+///
+/// # Returns
+/// An array of arrays, where each inner array is a combination of `k` cards
+///
+/// # Author
+/// [@pope-h]
+fn generate_combinations(cards: Array<Card>, k: usize) -> Array<Array<Card>> {
+    let n = cards.len();
+    let mut result: Array<Array<Card>> = array![];
+    let total: u32 = pow(2, n.try_into().unwrap()); // 2^n subsets
+    let mut i: u32 = 0;
+
+    while i < total {
+        let mut subset: Array<Card> = array![];
+        let mut j: usize = 0;
+        while j < n {
+            if i & pow(2, j.try_into().unwrap()) != 0 {
+                subset.append(*cards.at(j));
+            }
+            // if bit_and(i, pow(2, j.try_into().unwrap())) != 0 {
+
+            // };
+            j += 1;
+        };
+        if subset.len() == k {
+            result.append(subset);
+        };
+        i += 1;
+    };
+    result
+}
+
+/// Performs bitwise AND operation simulation
+///
+/// This function simulates a bitwise AND operation for 32-bit unsigned integers
+/// by manually checking and combining bits.
+///
+/// # Arguments
+/// * `a` - First 32-bit unsigned integer
+/// * `b` - Second 32-bit unsigned integer
+///
+/// # Returns
+/// Result of the bitwise AND operation
+///
+/// # Author
+/// [@pope-h]
+fn bit_and(a: u32, b: u32) -> u32 {
+    let mut result = 0_u32;
+    let mut position = 0_u32;
+    let mut a_copy = a;
+    let mut b_copy = b;
+
+    while position < 32 {
+        let bit_a = a_copy % 2;
+        let bit_b = b_copy % 2;
+        if bit_a == 1 && bit_b == 1 {
+            result += pow(2, position);
+        };
+        a_copy /= 2;
+        b_copy /= 2;
+        position += 1;
+    };
+    result
+}
+
+/// Calculates the power of a number
+///
+/// Computes `base` raised to the power of `exp` using iterative multiplication.
+///
+/// # Arguments
+/// * `base` - Base number
+/// * `exp` - Exponent
+///
+/// # Returns
+/// Result of base raised to the power of exp
+///
+/// # Author
+/// [@pope-h]
+fn pow(base: u32, exp: u32) -> u32 {
+    let mut result = 1_u32;
+    let mut i = 0_u32;
+    while i < exp {
+        result *= base;
+        i += 1;
+    };
+    result
+}
+
+/// Evaluates a 5-card hand and determines its poker rank
+///
+/// Analyzes a 5-card hand to determine its poker rank, checking for various
+/// hand combinations like flush, straight, pairs, etc.
+///
+/// # Arguments
+/// * `cards` - An array of 5 cards to evaluate
+///
+/// # Returns
+/// A tuple containing:
+/// 1. The original cards
+/// 2. The hand's rank as a u16 (using HandRank constants)
+///
+/// # Panics
+/// Panics if the number of cards is not exactly 5
+///
+/// # Author
+/// [@pope-h]
+fn evaluate_five_cards(cards: Array<Card>) -> (Array<Card>, HandRank) {
+    assert(cards.len() == 5, 'Must have 5 cards');
+
+    // Convert to array of (value, poker_value, suit) for Ace handling
+    let mut card_data: Array<(u16, u16, u8)> = array![];
+    let mut i: usize = 0;
+    while i < cards.len() {
+        let card = *cards.at(i);
+        let poker_value = if card.value == Royals::ACE {
+            14_u16
+        } else {
+            card.value
+        };
+        card_data.append((card.value, poker_value, card.suit));
+        i += 1;
+    };
+
+    // Sort by poker_value descending
+    let mut sorted: Array<(u16, u16, u8)> = bubble_sort(card_data.clone());
+
+    // Extract all tuple elements for each card
+    let (orig_val0, poker_val0, suit0) = *sorted.at(0);
+    let (orig_val1, poker_val1, suit1) = *sorted.at(1);
+    let (orig_val2, poker_val2, suit2) = *sorted.at(2);
+    let (orig_val3, poker_val3, suit3) = *sorted.at(3);
+    let (orig_val4, poker_val4, suit4) = *sorted.at(4);
+
+    // Check for flush using suits (already fixed)
+    let is_flush = suit0 == suit1 && suit1 == suit2 && suit2 == suit3 && suit3 == suit4;
+
+    // Check for high straight using poker_values
+    let is_straight_high = poker_val0 == poker_val1
+        + 1 && poker_val1 == poker_val2
+        + 1 && poker_val2 == poker_val3
+        + 1 && poker_val3 == poker_val4
+        + 1;
+
+    // Check for Ace-low straight using original_values
+    let is_straight_low = orig_val0 == Royals::ACE
+        && orig_val1 == 5
+        && orig_val2 == 4
+        && orig_val3 == 3
+        && orig_val4 == 2;
+    let is_straight = is_straight_high || is_straight_low;
+
+    // Count values for pairs, three of a kind, etc., using original_values
+    let mut value_counts: Felt252Dict<u8> = Default::default();
+    let values = array![orig_val0, orig_val1, orig_val2, orig_val3, orig_val4];
+    i = 0;
+    while i < values.len() {
+        let val = *values.at(i);
+        value_counts.insert(val.into(), value_counts.get(val.into()) + 1);
+        i += 1;
+    };
+
+    let mut counts: Array<u8> = array![];
+    let mut k: u16 = 1;
+    while k <= 14 {
+        let count = value_counts.get(k.into());
+        if count > 0 {
+            counts.append(count);
+        };
+        k += 1;
+    };
+    let sorted_counts: Array<u8> = bubble_sort_u8(counts.clone());
+
+    // Evaluate hand rank
+    if is_flush && is_straight {
+        if poker_val0 == 14 {
+            return (cards.clone(), HandRank::ROYAL_FLUSH);
+        }
+        return (cards.clone(), HandRank::STRAIGHT_FLUSH);
+    }
+    if sorted_counts.len() > 0 && *sorted_counts.at(0) == 4 {
+        return (cards.clone(), HandRank::FOUR_OF_A_KIND);
+    }
+    if sorted_counts.len() > 1 && *sorted_counts.at(0) == 3 && *sorted_counts.at(1) == 2 {
+        return (cards.clone(), HandRank::FULL_HOUSE);
+    }
+    if is_flush {
+        return (cards.clone(), HandRank::FLUSH);
+    }
+    if is_straight {
+        return (cards.clone(), HandRank::STRAIGHT);
+    }
+    if sorted_counts.len() > 0 && *sorted_counts.at(0) == 3 {
+        return (cards.clone(), HandRank::THREE_OF_A_KIND);
+    }
+    if sorted_counts.len() > 1 && *sorted_counts.at(0) == 2 && *sorted_counts.at(1) == 2 {
+        return (cards.clone(), HandRank::TWO_PAIR);
+    }
+    if sorted_counts.len() > 0 && *sorted_counts.at(0) == 2 {
+        return (cards.clone(), HandRank::ONE_PAIR);
+    }
+    (cards.clone(), HandRank::HIGH_CARD)
+}
+
+/// Performs bubble sort on an array of card tuples
+///
+/// Sorts card tuples in descending order based on their poker value.
+///
+/// # Arguments
+/// * `arr` - An array of card tuples (original value, poker value, suit)
+///
+/// # Returns
+/// A sorted array of card tuples
+///
+/// # Author
+/// [@pope-h]
+fn bubble_sort(mut arr: Array<(u16, u16, u8)>) -> Array<(u16, u16, u8)> {
+    let mut swapped = true;
+    while swapped {
+        swapped = false;
+        let mut i: usize = 0;
+        while i < arr.len() - 1 {
+            // Destructure the tuples to access poker_value
+            let (orig_val_curr, poker_val_curr, suit_curr) = *arr.at(i);
+            let (orig_val_next, poker_val_next, suit_next) = *arr.at(i + 1);
+
+            // Compare poker_values for descending order
+            if poker_val_curr < poker_val_next {
+                // Swap elements if current poker_value is less than next
+                arr = set_array_element(arr.clone(), i, (orig_val_next, poker_val_next, suit_next));
+                arr = set_array_element(arr, i + 1, (orig_val_curr, poker_val_curr, suit_curr));
+                swapped = true;
+            };
+            i += 1;
+        };
+    };
+    arr
+}
+
+/// Performs bubble sort on an array of u8 values
+///
+/// Sorts u8 values in descending order.
+///
+/// # Arguments
+/// * `arr` - An array of u8 values
+///
+/// # Returns
+/// A sorted array of u8 values
+///
+/// # Author
+/// [@pope-h]
+fn bubble_sort_u8(mut arr: Array<u8>) -> Array<u8> {
+    let mut swapped = true;
+    while swapped {
+        swapped = false;
+        let mut i: usize = 0;
+        while i < arr.len() - 1 {
+            let current = *arr.at(i);
+            let next = *arr.at(i + 1);
+            if current < next {
+                arr = set_array_element(arr.clone(), i, next);
+                arr = set_array_element(arr, i + 1, current);
+                swapped = true;
+            };
+            i += 1;
+        };
+    };
+    arr
+}
+
+/// Immutably sets an element in an array
+///
+/// Creates a new array with a specific element replaced at the given index.
+///
+/// # Arguments
+/// * `arr` - The original array
+/// * `index` - The index of the element to replace
+/// * `value` - The new value to set at the specified index
+///
+/// # Returns
+/// A new array with the specified element replaced
+///
+/// # Author
+/// [@pope-h]
+fn set_array_element<T, +Copy<T>, +Drop<T>>(mut arr: Array<T>, index: usize, value: T) -> Array<T> {
+    let mut new_arr: Array<T> = array![];
+    let mut i: usize = 0;
+    while i < arr.len() {
+        if i == index {
+            new_arr.append(value);
+        } else {
+            new_arr.append(*arr.at(i));
+        };
+        i += 1;
+    };
+    new_arr
 }
