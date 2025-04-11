@@ -79,7 +79,7 @@ pub impl HandImpl of HandTrait {
             return (best_hand, best_rank.into());
         }
         let best_hand = Hand {
-            player: *self.player, cards: winning_hands.pop_front().unwrap().cards
+            player: *self.player, cards: winning_hands.pop_front().unwrap().cards,
         };
 
         (best_hand, best_rank.into())

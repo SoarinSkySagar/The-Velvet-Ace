@@ -105,7 +105,7 @@ fn bubble_sort(mut arr: Array<(u16, u16, u8)>) -> Array<(u16, u16, u8)> {
     let mut swapped = true;
     while swapped {
         swapped = false;
-        for i in 0..arr.len() -1 {
+        for i in 0..arr.len() - 1 {
             // Destructure the tuples to access poker_value
             let (orig_val_curr, poker_val_curr, suit_curr) = *arr.at(i);
             let (orig_val_next, poker_val_next, suit_next) = *arr.at(i + 1);
@@ -213,8 +213,6 @@ fn ashura(arr: Array<(u16, u16, u8)>) -> (bool, bool) {
 /// **************************************************************************
 /// DOCS
 
-
-
 /// fn extract_kicker(hands: Array<Hand>, hand_rank: u16) -> (Array<Hand>, Array<Card>)
 /// @Birdmannn
 /// Take in a HandRank::<const>, a u16 value
@@ -226,8 +224,6 @@ fn ashura(arr: Array<(u16, u16, u8)>) -> (bool, bool) {
 /// The card in the winning hands are always equal
 /// The hand returned here is usually one...unless all hands taken in as the parameter were exactly
 /// equal.
-
-
 
 /// fn generate_combinations(cards: Array<Card>, k: usize) -> Array<Array<Card>>
 /// @pope-h
@@ -242,8 +238,6 @@ fn ashura(arr: Array<(u16, u16, u8)>) -> (bool, bool) {
 ///
 /// # Returns
 /// An array of arrays, where each inner array is a combination of `k` cards
-
-
 
 /// fn evaluate_cards(cards: Array<Card>) -> (Array<Card>, HandRank)
 /// @pope-h, @Birdmannn
@@ -263,9 +257,6 @@ fn ashura(arr: Array<(u16, u16, u8)>) -> (bool, bool) {
 /// # Panics
 /// Panics if the number of cards is not exactly 5
 
-
-
-
 /// fn bubble_sort(mut arr: Array<(u16, u16, u8)>) -> Array<(u16, u16, u8)>
 /// @pope-h
 /// Performs bubble sort on an array of card tuples
@@ -278,9 +269,6 @@ fn ashura(arr: Array<(u16, u16, u8)>) -> (bool, bool) {
 /// # Returns
 /// A sorted array of card tuples
 
-
-
-
 /// fn bubble_sort_u8(mut arr: Array<u8>) -> Array<u8>
 /// @pope-h
 /// Performs bubble sort on an array of u8 values
@@ -292,9 +280,6 @@ fn ashura(arr: Array<(u16, u16, u8)>) -> (bool, bool) {
 ///
 /// # Returns
 /// A sorted array of u8 values
-
-
-
 
 /// fn set_array_element<T, +Copy<T>, +Drop<T>>(mut arr: Array<T>, index: usize, value: T) ->
 /// Array<T>
@@ -310,9 +295,6 @@ fn ashura(arr: Array<(u16, u16, u8)>) -> (bool, bool) {
 ///
 /// # Returns
 /// A new array with the specified element replaced
-
-
-
 
 /// Performs bitwise AND operation simulation
 ///
