@@ -34,6 +34,7 @@ trait IActions<TContractState> {
     fn all_in(ref self: TContractState);
     fn buy_chips(ref self: TContractState, no_of_chips: u256); // will call
     fn get_dealer(self: @TContractState) -> Option<Player>;
+    fn get_rank(self: @TContractState, player_id: ContractAddress) -> ByteArray;
 
 
     /// All functions here might be extracted into a separate contract
