@@ -129,7 +129,7 @@ pub mod actions {
             let mut world = self.world_default();
             let player: Player = world.read_model(player_id);
             let game_id = player.extract_current_game_id();
-            let game: Game = world.read_model(game_id);
+            let game: Game = world.read_model(*game_id);
             let hand: Hand = world.read_model(player_id);
             let (_, rank) = hand.rank(game.community_cards);
             rank.into()
