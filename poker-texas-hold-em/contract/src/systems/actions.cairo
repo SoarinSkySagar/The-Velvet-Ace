@@ -12,7 +12,7 @@ pub mod actions {
     use poker::models::deck::{Deck, DeckTrait};
     use poker::models::game::{Game, GameMode, GameParams, GameTrait};
     use poker::models::hand::{Hand, HandTrait};
-    use poker::models::player::{Player, PlayerTrait, get_default_player};
+    use poker::models::player::{Player, PlayerTrait};
     use poker::traits::game::get_default_game_params;
     use super::super::interface::IActions;
 
@@ -59,14 +59,14 @@ pub mod actions {
                 world.write_model(@deck);
             };
 
-            let init_event = GameInitialized {
+            let game_initialized = GameInitialized {
                 game_id: game_id,
                 player: caller,
                 game_params: game.params,
                 time_stamp: starknet::get_block_timestamp(),
             };
 
-            world.emit_event(@init_event);
+            world.emit_event(@game_initialized);
             game_id
         }
 
@@ -80,14 +80,14 @@ pub mod actions {
             let mut player: Player = world.read_model(caller);
             let can_start: bool = player.enter(ref game);
 
-            let joined_event = PlayerJoined {
+            let player_joined = PlayerJoined {
                 game_id,
                 player_id: caller,
                 player_count: game.current_player_count,
                 expected_no_of_players: game.params.max_no_of_players,
             };
 
-            world.emit_event(@joined_event);
+            world.emit_event(@player_joined);
 
             // if can_start, then the game is ready to be started.
             if can_start { // TODO:
@@ -125,7 +125,17 @@ pub mod actions {
         // deduct all available no. of chips
         }
 
-        fn buy_chips(ref self: ContractState, no_of_chips: u256) { // use a crate here
+        fn get_rank(self: @ContractState, player_id: ContractAddress) -> ByteArray {
+            let mut world = self.world_default();
+            let player: Player = world.read_model(player_id);
+            let game_id = player.extract_current_game_id();
+            let game: Game = world.read_model(*game_id);
+            let hand: Hand = world.read_model(player_id);
+            let (_, rank) = hand.rank(game.community_cards);
+            rank.into()
+        }
+
+        fn buy_in(ref self: ContractState, no_of_chips: u256) { // use a crate here
         // a package would be made for all transactions and nfts out of this contract package.
         // world.emit_event(@BoughtChip{game_id, no_of_chips})
         }
@@ -592,7 +602,7 @@ pub mod actions {
             assert(game.round_in_progress, GameErrors::ROUND_NOT_IN_PROGRESS);
 
             // Check if we can add more community cards (max 5)
-            assert(game.community_cards.len() < 5, GameErrors::COMMUNITY_CARDS_FULL);
+            assert(game.community_cards.len() <= 5, GameErrors::COMMUNITY_CARDS_FULL);
 
             let deck_ids = @game.deck;
             assert(!deck_ids.is_empty(), GameErrors::NO_DECKS_AVAILABLE);
