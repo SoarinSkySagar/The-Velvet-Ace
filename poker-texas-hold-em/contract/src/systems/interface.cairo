@@ -32,7 +32,7 @@ trait IActions<TContractState> {
     fn fold(ref self: TContractState);
     fn raise(ref self: TContractState, no_of_chips: u256);
     fn all_in(ref self: TContractState);
-    fn buy_chips(ref self: TContractState, no_of_chips: u256); // will call
+    fn buy_in(ref self: TContractState, no_of_chips: u256); // will call
     fn get_dealer(self: @TContractState) -> Option<Player>;
     fn get_rank(self: @TContractState, player_id: ContractAddress) -> ByteArray;
 

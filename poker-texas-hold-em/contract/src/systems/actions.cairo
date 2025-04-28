@@ -125,9 +125,17 @@ pub mod actions {
         // deduct all available no. of chips
         }
 
-        fn get_rank(self: @ContractState, player_id: ContractAddress) -> ByteArray {}
+        fn get_rank(self: @ContractState, player_id: ContractAddress) -> ByteArray {
+            let mut world = self.world_default();
+            let player: Player = world.read_model(player_id);
+            let game_id = player.extract_current_game_id();
+            let game: Game = world.read_model(game_id);
+            let hand: Hand = world.read_model(player_id);
+            let (_, rank) = hand.rank(game.community_cards);
+            rank.into()
+        }
 
-        fn buy_chips(ref self: ContractState, no_of_chips: u256) { // use a crate here
+        fn buy_in(ref self: ContractState, no_of_chips: u256) { // use a crate here
         // a package would be made for all transactions and nfts out of this contract package.
         // world.emit_event(@BoughtChip{game_id, no_of_chips})
         }
