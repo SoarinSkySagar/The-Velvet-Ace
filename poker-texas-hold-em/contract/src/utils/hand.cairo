@@ -443,6 +443,7 @@ fn sort_cards_by_poker_value(cards: @Array<Card>) -> Array<Card> {
 }
 
 /// Sorts an array of u16 values in descending order.
+/// @pope-h
 fn bubble_sort_u16(mut arr: Array<u16>) -> Array<u16> {
     let mut swapped = true;
     while swapped {
@@ -457,6 +458,28 @@ fn bubble_sort_u16(mut arr: Array<u16>) -> Array<u16> {
         };
     };
     arr
+}
+
+/// Extracts the comparison key for ONE_PAIR: (pair_value, kicker1, kicker2, kicker3).
+/// @pope-h
+fn get_one_pair_key(hand: @Hand) -> Array<u16> {
+    let mut value_counts: Felt252Dict<u8> = Default::default();
+    for i in 0..hand.cards.len() {
+        let card = *hand.cards.at(i);
+        value_counts.insert(card.value.into(), value_counts.get(card.value.into()) + 1);
+    };
+    let mut pair_value: u16 = 0;
+    let mut kickers: Array<u16> = array![];
+    for v in 1..15_u16 {
+        let count = value_counts.get(v.into());
+        if count == 2 {
+            pair_value = v;
+        } else if count == 1 {
+            kickers.append(v);
+        }
+    };
+    let sorted_kickers = bubble_sort_u16(kickers);
+    array![pair_value, *sorted_kickers.at(0), *sorted_kickers.at(1), *sorted_kickers.at(2)]
 }
 
 /// FOR KICKER, SORT ALL CARDS AND COMPARE THEIR FIRST VALUES (POKER_VAL)
