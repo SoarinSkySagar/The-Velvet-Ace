@@ -547,6 +547,27 @@ fn get_full_house_key(hand: @Hand) -> Array<u16> {
     array![three_value, pair_value]
 }
 
+/// Extracts the comparison key for FOUR_OF_A_KIND: (four_value, kicker).
+/// @pope-h
+fn get_four_of_a_kind_key(hand: @Hand) -> Array<u16> {
+    let mut value_counts: Felt252Dict<u8> = Default::default();
+    for i in 0..hand.cards.len() {
+        let card = *hand.cards.at(i);
+        value_counts.insert(card.value.into(), value_counts.get(card.value.into()) + 1);
+    };
+    let mut four_value: u16 = 0;
+    let mut kicker: u16 = 0;
+    for v in 1..15_u16 {
+        let count = value_counts.get(v.into());
+        if count == 4 {
+            four_value = v;
+        } else if count == 1 {
+            kicker = v;
+        }
+    };
+    array![four_value, kicker]
+}
+
 /// FOR KICKER, SORT ALL CARDS AND COMPARE THEIR FIRST VALUES (POKER_VAL)
 /// THE REST SHOULD BE HISTORY. :)
 ///
