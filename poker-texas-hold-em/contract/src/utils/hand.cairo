@@ -581,6 +581,39 @@ fn get_high_card_key(hand: @Hand) -> Array<u16> {
     values
 }
 
+/// @pope-h
+fn compare_arrays(a: @Array<u16>, b: @Array<u16>) -> felt252 {
+    let len_a = a.len();
+    let len_b = b.len();
+    let min_len = if len_a < len_b { len_a } else { len_b };
+    let mut result: felt252 = 0;
+
+    for i in 0..min_len {
+        if result != 0 {
+            break;
+        }
+        let val_a = *a.at(i);
+        let val_b = *b.at(i);
+        if val_a > val_b {
+            result = 1;
+            break;
+        } else if val_a < val_b {
+            result = -1;
+            break;
+        }
+    };
+
+    if result != 0 {
+        result
+    } else if len_a > len_b {
+        1
+    } else if len_a < len_b {
+        -1
+    } else {
+        0
+    }
+}
+
 /// FOR KICKER, SORT ALL CARDS AND COMPARE THEIR FIRST VALUES (POKER_VAL)
 /// THE REST SHOULD BE HISTORY. :)
 ///
