@@ -56,9 +56,11 @@ pub impl GameImpl of GameTrait {
     fn append() {}
 }
 
-pub fn get_default_game_params() -> GameParams {
+
+fn get_default_game_params() -> GameParams {
     GameParams {
         game_mode: Default::default(),
+        ownable: Option::None,
         max_no_of_players: 5,
         small_blind: 10,
         big_blind: 20,
