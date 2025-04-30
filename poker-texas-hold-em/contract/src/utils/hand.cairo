@@ -526,6 +526,27 @@ fn get_three_of_a_kind_key(hand: @Hand) -> Array<u16> {
     array![three_value, *sorted_kickers.at(0), *sorted_kickers.at(1)]
 }
 
+/// Extracts the comparison key for FULL_HOUSE: (three_value, pair_value).
+/// @pope-h
+fn get_full_house_key(hand: @Hand) -> Array<u16> {
+    let mut value_counts: Felt252Dict<u8> = Default::default();
+    for i in 0..hand.cards.len() {
+        let card = *hand.cards.at(i);
+        value_counts.insert(card.value.into(), value_counts.get(card.value.into()) + 1);
+    };
+    let mut three_value: u16 = 0;
+    let mut pair_value: u16 = 0;
+    for v in 1..15_u16 {
+        let count = value_counts.get(v.into());
+        if count == 3 {
+            three_value = v;
+        } else if count == 2 {
+            pair_value = v;
+        }
+    };
+    array![three_value, pair_value]
+}
+
 /// FOR KICKER, SORT ALL CARDS AND COMPARE THEIR FIRST VALUES (POKER_VAL)
 /// THE REST SHOULD BE HISTORY. :)
 ///
