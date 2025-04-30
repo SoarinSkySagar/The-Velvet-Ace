@@ -482,6 +482,28 @@ fn get_one_pair_key(hand: @Hand) -> Array<u16> {
     array![pair_value, *sorted_kickers.at(0), *sorted_kickers.at(1), *sorted_kickers.at(2)]
 }
 
+/// Extracts the comparison key for TWO_PAIR: (high_pair, low_pair, kicker).
+/// @pope-h
+fn get_two_pair_key(hand: @Hand) -> Array<u16> {
+    let mut value_counts: Felt252Dict<u8> = Default::default();
+    for i in 0..hand.cards.len() {
+        let card = *hand.cards.at(i);
+        value_counts.insert(card.value.into(), value_counts.get(card.value.into()) + 1);
+    };
+    let mut pairs: Array<u16> = array![];
+    let mut kicker: u16 = 0;
+    for v in 1..15_u16 {
+        let count = value_counts.get(v.into());
+        if count == 2 {
+            pairs.append(v);
+        } else if count == 1 {
+            kicker = v;
+        }
+    };
+    let sorted_pairs = bubble_sort_u16(pairs);
+    array![*sorted_pairs.at(0), *sorted_pairs.at(1), kicker]
+}
+
 /// FOR KICKER, SORT ALL CARDS AND COMPARE THEIR FIRST VALUES (POKER_VAL)
 /// THE REST SHOULD BE HISTORY. :)
 ///
