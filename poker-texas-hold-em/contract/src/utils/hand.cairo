@@ -424,6 +424,24 @@ fn ashura(arr: Array<(u16, u16, u8)>) -> (bool, bool) {
     (is_flush, is_straight_high || is_straight_low)
 }
 
+/// Sorts an array of cards by poker value in descending order (Ace as 14, King as 13, etc.).
+/// @pope-h
+fn sort_cards_by_poker_value(cards: @Array<Card>) -> Array<Card> {
+    let mut card_data: Array<(u16, u16, u8)> = array![];
+    for i in 0..cards.len() {
+        let card = *cards.at(i);
+        let poker_value = if card.value == Royals::ACE { 14_u16 } else { card.value };
+        card_data.append((card.value, poker_value, card.suit));
+    };
+    let sorted_data = bubble_sort(card_data);
+    let mut sorted_cards: Array<Card> = array![];
+    for i in 0..sorted_data.len() {
+        let (value, _, suit) = *sorted_data.at(i);
+        sorted_cards.append(Card { suit, value });
+    };
+    sorted_cards
+}
+
 /// FOR KICKER, SORT ALL CARDS AND COMPARE THEIR FIRST VALUES (POKER_VAL)
 /// THE REST SHOULD BE HISTORY. :)
 ///
