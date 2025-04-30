@@ -568,6 +568,19 @@ fn get_four_of_a_kind_key(hand: @Hand) -> Array<u16> {
     array![four_value, kicker]
 }
 
+/// Extracts the comparison key for HIGH_CARD or FLUSH: (val1, val2, val3, val4, val5).
+/// @pope-h
+fn get_high_card_key(hand: @Hand) -> Array<u16> {
+    let sorted_cards = sort_cards_by_poker_value(hand.cards);
+    let mut values: Array<u16> = array![];
+    for i in 0..sorted_cards.len() {
+        let card = *sorted_cards.at(i);
+        let poker_value = if card.value == Royals::ACE { 14_u16 } else { card.value };
+        values.append(poker_value);
+    };
+    values
+}
+
 /// FOR KICKER, SORT ALL CARDS AND COMPARE THEIR FIRST VALUES (POKER_VAL)
 /// THE REST SHOULD BE HISTORY. :)
 ///
