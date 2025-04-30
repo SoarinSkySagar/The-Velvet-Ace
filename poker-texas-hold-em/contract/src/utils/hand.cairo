@@ -442,6 +442,23 @@ fn sort_cards_by_poker_value(cards: @Array<Card>) -> Array<Card> {
     sorted_cards
 }
 
+/// Sorts an array of u16 values in descending order.
+fn bubble_sort_u16(mut arr: Array<u16>) -> Array<u16> {
+    let mut swapped = true;
+    while swapped {
+        swapped = false;
+        for i in 0..arr.len() - 1 {
+            if *arr.at(i) < *arr.at(i + 1) {
+                let temp = *arr.at(i);
+                arr = set_array_element(arr.clone(), i, *arr.at(i + 1));
+                arr = set_array_element(arr, i + 1, temp);
+                swapped = true;
+            };
+        };
+    };
+    arr
+}
+
 /// FOR KICKER, SORT ALL CARDS AND COMPARE THEIR FIRST VALUES (POKER_VAL)
 /// THE REST SHOULD BE HISTORY. :)
 ///
