@@ -63,6 +63,17 @@ pub struct PlayerJoined {
     pub expected_no_of_players: u32,
 }
 
+#[derive(Drop, Serde)]
+#[dojo::event]
+pub struct PlayerLeft {
+    #[key]
+    pub game_id: u64,
+    #[key]
+    pub player_id: ContractAddress,
+    pub player_count: u32,
+    pub expected_no_of_players: u32,
+}
+
 /// MODEL
 
 #[derive(Serde, Copy, Drop, PartialEq)]

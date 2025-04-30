@@ -1,12 +1,12 @@
 /// POKER CONTRACT
 #[dojo::contract]
 pub mod actions {
-    use starknet::{ContractAddress, get_caller_address};
+    use starknet::{ContractAddress, get_caller_address, get_contract_address};
     use dojo::model::{ModelStorage, ModelValueStorage};
     use dojo::event::EventStorage;
     use poker::models::base::{
         GameErrors, Id, GameInitialized, CardDealt, HandCreated, HandResolved, RoundResolved,
-        PlayerJoined,
+        PlayerJoined, PlayerLeft,
     };
     use poker::models::card::{Card, CardTrait};
     use poker::models::deck::{Deck, DeckTrait};
@@ -101,17 +101,72 @@ pub mod actions {
             world.write_model(@player);
         }
 
-        fn leave_game(ref self: ContractState) { // assert if the player exists
-        // extract game_id
-        // assert if the game exists
-        // assert player.locked == true
-        // Check if the player is in the game
+        fn leave_game(ref self: ContractState) {
+            let caller = get_caller_address();
+            let mut world = self.world_default();
+            let mut player: Player = world.read_model(caller);
 
-        // Emit an event here
-        // world.emit_event(@PlayerLeft{game_id, player})
+            let game_id = player.extract_current_game_id();
+            let mut game: Game = world.read_model(game_id);
+
+            // you can leave and return only for CashGame GameModes
+            let out = game.params.game_mode == Default::default();
+            // this decrements the player count
+            player.exit(ref game, out);
+
+            let precision = 1_000_000;
+            let ratio = precision / 5; // 1 out of 5 players, times precision
+            let current_ratio = game.current_player_count * precision / game.players.len();
+            if ratio >= current_ratio {
+                // shuffle.
+                let mut players = array![];
+                for c in game.players {
+                    let p: Player = world.read_model(c);
+                    if p.is_in_game(*game_id) {
+                        players.append(c);
+                    }
+                };
+                game.players = players;
+                game.reshuffled += 1;
+            }
+
+            if game.current_player_count == 0 {
+                // for the bool variable, the value is not really necessary because it's called
+                // by this contract.
+                self._resolve_game(ref game, get_contract_address(), true);
+            }
+
+            // Emit an event here
+
+            // pub struct PlayerLeft {
+            //     #[key]
+            //     pub game_id: u64,
+            //     #[key]
+            //     pub player_id: ContractAddress,
+            //     pub player_count: u32,
+            //     pub expected_no_of_players: u32,
+            // }
+            // world.emit_event(@PlayerLeft{game_id, player})
+            // keep track of the number of players left. If the player count == 0, end the game
+            // automatically
+            world.write(@game);
+            // write world variables here
         }
 
-        fn end_game(ref self: ContractState, game_id: u64) {}
+        // @Birdmannn
+        fn end_game(ref self: ContractState, game_id: u64, force: bool) {
+            let caller = get_caller_address();
+            let mut world = self.world_default();
+            let mut game: Game = world.read_model(game_id);
+            if game.has_ended {
+                return;
+            }
+            // TODO: You can assign admin roles of the tournament that can bypass this check.
+            // naturally, a `game` should end when all players leave the game
+            self._resolve_game(ref game, caller, force);
+            // exit all players after resolving a round
+        // would be audited in the future.
+        }
 
         fn check(ref self: ContractState) {}
 
@@ -507,7 +562,7 @@ pub mod actions {
             world.emit_event(@HandResolved { game_id: game_id, players: resolved_players });
         }
 
-        /// dev: @psychemist
+        /// @psychemist, @Birdmannn
         ///
         /// Resolves the current round and prepares the game for the next round
         ///
@@ -573,13 +628,37 @@ pub mod actions {
 
             // Check if the game allows new players to join based on game parameters
             let _can_join = game.is_allowable();
-
+            if game.should_end {
+                self._resolve_game(ref game, get_contract_address(), false);
+            }
             world.write_model(@game);
-
             world.emit_event(@RoundResolved { game_id: game_id, can_join: _can_join });
         }
 
-        /// dev: @psychemist
+        fn _resolve_game(
+            ref self: ContractState, ref game: Game, caller: ContractAddress, force: bool,
+        ) {
+            if game.round_in_progress {
+                if !force {
+                    game.should_end = true;
+                    return;
+                }
+            }
+
+            if game.should_end {}
+            // this function should never call resolve_round, stop reentrancy
+            if caller != get_contract_address() { // TODO: figure out how to do a split when a single player remains, or when a force is
+            // called maybe not in this if block, but somewhere
+
+            // resolve this if block too, you can invert it.
+            } else { // if it's call by this contract, then
+            // then all players should have left.. just, resolve the game variables
+            // or moreso, remove the else block.
+            }
+            // Emit a game concluded event afterwards
+        }
+
+        /// @psychemist
         ///
         /// Deals a community card to the game board
         ///

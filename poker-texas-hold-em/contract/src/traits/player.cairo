@@ -8,18 +8,19 @@ pub impl PlayerImpl of PlayerTrait {
     fn exit(ref self: Player, ref game: Game, out: bool) {
         let (is_locked, id) = self.locked;
         assert(is_locked, 'CANNOT EXIT, PLAYER NOT LOCKED');
-        assert(game.current_player_count != 0, 'GAME PLAYER COUNT SUB');
+        assert(game.current_player_count != 0, 'GAME PLAYER COUNT SUB');    // sub overflow guard
         if out {
             // check game id
             assert(id == game.id, 'BAD REQUEST');
             self.out = (game.id, game.reshuffled);
+        } else {
+            self.out = (0, 0);
         }
 
         self.current_bet = 0;
         self.is_dealer = false;
         self.in_round = false;
         self.locked = (false, 0);
-        self.out = (0, 0);
 
         game.current_player_count -= 1;
     }
