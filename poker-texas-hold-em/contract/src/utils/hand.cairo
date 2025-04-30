@@ -504,6 +504,28 @@ fn get_two_pair_key(hand: @Hand) -> Array<u16> {
     array![*sorted_pairs.at(0), *sorted_pairs.at(1), kicker]
 }
 
+/// Extracts the comparison key for THREE_OF_A_KIND: (three_value, kicker1, kicker2).
+/// @pope-h
+fn get_three_of_a_kind_key(hand: @Hand) -> Array<u16> {
+    let mut value_counts: Felt252Dict<u8> = Default::default();
+    for i in 0..hand.cards.len() {
+        let card = *hand.cards.at(i);
+        value_counts.insert(card.value.into(), value_counts.get(card.value.into()) + 1);
+    };
+    let mut three_value: u16 = 0;
+    let mut kickers: Array<u16> = array![];
+    for v in 1..15_u16 {
+        let count = value_counts.get(v.into());
+        if count == 3 {
+            three_value = v;
+        } else if count == 1 {
+            kickers.append(v);
+        }
+    };
+    let sorted_kickers = bubble_sort_u16(kickers);
+    array![three_value, *sorted_kickers.at(0), *sorted_kickers.at(1)]
+}
+
 /// FOR KICKER, SORT ALL CARDS AND COMPARE THEIR FIRST VALUES (POKER_VAL)
 /// THE REST SHOULD BE HISTORY. :)
 ///
