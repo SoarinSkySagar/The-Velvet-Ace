@@ -50,6 +50,8 @@ pub struct RoundResolved {
     #[key]
     pub game_id: u64,
     pub can_join: bool,
+    pub winners: Array<ContractAddress>,
+    pub pot: u256,
 }
 
 #[derive(Drop, Serde)]
@@ -72,6 +74,15 @@ pub struct PlayerLeft {
     pub player_id: ContractAddress,
     pub player_count: u32,
     pub expected_no_of_players: u32,
+}
+
+#[derive(Drop, Serde)]
+#[dojo::event]
+pub struct GameConcluded {
+    #[key]
+    pub game_id: u64,
+    pub time_stamp: u64,
+    pub mvp: ContractAddress,
 }
 
 /// MODEL

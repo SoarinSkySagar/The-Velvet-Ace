@@ -8,7 +8,7 @@ pub impl PlayerImpl of PlayerTrait {
     fn exit(ref self: Player, ref game: Game, out: bool) {
         let (is_locked, id) = self.locked;
         assert(is_locked, 'CANNOT EXIT, PLAYER NOT LOCKED');
-        assert(game.current_player_count != 0, 'GAME PLAYER COUNT SUB');    // sub overflow guard
+        assert(game.current_player_count != 0, 'GAME PLAYER COUNT SUB'); // sub overflow guard
         if out {
             // check game id
             assert(id == game.id, 'BAD REQUEST');
