@@ -194,4 +194,12 @@ mod tests {
         assert(winners.len() == 2, 'All straights should tie');
         assert(kicker.len() == 0, 'Straights tie, no kicker');
     }
+
+    #[test]
+    #[should_panic]
+    fn test_empty_hands_panics() {
+        // empty input should hit the first assert and panic
+        let _: (Array<Hand>, Array<Card>) =
+            extract_kicker(array![], HandRank::HIGH_CARD.into());
+    }
 }
