@@ -20,7 +20,7 @@ trait IActions<TContractState> {
     fn initialize_game(ref self: TContractState, game_params: Option<GameParams>) -> u64;
     fn join_game(ref self: TContractState, game_id: u64);
     fn leave_game(ref self: TContractState);
-    fn end_game(ref self: TContractState, game_id: u64);
+    fn end_game(ref self: TContractState, game_id: u64, force: bool);
 
     /// ********************************* NOTE *************************************************
     ///
