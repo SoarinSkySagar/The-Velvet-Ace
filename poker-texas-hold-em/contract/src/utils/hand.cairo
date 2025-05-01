@@ -28,12 +28,13 @@ fn extract_kicker(mut hands: Array<Hand>, hand_rank: u16) -> (Array<Hand>, Array
     let rank: HandRank = hand_rank.into();
 
     match rank {
-        HandRank::HIGH_CARD | HandRank::FLUSH => {
+        HandRank::HIGH_CARD |
+        HandRank::FLUSH => {
             let first_hand = hands.at(0); // Snapshot: @Hand
             assert(first_hand.cards.len() == 5, 'Hand must have 5 cards');
             let mut max_key = get_high_card_key(first_hand);
             let mut winning_indices: Array<usize> = array![0];
-          
+
             for i in 1..hands.len() {
                 let hand = hands.at(i); // Snapshot: @Hand
                 assert(hand.cards.len() == 5, 'Hand must have 5 cards');
@@ -63,7 +64,7 @@ fn extract_kicker(mut hands: Array<Hand>, hand_rank: u16) -> (Array<Hand>, Array
             assert(first_hand.cards.len() == 5, 'Hand must have 5 cards');
             let mut max_key = get_one_pair_key(first_hand);
             let mut winning_indices: Array<usize> = array![0];
-          
+
             for i in 1..hands.len() {
                 let hand = hands.at(i);
                 assert(hand.cards.len() == 5, 'Hand must have 5 cards');
@@ -76,7 +77,7 @@ fn extract_kicker(mut hands: Array<Hand>, hand_rank: u16) -> (Array<Hand>, Array
                     winning_indices.append(i);
                 }
             };
-           
+
             let mut winning_hands: Array<Hand> = array![];
             for j in 0..winning_indices.len() {
                 let index = *winning_indices.at(j);
@@ -93,7 +94,7 @@ fn extract_kicker(mut hands: Array<Hand>, hand_rank: u16) -> (Array<Hand>, Array
             assert(first_hand.cards.len() == 5, 'Hand must have 5 cards');
             let mut max_key = get_two_pair_key(first_hand);
             let mut winning_indices: Array<usize> = array![0];
-         
+
             for i in 1..hands.len() {
                 let hand = hands.at(i);
                 assert(hand.cards.len() == 5, 'Hand must have 5 cards');
@@ -106,7 +107,7 @@ fn extract_kicker(mut hands: Array<Hand>, hand_rank: u16) -> (Array<Hand>, Array
                     winning_indices.append(i);
                 }
             };
-           
+
             let mut winning_hands: Array<Hand> = array![];
             for j in 0..winning_indices.len() {
                 let index = *winning_indices.at(j);
@@ -123,7 +124,7 @@ fn extract_kicker(mut hands: Array<Hand>, hand_rank: u16) -> (Array<Hand>, Array
             assert(first_hand.cards.len() == 5, 'Hand must have 5 cards');
             let mut max_key = get_three_of_a_kind_key(first_hand);
             let mut winning_indices: Array<usize> = array![0];
-          
+
             for i in 1..hands.len() {
                 let hand = hands.at(i);
                 assert(hand.cards.len() == 5, 'Hand must have 5 cards');
@@ -136,7 +137,7 @@ fn extract_kicker(mut hands: Array<Hand>, hand_rank: u16) -> (Array<Hand>, Array
                     winning_indices.append(i);
                 }
             };
-           
+
             let mut winning_hands: Array<Hand> = array![];
             for j in 0..winning_indices.len() {
                 let index = *winning_indices.at(j);
@@ -148,11 +149,12 @@ fn extract_kicker(mut hands: Array<Hand>, hand_rank: u16) -> (Array<Hand>, Array
                 (winning_hands, array![])
             }
         },
-        HandRank::STRAIGHT | HandRank::STRAIGHT_FLUSH | HandRank::ROYAL_FLUSH => {
+        HandRank::STRAIGHT | HandRank::STRAIGHT_FLUSH |
+        HandRank::ROYAL_FLUSH => {
             for i in 0..hands.len() {
                 assert(hands.at(i).cards.len() == 5, 'Hand must have 5 cards');
             };
-            
+
             let mut result_hands: Array<Hand> = array![];
             for j in 0..hands.len() {
                 result_hands.append(hands[j].clone());
@@ -164,7 +166,7 @@ fn extract_kicker(mut hands: Array<Hand>, hand_rank: u16) -> (Array<Hand>, Array
             assert(first_hand.cards.len() == 5, 'Hand must have 5 cards');
             let mut max_key = get_full_house_key(first_hand);
             let mut winning_indices: Array<usize> = array![0];
-           
+
             for i in 1..hands.len() {
                 let hand = hands.at(i);
                 assert(hand.cards.len() == 5, 'Hand must have 5 cards');
@@ -177,7 +179,7 @@ fn extract_kicker(mut hands: Array<Hand>, hand_rank: u16) -> (Array<Hand>, Array
                     winning_indices.append(i);
                 }
             };
-            
+
             let mut winning_hands: Array<Hand> = array![];
             for j in 0..winning_indices.len() {
                 let index = *winning_indices.at(j);
@@ -219,9 +221,7 @@ fn extract_kicker(mut hands: Array<Hand>, hand_rank: u16) -> (Array<Hand>, Array
                 (winning_hands, array![])
             }
         },
-        HandRank::UNDEFINED => {
-            panic(array!['Undefined hand rank'])
-        }
+        HandRank::UNDEFINED => { panic(array!['Undefined hand rank']) },
     }
 }
 
@@ -427,7 +427,11 @@ fn sort_cards_by_poker_value(cards: @Array<Card>) -> Array<Card> {
     let mut card_data: Array<(u16, u16, u8)> = array![];
     for i in 0..cards.len() {
         let card = *cards.at(i);
-        let poker_value = if card.value == Royals::ACE { 14_u16 } else { card.value };
+        let poker_value = if card.value == Royals::ACE {
+            14_u16
+        } else {
+            card.value
+        };
         card_data.append((card.value, poker_value, card.suit));
     };
     let sorted_data = bubble_sort(card_data);
@@ -572,7 +576,11 @@ fn get_high_card_key(hand: @Hand) -> Array<u16> {
     let mut values: Array<u16> = array![];
     for i in 0..sorted_cards.len() {
         let card = *sorted_cards.at(i);
-        let poker_value = if card.value == Royals::ACE { 14_u16 } else { card.value };
+        let poker_value = if card.value == Royals::ACE {
+            14_u16
+        } else {
+            card.value
+        };
         values.append(poker_value);
     };
     values
@@ -582,7 +590,11 @@ fn get_high_card_key(hand: @Hand) -> Array<u16> {
 fn compare_arrays(a: @Array<u16>, b: @Array<u16>) -> felt252 {
     let len_a = a.len();
     let len_b = b.len();
-    let min_len = if len_a < len_b { len_a } else { len_b };
+    let min_len = if len_a < len_b {
+        len_a
+    } else {
+        len_b
+    };
     let mut result: felt252 = 0;
 
     for i in 0..min_len {
