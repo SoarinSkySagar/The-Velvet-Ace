@@ -429,4 +429,21 @@ mod tests {
         assert(winners.len() == 2, 'All straight-flush hands tie');
         assert(kicker.len()   == 0, 'Tie, no kicker');
     }
+
+    #[test]
+    fn test_royal_flush_tie() {
+        let p1 = contract_address_const::<'P1'>();
+        let p2 = contract_address_const::<'P2'>();
+        let h1 = mk_hand(p1, array![
+            c(10,2), c(11,2), c(12,2), c(13,2), c(14,2)
+        ]);
+        let h2 = mk_hand(p2, array![
+            c(10,1), c(11,1), c(12,1), c(13,1), c(14,1)
+        ]);
+
+        let (winners, kicker) =
+            extract_kicker(array![h1.clone(), h2.clone()], HandRank::ROYAL_FLUSH.into());
+        assert(winners.len() == 2, 'All royal-flush hands tie');
+        assert(kicker.len()   == 0, 'Tie, no kicker');
+    }
 }
