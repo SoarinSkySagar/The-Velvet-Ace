@@ -135,4 +135,20 @@ mod tests {
         // kicker must be the winner’s full 5 cards
         assert(kicker == h1.cards, 'kicker must be winner cards');
     }
+
+    #[test]
+    fn test_high_card_tie() {
+        let player1 = contract_address_const::<'PLAYER1'>();
+        let player2 = contract_address_const::<'PLAYER2'>();
+
+        // both hands identical → tie, no kicker
+        let cards = array![c(14,0), c(10,1), c(8,2), c(4,3), c(2,0)];
+        let h1 = mk_hand(player1, cards.clone());
+        let h2 = mk_hand(player2, cards);
+        let (winners, kicker) =
+            extract_kicker(array![h1.clone(), h2.clone()], HandRank::HIGH_CARD.into());
+
+        assert(winners.len() == 2, 'Both hands should tie');
+        assert(kicker.len() == 0, 'Tie means no kicker returned');
+    }
 }
