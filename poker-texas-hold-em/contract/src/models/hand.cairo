@@ -335,4 +335,23 @@ mod tests {
         assert(winners.at(0).player == @h2.player, 'Wrong winner on two-pair kicker');
         assert(kicker == h2.cards, 'Kicker must be winner cards');
     }
+
+    #[test]
+    fn test_three_of_a_kind_different_three() {
+        let p1 = contract_address_const::<'P1'>();
+        let p2 = contract_address_const::<'P2'>();
+        // p1: three 9s, p2: three 8s
+        let h1 = mk_hand(p1, array![
+            c(9,0), c(9,1), c(9,2), c(5,0), c(4,1)
+        ]);
+        let h2 = mk_hand(p2, array![
+            c(8,0), c(8,1), c(8,2), c(14,0), c(2,1)
+        ]);
+
+        let (winners, kicker) =
+            extract_kicker(array![h1.clone(), h2.clone()], HandRank::THREE_OF_A_KIND.into());
+        assert(winners.len() == 1, 'Higher three-of-kind wins');
+        assert(winners.at(0).player == @h1.player, 'Wrong winner on three-of-a-kind');
+        assert(kicker == h1.cards, 'Kicker must be winner cards');
+    }
 }
