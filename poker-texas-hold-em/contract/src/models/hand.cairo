@@ -374,4 +374,23 @@ mod tests {
         assert(winners.at(0).player == @h1.player, 'Wrong winner on flush');
         assert(kicker == h1.cards, 'Kicker must be winner cards');
     }
+
+    #[test]
+    fn test_full_house_different_three() {
+        let p1 = contract_address_const::<'P1'>();
+        let p2 = contract_address_const::<'P2'>();
+        // p1: 3×A + 2×K, p2: 3×K + 2×Q
+        let h1 = mk_hand(p1, array![
+            c(14,0), c(14,1), c(14,2), c(13,0), c(13,1)
+        ]);
+        let h2 = mk_hand(p2, array![
+            c(13,2), c(13,3), c(13,1), c(12,0), c(12,1)
+        ]);
+
+        let (winners, kicker) =
+            extract_kicker(array![h1.clone(), h2.clone()], HandRank::FULL_HOUSE.into());
+        assert(winners.len() == 1, 'Higher triple wins');
+        assert(winners.at(0).player == @h1.player, 'Wrong winner on full house');
+        assert(kicker == h1.cards, 'Kicker must be winner cards');
+    }
 }
