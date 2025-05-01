@@ -151,4 +151,27 @@ mod tests {
         assert(winners.len() == 2, 'Both hands should tie');
         assert(kicker.len() == 0, 'Tie means no kicker returned');
     }
+
+    #[test]
+    fn test_one_pair_kicker_ordering() {
+        let player1 = contract_address_const::<'PLAYER1'>();
+        let player2 = contract_address_const::<'PLAYER2'>();
+
+        // Both have pair of 9s:
+        // h1 kickers = [A, K, 3]
+        let h1 = mk_hand(player1, array![
+            c(9,0), c(9,1), c(14,0), c(13,1), c(3,2),
+        ]);
+        // h2 kickers = [A, Q, 5] → Q < K, so h1 should win
+        let h2 = mk_hand(player2, array![
+            c(9,2), c(9,3), c(14,1), c(12,0), c(5,1),
+        ]);
+
+        let (winners, kicker) =
+            extract_kicker(array![h1.clone(), h2.clone()], HandRank::ONE_PAIR.into());
+
+        assert(winners.len() == 1, 'Only one hand should win');
+        assert(winners.at(0).player == @h1.player, 'Wrong hand won the tie');
+        assert(kicker == h1.cards, 'Winner cards must be returned');
+    }
 }
