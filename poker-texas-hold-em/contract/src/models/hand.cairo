@@ -214,4 +214,25 @@ mod tests {
         let _: (Array<Hand>, Array<Card>) =
             extract_kicker(array![h], 0);
     }
+
+    #[test]
+    fn test_high_card_different_high() {
+        let p1 = contract_address_const::<'P1'>();
+        let p2 = contract_address_const::<'P2'>();
+
+        // p1: K♣ Q♦ J♠ 10♣ 9♦  (King high)
+        let h1 = mk_hand(p1, array![
+            c(13, 0), c(12, 1), c(11, 2), c(10, 0), c(9,  1)
+        ]);
+        // p2: A♥ 5♣ 4♦ 3♠ 2♣   (Ace high)
+        let h2 = mk_hand(p2, array![
+            c(14, 3), c(5,  0), c(4,  1), c(3,  2), c(2,  0)
+        ]);
+
+        let (winners, kicker) =
+            extract_kicker(array![h1.clone(), h2.clone()], HandRank::HIGH_CARD.into());
+        assert(winners.len() == 1, 'Expected one winner');
+        assert(winners.at(0).player == @h2.player, 'Ace-high should win');
+        assert(kicker == h2.cards, 'Kicker must be winner cards');
+    }
 }
