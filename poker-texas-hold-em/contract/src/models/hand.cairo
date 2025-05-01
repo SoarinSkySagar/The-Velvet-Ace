@@ -278,4 +278,21 @@ mod tests {
         assert(winners.at(0).player == @h1.player, 'Wrong winner on different pairs');
         assert(kicker == h1.cards, 'Kicker must be winner cards');
     }
+
+    #[test]
+    fn test_one_pair_tie() {
+        let p1 = contract_address_const::<'P1'>();
+        let p2 = contract_address_const::<'P2'>();
+        let cards = array![
+            c(8,0), c(8,1), c(14,0), c(13,1), c(2,2)
+        ];
+
+        let h1 = mk_hand(p1, cards.clone());
+        let h2 = mk_hand(p2, cards);
+
+        let (winners, kicker) =
+            extract_kicker(array![h1.clone(), h2.clone()], HandRank::ONE_PAIR.into());
+        assert(winners.len() == 2, 'Identical pairs should tie');
+        assert(kicker.len()   == 0, 'Tie, no kicker');
+    }
 }
