@@ -257,4 +257,25 @@ mod tests {
         assert(winners.at(0).player == @h2.player, 'Higher second-card should win');
         assert(kicker == h2.cards, 'Kicker must be winner cards');
     }
+
+    #[test]
+    fn test_one_pair_different_pairs() {
+        let p1 = contract_address_const::<'P1'>();
+        let p2 = contract_address_const::<'P2'>();
+
+        // p1: pair of Jacks
+        let h1 = mk_hand(p1, array![
+            c(11,0), c(11,1), c(9,0), c(8,1), c(7,2)
+        ]);
+        // p2: pair of Tens
+        let h2 = mk_hand(p2, array![
+            c(10,2), c(10,3), c(14,0), c(2,1), c(3,2)
+        ]);
+
+        let (winners, kicker) =
+            extract_kicker(array![h1.clone(), h2.clone()], HandRank::ONE_PAIR.into());
+        assert(winners.len() == 1, 'Higher pair wins');
+        assert(winners.at(0).player == @h1.player, 'Wrong winner on different pairs');
+        assert(kicker == h1.cards, 'Kicker must be winner cards');
+    }
 }
