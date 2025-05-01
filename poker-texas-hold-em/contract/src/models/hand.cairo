@@ -202,4 +202,16 @@ mod tests {
         let _: (Array<Hand>, Array<Card>) =
             extract_kicker(array![], HandRank::HIGH_CARD.into());
     }
+
+    #[test]
+    #[should_panic]
+    fn test_undefined_rank_panics() {
+        let player = contract_address_const::<'PLAYER1'>();
+        let h = mk_hand(player, array![
+            c(2,0), c(3,0), c(4,0), c(5,0), c(6,0),
+        ]);
+        // 0 maps to UNDEFINED → should panic
+        let _: (Array<Hand>, Array<Card>) =
+            extract_kicker(array![h], 0);
+    }
 }
