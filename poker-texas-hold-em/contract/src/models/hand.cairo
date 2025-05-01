@@ -315,4 +315,24 @@ mod tests {
         assert(winners.at(0).player == @h1.player, 'Wrong winner on two-pair');
         assert(kicker == h1.cards, 'Kicker must be winner cards');
     }
+
+    #[test]
+    fn test_two_pair_same_pairs_different_kicker() {
+        let p1 = contract_address_const::<'P1'>();
+        let p2 = contract_address_const::<'P2'>();
+        // both K-K & Q-Q…
+        // p1 kicker = 10, p2 kicker = J
+        let h1 = mk_hand(p1, array![
+            c(13,0), c(13,1), c(12,0), c(12,1), c(10,2)
+        ]);
+        let h2 = mk_hand(p2, array![
+            c(13,2), c(13,3), c(12,2), c(12,3), c(11,0)
+        ]);
+
+        let (winners, kicker) =
+            extract_kicker(array![h1.clone(), h2.clone()], HandRank::TWO_PAIR.into());
+        assert(winners.len() == 1, 'Higher kicker wins');
+        assert(winners.at(0).player == @h2.player, 'Wrong winner on two-pair kicker');
+        assert(kicker == h2.cards, 'Kicker must be winner cards');
+    }
 }
