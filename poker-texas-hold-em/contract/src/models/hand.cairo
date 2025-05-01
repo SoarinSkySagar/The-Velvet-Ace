@@ -98,6 +98,7 @@ impl U16HandRank of Into<u16, HandRank> {
     }
 }
 
+/// @pope-h
 #[cfg(test)]
 mod tests {
     use super::{Hand, HandRank, Card, ContractAddress, Royals};
