@@ -174,4 +174,24 @@ mod tests {
         assert(winners.at(0).player == @h1.player, 'Wrong hand won the tie');
         assert(kicker == h1.cards, 'Winner cards must be returned');
     }
+
+    #[test]
+    fn test_straight_always_tie() {
+        let player1 = contract_address_const::<'PLAYER1'>();
+        let player2 = contract_address_const::<'PLAYER2'>();
+
+        // h1: 10-J-Q-K-A, h2: 9-10-J-Q-K
+        let h1 = mk_hand(player1, array![
+            c(10,0), c(11,0), c(12,0), c(13,0), c(14,0),
+        ]);
+        let h2 = mk_hand(player2, array![
+            c(9,1), c(10,1), c(11,1), c(12,1), c(13,1),
+        ]);
+
+        let (winners, kicker) =
+            extract_kicker(array![h1.clone(), h2.clone()], HandRank::STRAIGHT.into());
+
+        assert(winners.len() == 2, 'All straights should tie');
+        assert(kicker.len() == 0, 'Straights tie, no kicker');
+    }
 }
