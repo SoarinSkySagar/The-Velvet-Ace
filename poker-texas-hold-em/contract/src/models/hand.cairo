@@ -412,4 +412,21 @@ mod tests {
         assert(winners.at(0).player == @h1.player, 'Wrong winner on four-of-a-kind');
         assert(kicker == h1.cards, 'Kicker must be winner cards');
     }
+
+    #[test]
+    fn test_straight_flush_tie() {
+        let p1 = contract_address_const::<'P1'>();
+        let p2 = contract_address_const::<'P2'>();
+        let h1 = mk_hand(p1, array![
+            c(5,0), c(6,0), c(7,0), c(8,0), c(9,0)
+        ]);
+        let h2 = mk_hand(p2, array![
+            c(2,1), c(3,1), c(4,1), c(5,1), c(6,1)
+        ]);
+
+        let (winners, kicker) =
+            extract_kicker(array![h1.clone(), h2.clone()], HandRank::STRAIGHT_FLUSH.into());
+        assert(winners.len() == 2, 'All straight-flush hands tie');
+        assert(kicker.len()   == 0, 'Tie, no kicker');
+    }
 }
