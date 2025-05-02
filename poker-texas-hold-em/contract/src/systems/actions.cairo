@@ -113,6 +113,8 @@ pub mod actions {
 
         fn end_game(ref self: ContractState, game_id: u64) {}
 
+
+        /// @dub_zn
         fn check(ref self: ContractState) {
             let caller = get_caller_address();
             self.before_play(caller);
@@ -124,6 +126,7 @@ pub mod actions {
             self.after_play(caller);
         }
 
+        /// @dub_zn
         fn call(ref self: ContractState) {
             let mut world = self.world_default();
             let mut player: Player = world.read_model(get_caller_address());
@@ -140,6 +143,7 @@ pub mod actions {
             self.after_play(player.id);
         }
 
+        /// @dub_zn
         fn fold(ref self: ContractState) {
             let mut world = self.world_default();
             let mut player: Player = world.read_model(get_caller_address());
@@ -151,6 +155,7 @@ pub mod actions {
             self.after_play(player.id);
         }
 
+        /// @dub_zn
         fn raise(ref self: ContractState, no_of_chips: u256) {
             let mut world = self.world_default();
             let mut player: Player = world.read_model(get_caller_address());
@@ -169,6 +174,7 @@ pub mod actions {
             self.after_play(player.id)
         }
 
+        /// @dub_zn
         fn all_in(ref self: ContractState) {
             let mut world = self.world_default();
             let mut player: Player = world.read_model(get_caller_address());
