@@ -1,12 +1,12 @@
-use starknet::ContractAddress;
-use poker::models::hand::{Hand, HandRank};
-use poker::models::card::{Card, DEFAULT_NO_OF_CARDS, Royals, CardTrait};
-use poker::models::game::GameParams;
-use poker::utils::hand::{evaluate_cards, generate_combinations, min_u32, extract_kicker};
-use core::num::traits::{Zero, One};
-use core::dict::Felt252DictTrait;
 use core::array::ArrayTrait;
+use core::dict::Felt252DictTrait;
+use core::num::traits::{One, Zero};
 use core::option::OptionTrait;
+use poker::models::card::{Card, CardTrait, DEFAULT_NO_OF_CARDS, Royals};
+use poker::models::game::GameParams;
+use poker::models::hand::{Hand, HandRank};
+use poker::utils::hand::{evaluate_cards, extract_kicker, generate_combinations, min_u32};
+use starknet::ContractAddress;
 use super::handtrait::HandTrait;
 
 pub impl HandImpl of HandTrait {
@@ -30,11 +30,11 @@ pub impl HandImpl of HandTrait {
 
         for i in 0..self.cards.len() {
             all_cards.append(*self.cards[i]);
-        };
+        }
 
         for i in 0..community_cards.len() {
             all_cards.append(*community_cards[i]);
-        };
+        }
 
         // Generate all max 5-card combinations (C(7,k)), where  0 <= k <= 5
         let k = min_u32(all_cards.len(), 5);
@@ -57,7 +57,7 @@ pub impl HandImpl of HandTrait {
                 let hand = Hand { player: *self.player, cards: hand_cards.clone() };
                 best_hands.append(hand);
             }
-        };
+        }
 
         // let best_hand: Hand = Self::default();
 
@@ -104,7 +104,7 @@ pub impl HandImpl of HandTrait {
                 winning_hands.append(hand);
                 winning_new_hands.append(new_hand);
             }
-        };
+        }
 
         // if winning_hands.len() > 1, then it kicked. Extract kicker
         // add all hands into the array if game_params.kicker_split is true.
@@ -127,7 +127,7 @@ pub impl HandImpl of HandTrait {
                             break;
                         }
                     }
-                };
+                }
                 kicker_cards = _cards;
             }
             winning_hands = hands;
@@ -164,7 +164,7 @@ pub impl HandImpl of HandTrait {
             let word: ByteArray = format!("{}. {}\n", count, card.to_byte_array());
             str.append(@word);
             count += 1;
-        };
+        }
 
         str
     }

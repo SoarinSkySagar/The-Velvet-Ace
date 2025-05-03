@@ -1,12 +1,12 @@
 /// POKER CONTRACT
 #[dojo::contract]
 pub mod actions {
-    use starknet::{ContractAddress, get_caller_address, get_contract_address, get_block_timestamp};
-    use dojo::model::{ModelStorage, ModelValueStorage};
+    use core::num::traits::Zero;
     use dojo::event::EventStorage;
+    use dojo::model::{ModelStorage, ModelValueStorage};
     use poker::models::base::{
-        GameErrors, Id, GameInitialized, CardDealt, HandCreated, HandResolved, RoundResolved,
-        PlayerJoined, PlayerLeft, GameConcluded,
+        CardDealt, GameConcluded, GameErrors, GameInitialized, HandCreated, HandResolved, Id,
+        PlayerJoined, PlayerLeft, RoundResolved,
     };
     use poker::models::card::{Card, CardTrait};
     use poker::models::deck::{Deck, DeckTrait};
@@ -14,7 +14,7 @@ pub mod actions {
     use poker::models::hand::{Hand, HandTrait};
     use poker::models::player::{Player, PlayerTrait};
     use poker::traits::game::get_default_game_params;
-    use core::num::traits::Zero;
+    use starknet::{ContractAddress, get_block_timestamp, get_caller_address, get_contract_address};
     use crate::systems::interface::IActions;
 
     pub const GAME: felt252 = 'GAME';
@@ -58,7 +58,7 @@ pub mod actions {
             // Save available decks
             for deck in decks {
                 world.write_model(@deck);
-            };
+            }
 
             let game_initialized = GameInitialized {
                 game_id: game_id,
@@ -96,7 +96,7 @@ pub mod actions {
             //      CALL START ROUND FUNCTION
             // **************************************
             // ASSERT THAT THE START_ROUND EMITS A GAMESTARTED EVENT.
-            };
+            }
 
             world.write_model(@game);
             world.write_model(@player);
@@ -127,7 +127,7 @@ pub mod actions {
                     if p.is_in_game(game_id) {
                         players.append(c);
                     }
-                };
+                }
                 game.players = players;
                 game.reshuffled += 1;
             }
@@ -341,7 +341,7 @@ pub mod actions {
                     break;
                 }
                 i += 1;
-            };
+            }
             result
         }
 
@@ -367,7 +367,7 @@ pub mod actions {
                 }
                 next_index = (next_index + 1) % num_players;
                 attempts += 1;
-            };
+            }
             result
         }
 
@@ -393,12 +393,12 @@ pub mod actions {
                     break;
                 }
                 i += 1;
-            };
+            }
 
             // If no dealer is found, return None
             if !found {
                 return Option::None;
-            };
+            }
 
             // Calculate the index of the next dealer
             let mut next_dealer_index: usize = (current_dealer_index + 1) % num_players;
@@ -444,7 +444,7 @@ pub mod actions {
             for player in players.span() {
                 let current_game_id = player.extract_current_game_id();
                 assert(current_game_id == game_id, 'Players in different games');
-            };
+            }
 
             let mut world = self.world_default();
             let game: Game = world.read_model(*game_id);
@@ -475,7 +475,7 @@ pub mod actions {
                                 time_stamp: starknet::get_block_timestamp(),
                             },
                         );
-                };
+                }
 
                 world.write_model(@hand);
                 world.write_model(player);
@@ -514,7 +514,7 @@ pub mod actions {
                 assert(*player_game_id == game_id, 'Players in different games');
 
                 i += 1;
-            };
+            }
 
             let mut world = self.world_default();
             let mut game: Game = world.read_model(game_id);
@@ -528,7 +528,7 @@ pub mod actions {
                 deck.new_deck();
                 deck.shuffle();
                 world.write_model(@deck); // should work, I guess.
-            };
+            }
 
             // Array of all the players
             let mut resolved_players = ArrayTrait::new();
@@ -551,7 +551,7 @@ pub mod actions {
 
                 world.write_model(@hand);
                 j += 1;
-            };
+            }
 
             world.emit_event(@HandResolved { game_id: game_id, players: resolved_players });
         }
@@ -588,7 +588,7 @@ pub mod actions {
             for player_address in game.players.span() {
                 let player: Player = world.read_model(*player_address);
                 players.append(player);
-            };
+            }
 
             // Reset player hands and decks
             self._resolve_hands(ref players);
@@ -596,7 +596,7 @@ pub mod actions {
             // Write the modified players back to the world storage first
             for player in players.span() {
                 world.write_model(player);
-            };
+            }
 
             // Update game state for the next round
             game.current_round += 1;
@@ -618,7 +618,7 @@ pub mod actions {
                     // Write the modified copy back to world
                     world.write_model(@player_copy);
                 }
-            };
+            }
 
             // Check if the game allows new players to join based on game parameters
             let _can_join = game.is_allowable();
@@ -630,7 +630,7 @@ pub mod actions {
             for i in 0..winning_hands.len() {
                 let winner = winning_hands.at(i);
                 winners.append(*winner.player);
-            };
+            }
             let pot = game.pot;
             world.write_model(@game);
             let round_resolved = RoundResolved {

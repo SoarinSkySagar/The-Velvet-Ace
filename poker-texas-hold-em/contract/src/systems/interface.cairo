@@ -1,7 +1,7 @@
 use poker::models::game::{Game, GameParams};
 use poker::models::player::Player;
-use starknet::ContractAddress;
 use poker::traits::game::get_default_game_params;
+use starknet::ContractAddress;
 
 
 /// TODO: Read the GameREADME.md file to understand the rules of coding this game.
