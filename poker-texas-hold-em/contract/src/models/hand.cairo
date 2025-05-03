@@ -101,9 +101,10 @@ impl U16HandRank of Into<u16, HandRank> {
 /// @pope-h
 #[cfg(test)]
 mod tests {
-    use super::{Hand, HandRank, Card, ContractAddress, Royals};
+    use super::{Hand, HandRank, HandTrait, Card, ContractAddress, Royals};
     use starknet::contract_address_const;
     use poker::utils::hand::{extract_kicker};
+    use poker::models::game::{GameMode, GameParams};
     // use crate::models::card::Suits;
 
     // convenience constructor for cards
