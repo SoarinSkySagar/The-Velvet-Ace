@@ -1,6 +1,6 @@
-use poker::models::base::GameErrors;
-use poker::models::game::Game;
 use poker::models::player::Player;
+use poker::models::game::Game;
+use poker::models::base::GameErrors;
 use super::game::GameTrait;
 
 #[generate_trait]

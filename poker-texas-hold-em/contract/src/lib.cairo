@@ -4,19 +4,19 @@ mod systems {
 }
 
 mod models {
-    mod base;
-    mod card;
     mod deck;
     mod game;
     mod hand;
     mod player;
+    mod card;
+    mod base;
 }
 
 mod traits {
-    mod deck;
+    mod handtrait;
     mod game;
     mod handimpl;
-    mod handtrait;
+    mod deck;
     mod player;
 }
 

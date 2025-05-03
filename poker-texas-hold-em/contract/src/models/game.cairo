@@ -1,7 +1,7 @@
-use core::num::traits::Zero;
-use poker::traits::game::GameTrait;
 use starknet::ContractAddress;
 use super::card::Card;
+use poker::traits::game::GameTrait;
+use core::num::traits::Zero;
 
 /// CashGame. same as the `true` value for the Tournament. CashGame should allow incoming players...
 /// may be refactored in the future.

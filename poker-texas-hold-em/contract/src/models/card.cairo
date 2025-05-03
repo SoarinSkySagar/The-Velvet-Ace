@@ -83,7 +83,7 @@ pub mod Suits {
 
 #[cfg(test)]
 mod tests {
-    use super::{Card, CardTrait, Royals, Suits};
+    use super::{Card, CardTrait, Suits, Royals};
 
     #[test]
     fn test_card_is_valid() {
