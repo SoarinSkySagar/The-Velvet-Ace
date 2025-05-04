@@ -2,7 +2,7 @@
 
 To start writing, compiling, and testing Starknet smart contracts in Cairo 1.x, you’ll need to install a few essential tools:
 
-* **Cairo** – The core programming language for Starknet smart contracts.
+
 * **Scarb** – Cairo’s package manager and build tool (like npm or cargo).
 * **Starknet Foundry** – A toolkit for testing and deploying Cairo contracts (snforge, sncast).
 * **asdf** – A version manager to install and manage compatible versions of each tool.
@@ -50,7 +50,6 @@ If this prints a version, `asdf` is ready.
 
 
 ```bash
-asdf plugin add cairo-lang https://github.com/asdf-community/asdf-cairo-lang.git
 asdf plugin add scarb https://github.com/software-mansion/asdf-scarb.git
 asdf plugin add starknet-foundry https://github.com/ImJoselito/asdf-starknet-foundry.git
 ```
@@ -65,7 +64,6 @@ To install tools to match your project setup:
 For a project with `scarb = "2.9.2"`, you likely need:
 
 ```bash
-asdf install cairo-lang 2.9.2
 asdf install scarb 2.9.2
 asdf install starknet-foundry 0.13.1
 ```
@@ -76,35 +74,42 @@ Make sure to adjust if your project defines different versions.
 ---
 
 ### Step 4: Set Tool Versions 
-* Use `global` to apply versions system-wide (recommended).
+ ⚠️ Note: If you're using `asdf` version 0.16.0 or later, the `global` and `local` commands have been removed. Use `asdf set` instead. 
+ 
+ [See what changed in v0.16.0](https://asdf-vm.com/guide/upgrading-to-v0-16.html#breaking-changes) 
+
+**For asdf < 0.16.0**:
 
 ```bash
-asdf global cairo-lang 2.9.9               
-asdf global scarb 2.9.2                    
-asdf global starknet-foundry 0.13.1       
-```
-* Use`local` to apply them only in the current project.
-```bash
-asdf local cairo-lang 2.9.2
-asdf local scarb 2.9.2
+asdf global scarb 2.9.2           # applies version system-wide         
+asdf global starknet-foundry 0.13.1
+
+asdf local scarb 2.9.2            # applies version only in current project
 asdf local starknet-foundry 0.13.1
 ```
+
+
+**For asdf >= 0.16.0**:
+
+```bash
+asdf set scarb 2.9.2
+asdf set starknet-foundry 0.13.1
+
+asdf set --home scarb 2.9.2  # optional, sets version globally
+asdf set --home starknet-foundry 0.13.1
+```
+
 This creates a `.tool-versions` file to track versions for your project.
-
-
 
 
 ## ⚙️ Manual Setup
 This installs each tool separately:
 
 
-**1. Cairo** - Download from [Cairo Releases](https://github.com/starkware-libs/cairo/releases) and follow your OS-specific instructions.
-
-
-**2. Scarb** - Get it from [Scarb Docs](https://docs.swmansion.com/scarb/).
+**1. Scarb** - Get it from [Scarb Docs](https://docs.swmansion.com/scarb/).
 Extract it and move it to `/usr/local/bin/` or update your system `PATH`.
 
-**3. Starknet Foundry**
+**2. Starknet Foundry**
 
 First, install Rust:
 
@@ -145,7 +150,6 @@ Adds syntax highlighting, error checking, and smart features.
 Run these commands to confirm everything works:
 
 ```bash
-cairo-run --version
 scarb --version
 snforge --version
 ```
@@ -153,7 +157,6 @@ snforge --version
 You should see version numbers like:
 
 ```
-cairo-run 2.9.2
 scarb 2.9.2
 snforge 0.13.1
 ```
