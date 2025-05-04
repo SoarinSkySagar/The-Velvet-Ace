@@ -1,12 +1,12 @@
 /// POKER CONTRACT
 #[dojo::contract]
 pub mod actions {
-    use starknet::{ContractAddress, get_caller_address};
+    use starknet::{ContractAddress, get_caller_address, get_contract_address, get_block_timestamp};
     use dojo::model::{ModelStorage, ModelValueStorage};
     use dojo::event::EventStorage;
     use poker::models::base::{
         GameErrors, Id, GameInitialized, CardDealt, HandCreated, HandResolved, RoundResolved,
-        PlayerJoined,
+        PlayerJoined, PlayerLeft, GameConcluded,
     };
     use poker::models::card::{Card, CardTrait};
     use poker::models::deck::{Deck, DeckTrait};
@@ -14,7 +14,8 @@ pub mod actions {
     use poker::models::hand::{Hand, HandTrait};
     use poker::models::player::{Player, PlayerTrait};
     use poker::traits::game::get_default_game_params;
-    use super::super::interface::IActions;
+    use core::num::traits::Zero;
+    use crate::systems::interface::IActions;
 
     pub const GAME: felt252 = 'GAME';
     pub const DECK: felt252 = 'DECK';
@@ -63,7 +64,7 @@ pub mod actions {
                 game_id: game_id,
                 player: caller,
                 game_params: game.params,
-                time_stamp: starknet::get_block_timestamp(),
+                time_stamp: get_block_timestamp(),
             };
 
             world.emit_event(@game_initialized);
@@ -101,17 +102,65 @@ pub mod actions {
             world.write_model(@player);
         }
 
-        fn leave_game(ref self: ContractState) { // assert if the player exists
-        // extract game_id
-        // assert if the game exists
-        // assert player.locked == true
-        // Check if the player is in the game
+        // @Birdmannn
+        fn leave_game(ref self: ContractState) {
+            let caller = get_caller_address();
+            let mut world = self.world_default();
+            let mut player: Player = world.read_model(caller);
 
-        // Emit an event here
-        // world.emit_event(@PlayerLeft{game_id, player})
+            let game_id = *player.extract_current_game_id();
+            let mut game: Game = world.read_model(game_id);
+
+            // you can leave and return only for CashGame GameModes
+            let out = game.params.game_mode == Default::default();
+            // this decrements the player count
+            player.exit(ref game, out);
+
+            let precision = 1_000_000;
+            let ratio = precision / 5; // 1 out of 5 players, times precision
+            let current_ratio = game.current_player_count * precision / game.players.len();
+            if ratio >= current_ratio {
+                // shuffle.
+                let mut players = array![];
+                for c in game.players {
+                    let p: Player = world.read_model(c);
+                    if p.is_in_game(game_id) {
+                        players.append(c);
+                    }
+                };
+                game.players = players;
+                game.reshuffled += 1;
+            }
+
+            let player_left = PlayerLeft {
+                game_id,
+                player_id: caller,
+                player_count: game.current_player_count,
+                expected_no_of_players: game.params.max_no_of_players,
+            };
+            world.emit_event(@player_left);
+            if game.current_player_count == 0 {
+                // for the bool variable, the value is not really necessary because it's called
+                // by this contract.
+                self._resolve_game(ref game, get_contract_address(), true);
+            }
+            world.write_model(@game);
+            world.write_model(@player);
         }
 
-        fn end_game(ref self: ContractState, game_id: u64) {}
+        // @Birdmannn
+        fn end_game(ref self: ContractState, game_id: u64, force: bool) {
+            let caller = get_caller_address();
+            let mut world = self.world_default();
+            let mut game: Game = world.read_model(game_id);
+            if game.has_ended {
+                return;
+            }
+            // TODO: You can assign admin roles of the tournament that can bypass this check.
+            // naturally, a `game` should end when all players leave the game
+            self._resolve_game(ref game, caller, force);
+            // would be audited in the future.
+        }
 
         /// @dub_zn
         fn check(ref self: ContractState) {
@@ -228,11 +277,11 @@ pub mod actions {
 
         fn set_alias(self: @ContractState, alias: felt252) {
             let caller: ContractAddress = get_caller_address();
-            assert(caller.is_non_zero(), 'ZERO CALLER');
+            assert(caller != Zero::zero(), 'ZERO CALLER');
             let mut world = self.world_default();
             let mut player: Player = world.read_model(caller);
             let check: Player = world.read_model(alias.clone());
-            assert(check.id.is_zero(), 'ALIAS UPDATE FAILED');
+            assert(check.id == Zero::zero(), 'ALIAS UPDATE FAILED');
             player.alias = alias;
 
             world.write_model(@player);
@@ -577,7 +626,7 @@ pub mod actions {
             world.emit_event(@HandResolved { game_id: game_id, players: resolved_players });
         }
 
-        /// dev: @psychemist
+        /// @psychemist, @Birdmannn
         ///
         /// Resolves the current round and prepares the game for the next round
         ///
@@ -643,13 +692,55 @@ pub mod actions {
 
             // Check if the game allows new players to join based on game parameters
             let _can_join = game.is_allowable();
-
+            if game.should_end {
+                self._resolve_game(ref game, get_contract_address(), false);
+            }
+            let (winning_hands, _) = self._extract_winner();
+            let mut winners = array![];
+            for i in 0..winning_hands.len() {
+                let winner = winning_hands.at(i);
+                winners.append(*winner.player);
+            };
+            let pot = game.pot;
             world.write_model(@game);
-
-            world.emit_event(@RoundResolved { game_id: game_id, can_join: _can_join });
+            let round_resolved = RoundResolved {
+                game_id: game_id, can_join: _can_join, winners, pot,
+            };
+            world.emit_event(@round_resolved);
         }
 
-        /// dev: @psychemist
+        // @Birdmannn
+        fn _resolve_game(
+            ref self: ContractState, ref game: Game, caller: ContractAddress, force: bool,
+        ) {
+            let mut world = self.world_default();
+            let round_in_progress = @game.round_in_progress;
+            if caller != get_contract_address() {
+                if *round_in_progress && !force {
+                    game.should_end = true;
+                    return;
+                }
+                // forced
+                // TODO: Do a split in the pot here, and extract winner.
+                // eject all players from the game
+                let players = game.players.clone();
+                for i in 0..players.len() {
+                    let mut player: Player = world.read_model(*players.at(i));
+                    player.exit(ref game, false);
+                }
+            }
+
+            game.has_ended = true;
+            game.next_player = Option::None;
+            // the remaining fields would be left for stats
+            // TODO: require mvp. assigned to a dev.
+            let game_concluded = GameConcluded {
+                game_id: game.id, time_stamp: get_block_timestamp(), mvp: Zero::zero(),
+            };
+            world.emit_event(@game_concluded);
+        }
+
+        /// @psychemist
         ///
         /// Deals a community card to the game board
         ///
@@ -695,8 +786,13 @@ pub mod actions {
         }
 
         // extracts the winning hands
-        fn extract_winner() -> (Array<Hand>, Option<Array<Card>>) {
+        fn _extract_winner(ref self: ContractState) -> (Array<Hand>, Option<Array<Card>>) {
+            // this should call split and finalize all that there is when a winner/winners have been
+            // set
             (array![], Option::None)
         }
     }
 }
+/// TODO: ALWAYS CHECK THE CURRENT_BET AND THE POT.
+
+
