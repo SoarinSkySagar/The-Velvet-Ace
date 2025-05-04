@@ -345,6 +345,7 @@ mod tests {
             current_bet: 0,
             params: get_default_game_params(),
             reshuffled: 0,
+            should_end: false,
         };
 
         let player_1 = Player {
