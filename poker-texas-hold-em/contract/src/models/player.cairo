@@ -15,7 +15,6 @@ use poker::traits::player::PlayerTrait;
 pub struct Player {
     #[key]
     id: ContractAddress,
-    #[key]
     alias: felt252,
     chips: u256,
     current_bet: u256,

@@ -162,16 +162,87 @@ pub mod actions {
             // would be audited in the future.
         }
 
-        fn check(ref self: ContractState) {}
+        /// @dub_zn
+        fn check(ref self: ContractState) {
+            let mut world = self.world_default();
+            let mut player: Player = world.read_model(get_caller_address());
 
-        fn call(ref self: ContractState) {}
+            self.before_play(player.id);
+            let game: Game = world.read_model(*player.extract_current_game_id());
+            assert!(
+                player.current_bet == game.current_bet,
+                "Your bet is not matched with the table. You must call, raise, or fold.",
+            );
 
-        fn fold(ref self: ContractState) {}
+            self.after_play(player.id);
+        }
 
-        fn raise(ref self: ContractState, no_of_chips: u256) {}
+        /// @dub_zn
+        fn call(ref self: ContractState) {
+            let mut world = self.world_default();
+            let mut player: Player = world.read_model(get_caller_address());
+            self.before_play(player.id);
 
-        fn all_in(ref self: ContractState) { //
-        // deduct all available no. of chips
+            let mut game: Game = world.read_model(*player.extract_current_game_id());
+            let amount_to_call = game.current_bet - player.current_bet;
+
+            assert!(amount_to_call > 0, "Your bet is already equal to the current bet.");
+
+            assert!(player.chips >= amount_to_call, "You don't have enough chips to call.");
+
+            player.chips -= amount_to_call;
+            player.current_bet += amount_to_call;
+            game.pot += amount_to_call;
+
+            world.write_model(@player);
+            world.write_model(@game);
+
+            self.after_play(player.id);
+        }
+
+        /// @dub_zn
+        fn fold(ref self: ContractState) {
+            let mut world = self.world_default();
+            let mut player: Player = world.read_model(get_caller_address());
+            self.before_play(player.id);
+
+            player.in_round = false;
+            world.write_model(@player);
+
+            self.after_play(player.id);
+        }
+
+        /// @dub_zn
+        fn raise(ref self: ContractState, no_of_chips: u256) {
+            let mut world = self.world_default();
+            let mut player: Player = world.read_model(get_caller_address());
+            self.before_play(player.id);
+
+            let mut game: Game = world.read_model(*player.extract_current_game_id());
+
+            let amount_to_call = game.current_bet - player.current_bet;
+            let total_required = amount_to_call + no_of_chips;
+
+            assert!(no_of_chips > 0, "Raise amount must be greater than zero.");
+
+            assert!(player.chips >= total_required, "You don't have enough chips to raise.");
+
+            player.chips -= total_required;
+            player.current_bet += total_required;
+            game.pot += total_required;
+            game.current_bet = player.current_bet;
+
+            world.write_model(@player);
+            world.write_model(@game);
+
+            self.after_play(player.id);
+        }
+
+        /// @dub_zn
+        fn all_in(ref self: ContractState) {
+            let mut world = self.world_default();
+            let player: Player = world.read_model(get_caller_address());
+            self.raise(player.chips);
         }
 
         fn get_rank(self: @ContractState, player_id: ContractAddress) -> ByteArray {
@@ -216,7 +287,6 @@ pub mod actions {
             world.write_model(@player);
         }
     }
-
 
     #[generate_trait]
     impl InternalImpl of InternalTrait {
