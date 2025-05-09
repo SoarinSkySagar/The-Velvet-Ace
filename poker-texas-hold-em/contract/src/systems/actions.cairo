@@ -822,7 +822,7 @@ pub mod actions {
             let mut i = 0;
             while i < total_players {
                 let current_player = players.at(i);
-                if *current_player == next_dealer {
+                if current_player == @next_dealer {
                     dealer_index = i;
                     break;
                 }
@@ -836,13 +836,13 @@ pub mod actions {
             let bb_index = (dealer_index + 1) % total_players;
             let bb_address = players.at(bb_index);
 
-            let mut sb_player: Player = world.read_model(sb_address);
+            let mut sb_player: Player = world.read_model(*sb_address);
             let sb_amount = game.params.small_blind;
             sb_player.chips = sb_player.chips - sb_amount.into();
             sb_player.current_bet = sb_amount.into();
             world.write_model(@sb_player);
 
-            let mut bb_player: Player = world.read_model(bb_address);
+            let mut bb_player: Player = world.read_model(*bb_address);
             let bb_amount = game.params.big_blind;
             bb_player.chips = bb_player.chips - bb_amount.into();
             bb_player.current_bet = bb_amount.into();
@@ -858,7 +858,7 @@ pub mod actions {
             // set the game actions taken back to 0
 
             for deck_id in game.deck.span() {
-                let mut deck: Deck = world.read_model(deck_id);
+                let mut deck: Deck = world.read_model(*deck_id);
                 deck.new_deck();
                 deck.shuffle();
                 world.write_model(@deck);
@@ -871,12 +871,13 @@ pub mod actions {
             let next_player_index = (bb_index + 1) % total_players;
             let next_player = players.at(next_player_index);
             game.next_player = Option::Some(*next_player.id);
+            let dealer: Player = world.read_model(dealer_index);
 
             world.write_model(@game);
             world.emit_event(
                 @RoundStarted {
                     game_id,
-                    dealer: world.read_model(@dealer_index),
+                    dealer: dealer.id,
                     current_game_bet: bb_amount.into(),
                     small_blind_player: sb_player.id,
                     big_blind_player: bb_player.id,
