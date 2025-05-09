@@ -18,6 +18,7 @@ pub enum GameMode {
 #[derive(Copy, Drop, Serde, Default, Introspect, PartialEq)]
 pub struct GameParams {
     game_mode: GameMode,
+    ownable: Option<ContractAddress>,
     max_no_of_players: u32,
     small_blind: u64,
     big_blind: u64,
@@ -53,6 +54,7 @@ pub struct Game {
     in_progress: bool,
     has_ended: bool,
     current_round: u8,
+    should_end: bool,
     round_in_progress: bool,
     current_player_count: u32,
     players: Array<ContractAddress>,

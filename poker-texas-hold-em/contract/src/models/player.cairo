@@ -9,13 +9,12 @@ use poker::traits::player::PlayerTrait;
 // Hand should be a reference.
 
 // FOR NOW, NO PLAYER CAN HAVE MORE THAN ONE HAND.
-// Go to all funcrtions that use player as a parameter, and remove the snapshot
+// Go to all functions that use player as a parameter, and remove the snapshot
 #[derive(Drop, Serde, Debug, Hash)]
 #[dojo::model]
 pub struct Player {
     #[key]
     id: ContractAddress,
-    #[key]
     alias: felt252,
     chips: u256,
     current_bet: u256,
