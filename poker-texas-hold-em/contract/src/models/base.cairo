@@ -74,7 +74,7 @@ pub struct RoundStarted {
     pub small_blind_player: ContractAddress,
     pub big_blind_player: ContractAddress,
     pub next_player: ContractAddress,
-    pub expected_no_of_players: u32,
+    pub no_of_players: u32,
 }
 
 /// MODEL
