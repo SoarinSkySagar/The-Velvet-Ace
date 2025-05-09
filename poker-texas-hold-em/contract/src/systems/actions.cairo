@@ -6,7 +6,7 @@ pub mod actions {
     use dojo::event::EventStorage;
     use poker::models::base::{
         GameErrors, Id, GameInitialized, CardDealt, HandCreated, HandResolved, RoundResolved,
-        PlayerJoined, PlayerLeft, GameConcluded, RoundStarted
+        PlayerJoined, PlayerLeft, GameConcluded, RoundStarted,
     };
     use poker::models::card::{Card, CardTrait};
     use poker::models::deck::{Deck, DeckTrait};
@@ -787,25 +787,29 @@ pub mod actions {
 
         // @OWK50GA
         // STEP 1:
-            // Change dealer/select dealer: this is because each round has a new dealer. Remember the dealer
-            //  choosing algorithm used in this project
+        // Change dealer/select dealer: this is because each round has a new dealer. Remember the
+        // dealer
+        //  choosing algorithm used in this project
 
-            // STEP 2:
-            // Initialize pots to take small blind and big blind. The small blind guy is the one immediately next 
-            // to the dealer (left hand), while the big blind guy is next to the small blind guy
+        // STEP 2:
+        // Initialize pots to take small blind and big blind. The small blind guy is the one
+        // immediately next to the dealer (left hand), while the big blind guy is next to the small
+        // blind guy
 
-            // STEP 3:
-            // Reset all previous round game variables, including bets and player amounts. Clear round actions as well
-            // so that you can record other actions. Also update the current_bet (minimum players must call to stay in)
+        // STEP 3:
+        // Reset all previous round game variables, including bets and player amounts. Clear round
+        // actions as well so that you can record other actions. Also update the current_bet
+        // (minimum players must call to stay in)
 
-            // STEP 4:
-            // Shuffle, and then deal hole cards. The function is in this contract already
+        // STEP 4:
+        // Shuffle, and then deal hole cards. The function is in this contract already
 
-            // STEP 5:
-            // Set player turn, to the player immediately right of the big blind, so that the engine knows whose turn it is.
+        // STEP 5:
+        // Set player turn, to the player immediately right of the big blind, so that the engine
+        // knows whose turn it is.
 
-            // STEP 6:
-            // Initialize community cards placeholder, and betting counter
+        // STEP 6:
+        // Initialize community cards placeholder, and betting counter
         fn _start_round(ref self: ContractState, game_id: u64, ref players: Array<Player>) {
             // Load world and game
             let mut world = self.world_default();
@@ -829,8 +833,10 @@ pub mod actions {
                 i += 1;
             };
 
-            // Post blinds now you have dealer index. Player to the left for small blind, right for big blind.
-            // We are taking 0 to length as left to right, so dealer_index - 1 for small blind, dealer_index + 1 for big blind
+            // Post blinds now you have dealer index. Player to the left for small blind, right for
+            // big blind.
+            // We are taking 0 to length as left to right, so dealer_index - 1 for small blind,
+            // dealer_index + 1 for big blind
             let sb_index = (dealer_index - 1) % total_players;
             let sb_address = players.at(sb_index);
             let bb_index = (dealer_index + 1) % total_players;
@@ -874,17 +880,18 @@ pub mod actions {
             let dealer: Player = world.read_model(dealer_index);
 
             world.write_model(@game);
-            world.emit_event(
-                @RoundStarted {
-                    game_id,
-                    dealer: dealer.id,
-                    current_game_bet: bb_amount.into(),
-                    small_blind_player: sb_player.id,
-                    big_blind_player: bb_player.id,
-                    next_player: *next_player.id,
-                    no_of_players: players.len()
-                }
-            )
+            world
+                .emit_event(
+                    @RoundStarted {
+                        game_id,
+                        dealer: dealer.id,
+                        current_game_bet: bb_amount.into(),
+                        small_blind_player: sb_player.id,
+                        big_blind_player: bb_player.id,
+                        next_player: *next_player.id,
+                        no_of_players: players.len(),
+                    },
+                )
         }
 
         // extracts the winning hands
