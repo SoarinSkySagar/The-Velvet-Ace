@@ -24,7 +24,10 @@ mod utils {
     mod hand;
 }
 
+#[cfg(test)]
 mod tests {
+    mod setup;
+    mod test_actions;
     mod test_hand_compare;
     mod test_hand_rank;
     mod test_world;
