@@ -36,7 +36,7 @@ pub impl HandImpl of HandTrait {
             all_cards.append(*community_cards[i]);
         };
 
-        // Generate all max 5-card combinations (C(7,k)), where  0 <= k <= 5
+        // Generate all max 5-card combinations (C(7,k)), where 0 <= k <= 5
         let k = min_u32(all_cards.len(), 5);
         let combinations = generate_combinations(all_cards.clone(), k);
 
