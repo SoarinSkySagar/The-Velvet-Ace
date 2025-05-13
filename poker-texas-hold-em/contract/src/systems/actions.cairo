@@ -380,6 +380,7 @@ pub mod actions {
 
             // Update game state with the player's action
 
+            // TODO: Crosscheck after_play, and adjust... may not be needed.
             if player.current_bet > game.current_bet {
                 game.current_bet = player.current_bet; // Raise updates the current bet
             }
