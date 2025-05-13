@@ -230,7 +230,7 @@ fn generate_combinations(cards: Array<Card>, k: usize) -> Array<Array<Card>> {
     let n = cards.len();
     let mut result: Array<Array<Card>> = array![];
     let total: u32 = pow(2, n.try_into().unwrap()); // 2^n subsets
- 
+
     for i in 0..total {
         let mut subset: Array<Card> = array![];
         for j in 0..n {
