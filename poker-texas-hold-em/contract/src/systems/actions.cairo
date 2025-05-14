@@ -822,10 +822,11 @@ pub mod actions {
 
             // Get dealer index, so that you can assign blinds
             let mut dealer_index = 0;
-            let total_players = players.len();
+            let total_players = game.current_player_count;
             let mut i = 0;
             while i < total_players {
                 let current_player = players.at(i);
+                assert(current_player.is_in_game(game_id), GameErrors::PLAYER_NOT_IN_GAME);
                 if current_player == @next_dealer {
                     dealer_index = i;
                     break;
@@ -837,10 +838,8 @@ pub mod actions {
             // big blind.
             // We are taking 0 to length as left to right, so dealer_index - 1 for small blind,
             // dealer_index + 1 for big blind
-            let sb_index = (dealer_index - 1) % total_players;
+            let sb_index = (dealer_index + 1) % total_players;
             let sb_address = players.at(sb_index);
-            let bb_index = (dealer_index + 1) % total_players;
-            let bb_address = players.at(bb_index);
 
             let mut sb_player: Player = world.read_model(*sb_address);
             let sb_amount = game.params.small_blind;
@@ -848,11 +847,7 @@ pub mod actions {
             sb_player.current_bet = sb_amount.into();
             world.write_model(@sb_player);
 
-            let mut bb_player: Player = world.read_model(*bb_address);
             let bb_amount = game.params.big_blind;
-            bb_player.chips = bb_player.chips - bb_amount.into();
-            bb_player.current_bet = bb_amount.into();
-            world.write_model(@bb_player);
 
             game.pot = (sb_amount + bb_amount).into();
             game.current_bet = bb_amount.into();
@@ -874,20 +869,19 @@ pub mod actions {
             self._deal_hands(ref players);
 
             // set player turn
-            let next_player_index = (bb_index + 1) % total_players;
+            let next_player_index = (sb_index + 1) % total_players;
             let next_player = players.at(next_player_index);
             game.next_player = Option::Some(*next_player.id);
-            let dealer: Player = world.read_model(dealer_index);
+            // let dealer: Player = world.read_model(dealer_index);
 
             world.write_model(@game);
             world
                 .emit_event(
                     @RoundStarted {
                         game_id,
-                        dealer: dealer.id,
+                        dealer: next_dealer.id,
                         current_game_bet: bb_amount.into(),
                         small_blind_player: sb_player.id,
-                        big_blind_player: bb_player.id,
                         next_player: *next_player.id,
                         no_of_players: players.len(),
                     },
