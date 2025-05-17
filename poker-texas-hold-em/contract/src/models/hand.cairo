@@ -141,16 +141,13 @@ mod tests {
         let player1 = contract_address_const::<'PLAYER1'>();
         let player2 = contract_address_const::<'PLAYER2'>();
 
-        // both hands identical → tie, no kicker
         let cards = array![c(14, 0), c(10, 1), c(8, 2), c(4, 3), c(2, 0)];
         let h1 = mk_hand(player1, cards.clone());
-        let h2 = mk_hand(player2, cards);
-        let (winners, kicker) = extract_kicker(
-            array![h1.clone(), h2.clone()], HandRank::HIGH_CARD.into(),
-        );
+        let h2 = mk_hand(player2, cards.clone());
 
-        assert(winners.len() == 2, 'Both hands should tie');
-        assert(kicker.len() == 0, 'Tie means no kicker returned');
+        let (sorted_hands, kicker) = extract_kicker(array![h1.clone(), h2.clone()], HandRank::HIGH_CARD.into());
+        assert(sorted_hands.len() == 2, 'Should return all hands');
+        assert(kicker.len() == 0, 'Tie means no kicker');
     }
 
     #[test]
@@ -158,19 +155,14 @@ mod tests {
         let player1 = contract_address_const::<'PLAYER1'>();
         let player2 = contract_address_const::<'PLAYER2'>();
 
-        // Both have pair of 9s:
-        // h1 kickers = [A, K, 3]
         let h1 = mk_hand(player1, array![c(9, 0), c(9, 1), c(14, 0), c(13, 1), c(3, 2)]);
-        // h2 kickers = [A, Q, 5] → Q < K, so h1 should win
         let h2 = mk_hand(player2, array![c(9, 2), c(9, 3), c(14, 1), c(12, 0), c(5, 1)]);
 
-        let (winners, kicker) = extract_kicker(
-            array![h1.clone(), h2.clone()], HandRank::ONE_PAIR.into(),
-        );
-
-        assert(winners.len() == 1, 'Only one hand should win');
-        assert(winners.at(0).player == @h1.player, 'Wrong hand won the tie');
-        assert(kicker == h1.cards, 'Winner cards must be returned');
+        let (sorted_hands, kicker) = extract_kicker(array![h1.clone(), h2.clone()], HandRank::ONE_PAIR.into());
+        assert(sorted_hands.len() == 2, 'Should return all hands');
+        assert(sorted_hands.at(0).player == @h1.player, 'Strongest hand should be first');
+        assert(sorted_hands.at(1).player == @h2.player, 'Weaker hand should be second');
+        assert(kicker == h1.cards, 'Kicker should be strongest hand');
     }
 
     #[test]
