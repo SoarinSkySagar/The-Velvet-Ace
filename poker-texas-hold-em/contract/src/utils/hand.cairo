@@ -238,6 +238,25 @@ fn get_key(hand: @Hand, rank: HandRank) -> Array<u16> {
     }
 }
 
+/// Sorts an array of (key, hand) pairs in descending order based on the key.
+fn bubble_sort_keys_and_hands(mut arr: Array<(Array<u16>, Hand)>) -> Array<(Array<u16>, Hand)> {
+    let mut swapped = true;
+    while swapped {
+        swapped = false;
+        for i in 0..arr.len() - 1 {
+            let (key1, _) = arr.at(i);
+            let (key2, _) = arr.at(i + 1);
+            if compare_arrays(key1, key2) == -1 {
+                let temp = arr.at(i).clone();
+                arr = set_array_element(arr.clone(), i, arr.at(i + 1).clone());
+                arr = set_array_element(arr, i + 1, temp);
+                swapped = true;
+            };
+        };
+    };
+    arr
+}
+
 /// @pope-h
 fn generate_combinations(cards: Array<Card>, k: usize) -> Array<Array<Card>> {
     let n = cards.len();
@@ -373,16 +392,14 @@ fn bubble_sort_u8(mut arr: Array<u8>) -> Array<u8> {
 }
 
 /// @pope-h
-fn set_array_element<T, +Copy<T>, +Drop<T>>(mut arr: Array<T>, index: usize, value: T) -> Array<T> {
+fn set_array_element<T, +Clone<T>, +Drop<T>>(mut arr: Array<T>, index: usize, value: T) -> Array<T> {
     let mut new_arr: Array<T> = array![];
-    let mut i: usize = 0;
-    while i < arr.len() {
+    for i in 0..arr.len() {
         if i == index {
-            new_arr.append(value);
+            new_arr.append(value.clone());
         } else {
-            new_arr.append(*arr.at(i));
+            new_arr.append(arr.at(i).clone());
         };
-        i += 1;
     };
     new_arr
 }
