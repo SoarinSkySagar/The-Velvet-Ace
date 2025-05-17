@@ -214,18 +214,14 @@ mod tests {
         let p1 = contract_address_const::<'P1'>();
         let p2 = contract_address_const::<'P2'>();
 
-        // both Ace high…
-        // p1 second-highest = Q
         let h1 = mk_hand(p1, array![c(14, 0), c(12, 1), c(10, 2), c(8, 0), c(6, 1)]);
-        // p2 second-highest = K
         let h2 = mk_hand(p2, array![c(14, 3), c(13, 1), c(9, 0), c(7, 2), c(5, 3)]);
 
-        let (winners, kicker) = extract_kicker(
-            array![h1.clone(), h2.clone()], HandRank::HIGH_CARD.into(),
-        );
-        assert(winners.len() == 1, 'Expected one winner');
-        assert(winners.at(0).player == @h2.player, 'Higher second-card should win');
-        assert(kicker == h2.cards, 'Kicker must be winner cards');
+        let (sorted_hands, kicker) = extract_kicker(array![h1.clone(), h2.clone()], HandRank::HIGH_CARD.into());
+        assert(sorted_hands.len() == 2, 'Should return all hands');
+        assert(sorted_hands.at(0).player == @h2.player, 'Higher 2nd-card should be first');
+        assert(sorted_hands.at(1).player == @h1.player, 'Lower 2nd-card should be second');
+        assert(kicker == h2.cards, 'Kicker should be strongest hand');
     }
 
     #[test]
