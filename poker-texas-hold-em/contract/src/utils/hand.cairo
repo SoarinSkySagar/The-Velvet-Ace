@@ -27,7 +27,9 @@ fn extract_kicker(hands: Array<Hand>, hand_rank: u16) -> (Array<Hand>, Array<Car
     let rank: HandRank = hand_rank.into();
 
     // For STRAIGHT, STRAIGHT_FLUSH, and ROYAL_FLUSH, return all hands with no kicker
-    if rank == HandRank::STRAIGHT || rank == HandRank::STRAIGHT_FLUSH || rank == HandRank::ROYAL_FLUSH {
+    if rank == HandRank::STRAIGHT
+        || rank == HandRank::STRAIGHT_FLUSH
+        || rank == HandRank::ROYAL_FLUSH {
         let mut sorted_hands: Array<Hand> = array![];
         let mut i: usize = 0;
         while i < hands.len() {
@@ -77,7 +79,8 @@ fn get_key(hand: @Hand, rank: HandRank) -> Array<u16> {
         HandRank::ONE_PAIR => get_one_pair_key(hand),
         HandRank::TWO_PAIR => get_two_pair_key(hand),
         HandRank::THREE_OF_A_KIND => get_three_of_a_kind_key(hand),
-        HandRank::STRAIGHT | HandRank::STRAIGHT_FLUSH | HandRank::ROYAL_FLUSH => get_high_card_key(hand),
+        HandRank::STRAIGHT | HandRank::STRAIGHT_FLUSH |
+        HandRank::ROYAL_FLUSH => get_high_card_key(hand),
         HandRank::FULL_HOUSE => get_full_house_key(hand),
         HandRank::FOUR_OF_A_KIND => get_four_of_a_kind_key(hand),
         HandRank::UNDEFINED => panic(array!['Undefined hand rank']),
@@ -238,7 +241,9 @@ fn bubble_sort_u8(mut arr: Array<u8>) -> Array<u8> {
 }
 
 /// @pope-h
-fn set_array_element<T, +Clone<T>, +Drop<T>>(mut arr: Array<T>, index: usize, value: T) -> Array<T> {
+fn set_array_element<T, +Clone<T>, +Drop<T>>(
+    mut arr: Array<T>, index: usize, value: T,
+) -> Array<T> {
     let mut new_arr: Array<T> = array![];
     for i in 0..arr.len() {
         if i == index {

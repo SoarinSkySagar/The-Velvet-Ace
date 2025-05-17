@@ -129,7 +129,9 @@ mod tests {
         let h1 = mk_hand(player1, card1);
         let h2 = mk_hand(player2, card2);
 
-        let (sorted_hands, kicker) = extract_kicker(array![h1.clone(), h2.clone()], HandRank::HIGH_CARD.into());
+        let (sorted_hands, kicker) = extract_kicker(
+            array![h1.clone(), h2.clone()], HandRank::HIGH_CARD.into(),
+        );
         assert(sorted_hands.len() == 2, 'Should return all hands');
         assert(sorted_hands.at(0).player == @h1.player, 'Strongest hand should be first');
         assert(sorted_hands.at(1).player == @h2.player, 'Weaker hand should be second');
@@ -145,7 +147,9 @@ mod tests {
         let h1 = mk_hand(player1, cards.clone());
         let h2 = mk_hand(player2, cards.clone());
 
-        let (sorted_hands, kicker) = extract_kicker(array![h1.clone(), h2.clone()], HandRank::HIGH_CARD.into());
+        let (sorted_hands, kicker) = extract_kicker(
+            array![h1.clone(), h2.clone()], HandRank::HIGH_CARD.into(),
+        );
         assert(sorted_hands.len() == 2, 'Should return all hands');
         assert(kicker.len() == 0, 'Tie means no kicker');
     }
@@ -158,7 +162,9 @@ mod tests {
         let h1 = mk_hand(player1, array![c(9, 0), c(9, 1), c(14, 0), c(13, 1), c(3, 2)]);
         let h2 = mk_hand(player2, array![c(9, 2), c(9, 3), c(14, 1), c(12, 0), c(5, 1)]);
 
-        let (sorted_hands, kicker) = extract_kicker(array![h1.clone(), h2.clone()], HandRank::ONE_PAIR.into());
+        let (sorted_hands, kicker) = extract_kicker(
+            array![h1.clone(), h2.clone()], HandRank::ONE_PAIR.into(),
+        );
         assert(sorted_hands.len() == 2, 'Should return all hands');
         assert(sorted_hands.at(0).player == @h1.player, 'Strongest hand should be first');
         assert(sorted_hands.at(1).player == @h2.player, 'Weaker hand should be second');
@@ -173,7 +179,9 @@ mod tests {
         let h1 = mk_hand(player1, array![c(10, 0), c(11, 0), c(12, 0), c(13, 0), c(14, 0)]);
         let h2 = mk_hand(player2, array![c(9, 1), c(10, 1), c(11, 1), c(12, 1), c(13, 1)]);
 
-        let (sorted_hands, kicker) = extract_kicker(array![h1.clone(), h2.clone()], HandRank::STRAIGHT.into());
+        let (sorted_hands, kicker) = extract_kicker(
+            array![h1.clone(), h2.clone()], HandRank::STRAIGHT.into(),
+        );
         assert(sorted_hands.len() == 2, 'Should return all hands');
         assert(kicker.len() == 0, 'Straights tie, no kicker');
     }
@@ -202,7 +210,9 @@ mod tests {
         let h1 = mk_hand(p1, array![c(13, 0), c(12, 1), c(11, 2), c(10, 0), c(9, 1)]);
         let h2 = mk_hand(p2, array![c(14, 3), c(5, 0), c(4, 1), c(3, 2), c(2, 0)]);
 
-        let (sorted_hands, kicker) = extract_kicker(array![h1.clone(), h2.clone()], HandRank::HIGH_CARD.into());
+        let (sorted_hands, kicker) = extract_kicker(
+            array![h1.clone(), h2.clone()], HandRank::HIGH_CARD.into(),
+        );
         assert(sorted_hands.len() == 2, 'Should return all hands');
         assert(sorted_hands.at(0).player == @h2.player, 'Ace-high should be first');
         assert(sorted_hands.at(1).player == @h1.player, 'King-high should be second');
@@ -217,7 +227,9 @@ mod tests {
         let h1 = mk_hand(p1, array![c(14, 0), c(12, 1), c(10, 2), c(8, 0), c(6, 1)]);
         let h2 = mk_hand(p2, array![c(14, 3), c(13, 1), c(9, 0), c(7, 2), c(5, 3)]);
 
-        let (sorted_hands, kicker) = extract_kicker(array![h1.clone(), h2.clone()], HandRank::HIGH_CARD.into());
+        let (sorted_hands, kicker) = extract_kicker(
+            array![h1.clone(), h2.clone()], HandRank::HIGH_CARD.into(),
+        );
         assert(sorted_hands.len() == 2, 'Should return all hands');
         assert(sorted_hands.at(0).player == @h2.player, 'Higher 2nd-card should be first');
         assert(sorted_hands.at(1).player == @h1.player, 'Lower 2nd-card should be second');
@@ -234,7 +246,9 @@ mod tests {
         // p2: pair of Tens
         let h2 = mk_hand(p2, array![c(10, 2), c(10, 3), c(14, 0), c(2, 1), c(3, 2)]);
 
-        let (sorted_hands, kicker) = extract_kicker(array![h1.clone(), h2.clone()], HandRank::ONE_PAIR.into());
+        let (sorted_hands, kicker) = extract_kicker(
+            array![h1.clone(), h2.clone()], HandRank::ONE_PAIR.into(),
+        );
         assert(sorted_hands.len() == 2, 'Should return all hands');
         assert(sorted_hands.at(0).player == @h1.player, 'Higher pair should be first');
         assert(sorted_hands.at(1).player == @h2.player, 'Lower pair should be second');
@@ -250,7 +264,9 @@ mod tests {
         let h1 = mk_hand(p1, cards.clone());
         let h2 = mk_hand(p2, cards.clone());
 
-        let (sorted_hands, kicker) = extract_kicker(array![h1.clone(), h2.clone()], HandRank::ONE_PAIR.into());
+        let (sorted_hands, kicker) = extract_kicker(
+            array![h1.clone(), h2.clone()], HandRank::ONE_PAIR.into(),
+        );
         assert(sorted_hands.len() == 2, 'Should return all hands');
         assert(kicker.len() == 0, 'Tie means no kicker');
     }
@@ -263,7 +279,9 @@ mod tests {
         let h1 = mk_hand(p1, array![c(13, 0), c(13, 1), c(2, 0), c(2, 1), c(9, 2)]);
         let h2 = mk_hand(p2, array![c(12, 2), c(12, 3), c(11, 0), c(11, 1), c(8, 2)]);
 
-        let (sorted_hands, kicker) = extract_kicker(array![h1.clone(), h2.clone()], HandRank::TWO_PAIR.into());
+        let (sorted_hands, kicker) = extract_kicker(
+            array![h1.clone(), h2.clone()], HandRank::TWO_PAIR.into(),
+        );
         assert(sorted_hands.len() == 2, 'Should return all hands');
         assert(sorted_hands.at(0).player == @h1.player, 'Higher top pair should be first');
         assert(sorted_hands.at(1).player == @h2.player, 'Lower top pair should be second');
@@ -278,7 +296,9 @@ mod tests {
         let h1 = mk_hand(p1, array![c(13, 0), c(13, 1), c(12, 0), c(12, 1), c(10, 2)]);
         let h2 = mk_hand(p2, array![c(13, 2), c(13, 3), c(12, 2), c(12, 3), c(11, 0)]);
 
-        let (sorted_hands, kicker) = extract_kicker(array![h1.clone(), h2.clone()], HandRank::TWO_PAIR.into());
+        let (sorted_hands, kicker) = extract_kicker(
+            array![h1.clone(), h2.clone()], HandRank::TWO_PAIR.into(),
+        );
         assert(sorted_hands.len() == 2, 'Should return all hands');
         assert(sorted_hands.at(0).player == @h2.player, 'Higher kicker should be first');
         assert(sorted_hands.at(1).player == @h1.player, 'Lower kicker should be second');
@@ -293,7 +313,9 @@ mod tests {
         let h1 = mk_hand(p1, array![c(9, 0), c(9, 1), c(9, 2), c(5, 0), c(4, 1)]);
         let h2 = mk_hand(p2, array![c(8, 0), c(8, 1), c(8, 2), c(14, 0), c(2, 1)]);
 
-        let (sorted_hands, kicker) = extract_kicker(array![h1.clone(), h2.clone()], HandRank::THREE_OF_A_KIND.into());
+        let (sorted_hands, kicker) = extract_kicker(
+            array![h1.clone(), h2.clone()], HandRank::THREE_OF_A_KIND.into(),
+        );
         assert(sorted_hands.len() == 2, 'Should return all hands');
         assert(sorted_hands.at(0).player == @h1.player, 'Higher three should be first');
         assert(sorted_hands.at(1).player == @h2.player, 'Lower three should be second');
@@ -308,7 +330,9 @@ mod tests {
         let h1 = mk_hand(p1, array![c(14, 1), c(11, 1), c(9, 1), c(7, 1), c(3, 1)]);
         let h2 = mk_hand(p2, array![c(13, 2), c(12, 2), c(10, 2), c(8, 2), c(2, 2)]);
 
-        let (sorted_hands, kicker) = extract_kicker(array![h1.clone(), h2.clone()], HandRank::FLUSH.into());
+        let (sorted_hands, kicker) = extract_kicker(
+            array![h1.clone(), h2.clone()], HandRank::FLUSH.into(),
+        );
         assert(sorted_hands.len() == 2, 'Should return all hands');
         assert(sorted_hands.at(0).player == @h1.player, 'Higher flush should be first');
         assert(sorted_hands.at(1).player == @h2.player, 'Lower flush should be second');
@@ -323,7 +347,9 @@ mod tests {
         let h1 = mk_hand(p1, array![c(14, 0), c(14, 1), c(14, 2), c(13, 0), c(13, 1)]);
         let h2 = mk_hand(p2, array![c(13, 2), c(13, 3), c(13, 1), c(12, 0), c(12, 1)]);
 
-        let (sorted_hands, kicker) = extract_kicker(array![h1.clone(), h2.clone()], HandRank::FULL_HOUSE.into());
+        let (sorted_hands, kicker) = extract_kicker(
+            array![h1.clone(), h2.clone()], HandRank::FULL_HOUSE.into(),
+        );
         assert(sorted_hands.len() == 2, 'Should return all hands');
         assert(sorted_hands.at(0).player == @h1.player, 'Higher triple should be first');
         assert(sorted_hands.at(1).player == @h2.player, 'Lower triple should be second');
@@ -338,7 +364,9 @@ mod tests {
         let h1 = mk_hand(p1, array![c(7, 0), c(7, 1), c(7, 2), c(7, 3), c(14, 0)]);
         let h2 = mk_hand(p2, array![c(6, 0), c(6, 1), c(6, 2), c(6, 3), c(13, 0)]);
 
-        let (sorted_hands, kicker) = extract_kicker(array![h1.clone(), h2.clone()], HandRank::FOUR_OF_A_KIND.into());
+        let (sorted_hands, kicker) = extract_kicker(
+            array![h1.clone(), h2.clone()], HandRank::FOUR_OF_A_KIND.into(),
+        );
         assert(sorted_hands.len() == 2, 'Should return all hands');
         assert(sorted_hands.at(0).player == @h1.player, 'Higher four should be first');
         assert(sorted_hands.at(1).player == @h2.player, 'Lower four should be second');
@@ -353,7 +381,9 @@ mod tests {
         let h1 = mk_hand(p1, array![c(5, 0), c(6, 0), c(7, 0), c(8, 0), c(9, 0)]);
         let h2 = mk_hand(p2, array![c(2, 1), c(3, 1), c(4, 1), c(5, 1), c(6, 1)]);
 
-        let (sorted_hands, kicker) = extract_kicker(array![h1.clone(), h2.clone()], HandRank::STRAIGHT_FLUSH.into());
+        let (sorted_hands, kicker) = extract_kicker(
+            array![h1.clone(), h2.clone()], HandRank::STRAIGHT_FLUSH.into(),
+        );
         assert(sorted_hands.len() == 2, 'Should return all hands');
         assert(kicker.len() == 0, 'Straight flushes tie, no kicker');
     }
@@ -366,7 +396,9 @@ mod tests {
         let h1 = mk_hand(p1, array![c(10, 2), c(11, 2), c(12, 2), c(13, 2), c(14, 2)]);
         let h2 = mk_hand(p2, array![c(10, 1), c(11, 1), c(12, 1), c(13, 1), c(14, 1)]);
 
-        let (sorted_hands, kicker) = extract_kicker(array![h1.clone(), h2.clone()], HandRank::ROYAL_FLUSH.into());
+        let (sorted_hands, kicker) = extract_kicker(
+            array![h1.clone(), h2.clone()], HandRank::ROYAL_FLUSH.into(),
+        );
         assert(sorted_hands.len() == 2, 'Should return all hands');
         assert(kicker.len() == 0, 'Royal flushes tie, no kicker');
     }
