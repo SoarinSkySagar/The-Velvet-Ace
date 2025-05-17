@@ -31,31 +31,25 @@ fn extract_kicker(hands: Array<Hand>, hand_rank: u16) -> (Array<Hand>, Array<Car
         || rank == HandRank::STRAIGHT_FLUSH
         || rank == HandRank::ROYAL_FLUSH {
         let mut sorted_hands: Array<Hand> = array![];
-        let mut i: usize = 0;
-        while i < hands.len() {
+        for i in 0..hands.len() {
             sorted_hands.append(hands.at(i).clone());
-            i += 1;
         };
         return (sorted_hands, array![]);
     }
 
     let mut keys_and_hands: Array<(Array<u16>, Hand)> = array![];
-    let mut i: usize = 0;
-    while i < hands.len() {
+    for i in 0..hands.len() {
         let hand = hands.at(i);
         assert(hand.cards.len() == 5, 'Hand must have 5 cards');
         let key = get_key(hand, rank);
         keys_and_hands.append((key, hand.clone()));
-        i += 1;
     };
 
     let sorted = bubble_sort_keys_and_hands(keys_and_hands);
     let mut sorted_hands: Array<Hand> = array![];
-    i = 0;
-    while i < sorted.len() {
+    for i in 0..sorted.len() {
         let (_, hand) = sorted.at(i);
         sorted_hands.append(hand.clone());
-        i += 1;
     };
 
     let mut kicker: Array<Card> = array![];
@@ -225,16 +219,13 @@ fn bubble_sort_u8(mut arr: Array<u8>) -> Array<u8> {
     let mut swapped = true;
     while swapped {
         swapped = false;
-        let mut i: usize = 0;
-        while i < arr.len() - 1 {
-            let current = *arr.at(i);
-            let next = *arr.at(i + 1);
-            if current < next {
-                arr = set_array_element(arr.clone(), i, next);
-                arr = set_array_element(arr, i + 1, current);
+        for i in 0..arr.len() - 1 {
+            if *arr.at(i) < *arr.at(i + 1) {
+                let temp = *arr.at(i);
+                arr = set_array_element(arr.clone(), i, *arr.at(i + 1));
+                arr = set_array_element(arr, i + 1, temp);
                 swapped = true;
             };
-            i += 1;
         };
     };
     arr
@@ -612,11 +603,10 @@ fn compare_arrays(a: @Array<u16>, b: @Array<u16>) -> felt252 {
 /// [@pope-h]
 fn bit_and(a: u32, b: u32) -> u32 {
     let mut result = 0_u32;
-    let mut position = 0_u32;
     let mut a_copy = a;
     let mut b_copy = b;
 
-    while position < 32 {
+    for position in 0..32_u32 {
         let bit_a = a_copy % 2;
         let bit_b = b_copy % 2;
         if bit_a == 1 && bit_b == 1 {
@@ -624,7 +614,6 @@ fn bit_and(a: u32, b: u32) -> u32 {
         };
         a_copy /= 2;
         b_copy /= 2;
-        position += 1;
     };
     result
 }
@@ -644,10 +633,8 @@ fn bit_and(a: u32, b: u32) -> u32 {
 /// [@pope-h]
 fn pow(base: u32, exp: u32) -> u32 {
     let mut result = 1_u32;
-    let mut i = 0_u32;
-    while i < exp {
+    for _i in 0..exp {
         result *= base;
-        i += 1;
     };
     result
 }
