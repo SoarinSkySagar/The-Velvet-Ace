@@ -85,7 +85,7 @@ pub impl HandImpl of HandTrait {
         (best_hand, best_rank.into())
     }
 
-    /// @Birdmannn
+    /// @Birdmannn, @pope-h
     fn compare_hands(
         hands: Array<Hand>, community_cards: Array<Card>, game_params: GameParams,
     ) -> (Span<Hand>, HandRank, Span<Card>) {

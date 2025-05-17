@@ -67,6 +67,7 @@ fn extract_kicker(hands: Array<Hand>, hand_rank: u16) -> (Array<Hand>, Array<Car
 }
 
 /// Extracts the comparison key for a hand based on its rank.
+/// @pope-h
 fn get_key(hand: @Hand, rank: HandRank) -> Array<u16> {
     match rank {
         HandRank::HIGH_CARD | HandRank::FLUSH => get_high_card_key(hand),
@@ -82,6 +83,7 @@ fn get_key(hand: @Hand, rank: HandRank) -> Array<u16> {
 }
 
 /// Sorts an array of (key, hand) pairs in descending order based on the key.
+/// @pope-h
 fn bubble_sort_keys_and_hands(mut arr: Array<(Array<u16>, Hand)>) -> Array<(Array<u16>, Hand)> {
     let mut swapped = true;
     while swapped {
