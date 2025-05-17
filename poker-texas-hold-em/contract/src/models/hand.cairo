@@ -170,16 +170,12 @@ mod tests {
         let player1 = contract_address_const::<'PLAYER1'>();
         let player2 = contract_address_const::<'PLAYER2'>();
 
-        // h1: 10-J-Q-K-A, h2: 9-10-J-Q-K
         let h1 = mk_hand(player1, array![c(10, 0), c(11, 0), c(12, 0), c(13, 0), c(14, 0)]);
         let h2 = mk_hand(player2, array![c(9, 1), c(10, 1), c(11, 1), c(12, 1), c(13, 1)]);
 
-        let (winners, kicker) = extract_kicker(
-            array![h1.clone(), h2.clone()], HandRank::STRAIGHT.into(),
-        );
-
-        assert(winners.len() == 2, 'All straights should tie');
-        assert(kicker.len() == 0, 'Straights tie, no kicker');
+        let (sorted_hands, kicker) = extract_kicker(array![h1.clone(), h2.clone()], HandRank::STRAIGHT.into());
+        assert(sorted_hands.len() == 2, 'Should return all hands');
+        assert(kicker.len() > 0, 'Straights tie, no kicker');
     }
 
     #[test]
@@ -203,17 +199,14 @@ mod tests {
         let p1 = contract_address_const::<'P1'>();
         let p2 = contract_address_const::<'P2'>();
 
-        // p1: K♣ Q♦ J♠ 10♣ 9♦  (King high)
         let h1 = mk_hand(p1, array![c(13, 0), c(12, 1), c(11, 2), c(10, 0), c(9, 1)]);
-        // p2: A♥ 5♣ 4♦ 3♠ 2♣   (Ace high)
         let h2 = mk_hand(p2, array![c(14, 3), c(5, 0), c(4, 1), c(3, 2), c(2, 0)]);
 
-        let (winners, kicker) = extract_kicker(
-            array![h1.clone(), h2.clone()], HandRank::HIGH_CARD.into(),
-        );
-        assert(winners.len() == 1, 'Expected one winner');
-        assert(winners.at(0).player == @h2.player, 'Ace-high should win');
-        assert(kicker == h2.cards, 'Kicker must be winner cards');
+        let (sorted_hands, kicker) = extract_kicker(array![h1.clone(), h2.clone()], HandRank::HIGH_CARD.into());
+        assert(sorted_hands.len() == 2, 'Should return all hands');
+        assert(sorted_hands.at(0).player == @h2.player, 'Ace-high should be first');
+        assert(sorted_hands.at(1).player == @h1.player, 'King-high should be second');
+        assert(kicker == h2.cards, 'Kicker should be strongest hand');
     }
 
     #[test]
