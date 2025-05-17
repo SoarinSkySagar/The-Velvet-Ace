@@ -334,16 +334,15 @@ mod tests {
     fn test_four_of_a_kind_different_four() {
         let p1 = contract_address_const::<'P1'>();
         let p2 = contract_address_const::<'P2'>();
-        // p1: four 7s, p2: four 6s
+
         let h1 = mk_hand(p1, array![c(7, 0), c(7, 1), c(7, 2), c(7, 3), c(14, 0)]);
         let h2 = mk_hand(p2, array![c(6, 0), c(6, 1), c(6, 2), c(6, 3), c(13, 0)]);
 
-        let (winners, kicker) = extract_kicker(
-            array![h1.clone(), h2.clone()], HandRank::FOUR_OF_A_KIND.into(),
-        );
-        assert(winners.len() == 1, 'Higher four-of-a-kind wins');
-        assert(winners.at(0).player == @h1.player, 'Wrong winner on four-of-a-kind');
-        assert(kicker == h1.cards, 'Kicker must be winner cards');
+        let (sorted_hands, kicker) = extract_kicker(array![h1.clone(), h2.clone()], HandRank::FOUR_OF_A_KIND.into());
+        assert(sorted_hands.len() == 2, 'Should return all hands');
+        assert(sorted_hands.at(0).player == @h1.player, 'Higher four should be first');
+        assert(sorted_hands.at(1).player == @h2.player, 'Lower four should be second');
+        assert(kicker == h1.cards, 'Kicker should be strongest hand');
     }
 
     #[test]
