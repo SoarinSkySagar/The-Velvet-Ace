@@ -123,19 +123,17 @@ mod tests {
         let player1 = contract_address_const::<'PLAYER1'>();
         let player2 = contract_address_const::<'PLAYER2'>();
 
-        // h1: A♠,K♠,Q♠,J♠,10♠  (ace high)
         let card1 = array![c(14, 0), c(13, 0), c(12, 0), c(11, 0), c(10, 0)];
-        // h2: K♥,Q♥,J♥,10♥,9♥  (king high)
         let card2 = array![c(13, 1), c(12, 1), c(11, 1), c(10, 1), c(9, 1)];
 
         let h1 = mk_hand(player1, card1);
         let h2 = mk_hand(player2, card2);
 
-        let (winners, kicker) = extract_kicker(array![h1.clone(), h2], HandRank::HIGH_CARD.into());
-        assert(winners.len() == 1, 'There should be only 1 winner');
-        assert(winners.at(0).player == @h1.player, 'Wrong winner');
-        // kicker must be the winner’s full 5 cards
-        assert(kicker == h1.cards, 'kicker must be winner cards');
+        let (sorted_hands, kicker) = extract_kicker(array![h1.clone(), h2.clone()], HandRank::HIGH_CARD.into());
+        assert(sorted_hands.len() == 2, 'Should return all hands');
+        assert(sorted_hands.at(0).player == @h1.player, 'Strongest hand should be first');
+        assert(sorted_hands.at(1).player == @h2.player, 'Weaker hand should be second');
+        assert(kicker == h1.cards, 'Kicker should be strongest hand');
     }
 
     #[test]
