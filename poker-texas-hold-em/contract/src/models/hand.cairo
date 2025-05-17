@@ -304,17 +304,15 @@ mod tests {
     fn test_flush_different_high() {
         let p1 = contract_address_const::<'P1'>();
         let p2 = contract_address_const::<'P2'>();
-        // p1 flush hearts: A,J,9,7,3 → Ace highest
+
         let h1 = mk_hand(p1, array![c(14, 1), c(11, 1), c(9, 1), c(7, 1), c(3, 1)]);
-        // p2 flush clubs: K,Q,10,8,2 → King highest
         let h2 = mk_hand(p2, array![c(13, 2), c(12, 2), c(10, 2), c(8, 2), c(2, 2)]);
 
-        let (winners, kicker) = extract_kicker(
-            array![h1.clone(), h2.clone()], HandRank::FLUSH.into(),
-        );
-        assert(winners.len() == 1, 'Higher flush wins');
-        assert(winners.at(0).player == @h1.player, 'Wrong winner on flush');
-        assert(kicker == h1.cards, 'Kicker must be winner cards');
+        let (sorted_hands, kicker) = extract_kicker(array![h1.clone(), h2.clone()], HandRank::FLUSH.into());
+        assert(sorted_hands.len() == 2, 'Should return all hands');
+        assert(sorted_hands.at(0).player == @h1.player, 'Higher flush should be first');
+        assert(sorted_hands.at(1).player == @h2.player, 'Lower flush should be second');
+        assert(kicker == h1.cards, 'Kicker should be strongest hand');
     }
 
     #[test]
