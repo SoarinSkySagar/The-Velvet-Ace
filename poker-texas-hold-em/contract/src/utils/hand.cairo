@@ -3,10 +3,9 @@ use crate::models::card::{Card, Royals};
 
 /// Determines the winning hand(s) among an array of hands with the same HandRank.
 ///
-/// This function compares hands of equal rank using poker tie-breaking rules specific to each
-/// HandRank. It assumes all input hands have the same rank and contain exactly 5 cards.
-/// For ranks like STRAIGHT, STRAIGHT_FLUSH, and ROYAL_FLUSH, where ties are determined solely
-/// by the rank itself, all hands are considered equal if they share the same rank.
+/// This function sorts all hands in descending order based on their strength and returns them,
+/// along with kicker cards determined by poker tie-breaking rules specific to each HandRank.
+/// It assumes all input hands have the same rank and contain exactly 5 cards.
 ///
 /// # Arguments
 /// * `hands` - An array of Hand structs, each with the same HandRank.
@@ -14,10 +13,10 @@ use crate::models::card::{Card, Royals};
 ///
 /// # Returns
 /// A tuple containing:
-/// 1. An `Array<Hand>` of the winning hand(s).
+/// 1. An `Array<Hand>` of all hands sorted in descending order by strength.
 /// 2. An `Array<Card>` of kicker cards:
-///    - If a single hand wins, contains all 5 cards of that hand.
-///    - If multiple hands tie, contains an empty array, indicating no further tie-breaking.
+///    - If the first hand is uniquely the strongest, contains all 5 cards of that hand.
+///    - If multiple hands tie for the strongest, contains an empty array.
 ///
 /// # Panics
 /// Panics if the input `hands` array is empty or if any hand does not have exactly 5 cards.
@@ -222,6 +221,20 @@ fn extract_kicker(mut hands: Array<Hand>, hand_rank: u16) -> (Array<Hand>, Array
             }
         },
         HandRank::UNDEFINED => { panic(array!['Undefined hand rank']) },
+    }
+}
+
+/// Extracts the comparison key for a hand based on its rank.
+fn get_key(hand: @Hand, rank: HandRank) -> Array<u16> {
+    match rank {
+        HandRank::HIGH_CARD | HandRank::FLUSH => get_high_card_key(hand),
+        HandRank::ONE_PAIR => get_one_pair_key(hand),
+        HandRank::TWO_PAIR => get_two_pair_key(hand),
+        HandRank::THREE_OF_A_KIND => get_three_of_a_kind_key(hand),
+        HandRank::STRAIGHT | HandRank::STRAIGHT_FLUSH | HandRank::ROYAL_FLUSH => get_high_card_key(hand),
+        HandRank::FULL_HOUSE => get_full_house_key(hand),
+        HandRank::FOUR_OF_A_KIND => get_four_of_a_kind_key(hand),
+        HandRank::UNDEFINED => panic(array!['Undefined hand rank']),
     }
 }
 
