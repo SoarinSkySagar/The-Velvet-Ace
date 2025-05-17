@@ -26,6 +26,17 @@ fn extract_kicker(hands: Array<Hand>, hand_rank: u16) -> (Array<Hand>, Array<Car
     assert(hands.len() > 0, 'Hands array cannot be empty');
     let rank: HandRank = hand_rank.into();
 
+    // For STRAIGHT, STRAIGHT_FLUSH, and ROYAL_FLUSH, return all hands with no kicker
+    if rank == HandRank::STRAIGHT || rank == HandRank::STRAIGHT_FLUSH || rank == HandRank::ROYAL_FLUSH {
+        let mut sorted_hands: Array<Hand> = array![];
+        let mut i: usize = 0;
+        while i < hands.len() {
+            sorted_hands.append(hands.at(i).clone());
+            i += 1;
+        };
+        return (sorted_hands, array![]);
+    }
+
     let mut keys_and_hands: Array<(Array<u16>, Hand)> = array![];
     let mut i: usize = 0;
     while i < hands.len() {
