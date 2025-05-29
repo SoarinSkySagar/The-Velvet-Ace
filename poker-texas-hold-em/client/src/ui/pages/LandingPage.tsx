@@ -1,52 +1,73 @@
-import { Link } from 'react-router-dom';
-import Button from '../components/LandingPage/Button';
-import { useEffect, useState } from 'react';
-import WalletConnectModal from '../components/WalletConnectModal';
-import ArrowDown from '../../assets/icons/ArrowDown';
+import { Link } from "react-router-dom";
+import Button from "../components/LandingPage/Button";
+import { useEffect, useState } from "react";
+import WalletConnectModal from "../components/WalletConnectModal";
+import ArrowDown from "../../assets/icons/ArrowDown";
+import { useAccount } from "@starknet-react/core";
 
 const LandingPage = () => {
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState<boolean>(false);
-  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const { account } = useAccount();
 
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 560);
     };
-    handleResize(); 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return (
     <section className="relative w-full h-screen max-h-screen overflow-hidden">
       {/* Nav */}
-      {isConnected && <nav className='hidden lg:block fixed min-w-full' style={{ background: 'linear-gradient(180deg, #171E3A 47.51%, #3F53A0 360.64%)' }}>
-        <div className='max-w-screen-2xl flex justify-between items-center mx-auto px-8 xl:px-10 py-3'>
-          <div className='flex items-center gap-x-2'>
-            <img src="/images/logo.svg" className='w-[80px] h-auto' alt="Velvet Ace Logo" />
-            <p className='font-orbitron text-white font-semibold lg:text-[20px]'>Velvet Ace</p>
-          </div>
-          <div className='flex items-center cursor-pointer gap-x-1'>
-            <div className='bg-yellow-300 w-[35px] h-[35px] rounded-[9px]'></div>
-            <div className='mr-1'>
-              <p className='text-xs text-white font-light'>0x12a...b34c</p>
-              <p className='text-white font-bold'>$4000</p>
+      {account && (
+        <nav
+          className="fixed hidden min-w-full lg:block"
+          style={{
+            background:
+              "linear-gradient(180deg, #171E3A 47.51%, #3F53A0 360.64%)",
+          }}
+        >
+          <div className="flex items-center justify-between px-8 py-3 mx-auto max-w-screen-2xl xl:px-10">
+            <div className="flex items-center gap-x-2">
+              <img
+                src="/images/logo.svg"
+                className="w-[80px] h-auto"
+                alt="Velvet Ace Logo"
+              />
+              <p className="font-orbitron text-white font-semibold lg:text-[20px]">
+                Velvet Ace
+              </p>
             </div>
-            <ArrowDown />
+            <div className="flex items-center cursor-pointer gap-x-1">
+              <div className="bg-yellow-300 w-[35px] h-[35px] rounded-[9px]"></div>
+              <div className="mr-1">
+                <p className="text-xs font-light text-white">
+                  {account.address}
+                </p>
+                <p className="font-bold text-white">$4000</p>
+              </div>
+              <ArrowDown />
+            </div>
           </div>
-        </div>
-      </nav>}
+        </nav>
+      )}
 
       {/* Background Image Container */}
       <div className="absolute inset-0 z-[-5]">
-        <img 
-          src={isMobile ? "/images/mobile-homebg.svg" : "/images/desktop-homebg.svg"}
+        <img
+          src={
+            isMobile
+              ? "/images/mobile-homebg.svg"
+              : "/images/desktop-homebg.svg"
+          }
           alt="Background"
-          className="w-full h-full object-cover object-bottom"
+          className="object-cover object-bottom w-full h-full"
         />
       </div>
-      
+
       {/* Coin Images */}
       <div>
         <img
@@ -74,55 +95,73 @@ const LandingPage = () => {
       </div>
 
       {/* Main Content */}
-      <div className='relative z-10 w-full h-full flex flex-col items-center justify-center gap-y-4 lg:gap-8'>
-        <img src="/images/logo.svg" className='w-[180px] md:w-[320px] h-auto' alt="Velvet Ace Logo" />
+      <div className="relative z-10 flex flex-col items-center justify-center w-full h-full gap-y-4 lg:gap-8">
+        <img
+          src="/images/logo.svg"
+          className="w-[180px] md:w-[320px] h-auto"
+          alt="Velvet Ace Logo"
+        />
         <div className="absolute sm:hidden z-[-2] bottom-[-80%] max-w-[600px] mx-auto inset-0">
-          <img 
+          <img
             src="/images/board-mobile.svg"
             alt="Background"
-            className="w-full h-full opacity-60 object-fill object-bottom"
+            className="object-fill object-bottom w-full h-full opacity-60"
           />
         </div>
-        
+
         <h1 className="font-orbitron text-[37px] lg:text-8xl font-semibold animate-glow">
-          <span className="
+          <span
+            className="
             text-[#E1E1E1]
             bg-clip-text
             tracking-tight
             drop-shadow-[0_0_6px_rgba(255,215,0,0.8)]
-          ">
+          "
+          >
             Velvet Ace
           </span>
         </h1>
 
         {/* Buttons Container */}
-        <div className='flex flex-col items-center md:flex-row gap-y-6 md:gap-4 mt-8'>
-          <Button 
-            variant='gradient' 
-            radius='lg'
+        <div className="flex flex-col items-center mt-8 md:flex-row gap-y-6 md:gap-4">
+          <Button
+            variant="gradient"
+            radius="lg"
             onClick={() => setIsWalletModalOpen(true)}
-            >
-              {isConnected? "ENTER LOBBY" :"Connect Wallet to Play"}
+          >
+            {account ? "ENTER LOBBY" : "Connect Wallet to Play"}
           </Button>
-          <Button variant='outline-green' radius='lg'>How to Play</Button>
+          <Button variant="outline-green" radius="lg">
+            How to Play
+          </Button>
         </div>
 
-              
         {/* Terms Links */}
-        <div className={`absolute bottom-10 font-orbitron text-xs lg:text-base ${isConnected ? 'lg:bottom-10 lg:right-10' : 'lg:top-5 lg:right-15'} flex gap-x-4 lg:gap-x-8 z-12 font-semibold text-white`}>
-          <Link to=""><span className='cursor-pointer hover:text-yellow-300 transition-colors'>[ Terms and Conditions ]</span></Link>
-          <Link to=""><span className='cursor-pointer hover:text-yellow-300 transition-colors'>[ Privacy Policy ]</span></Link>
+        <div
+          className={`absolute bottom-10 font-orbitron text-xs lg:text-base ${
+            account ? "lg:bottom-10 lg:right-10" : "lg:top-5 lg:right-15"
+          } flex gap-x-4 lg:gap-x-8 z-12 font-semibold text-white`}
+        >
+          <Link to="">
+            <span className="transition-colors cursor-pointer hover:text-yellow-300">
+              [ Terms and Conditions ]
+            </span>
+          </Link>
+          <Link to="">
+            <span className="transition-colors cursor-pointer hover:text-yellow-300">
+              [ Privacy Policy ]
+            </span>
+          </Link>
         </div>
       </div>
 
-       {/* Wallet Connect Modal */}
-       <WalletConnectModal 
-        isOpen={isWalletModalOpen} 
-        onClose={() => setIsWalletModalOpen(false)} 
-        connect={() => setIsConnected(true)}
+      {/* Wallet Connect Modal */}
+      <WalletConnectModal
+        isOpen={isWalletModalOpen}
+        onClose={() => setIsWalletModalOpen(false)}
       />
     </section>
-  )
-}
+  );
+};
 
 export default LandingPage;
