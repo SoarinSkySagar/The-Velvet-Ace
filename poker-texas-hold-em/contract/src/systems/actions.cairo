@@ -10,7 +10,7 @@ pub mod actions {
     };
     use poker::models::card::{Card, CardTrait};
     use poker::models::deck::{Deck, DeckTrait};
-    use poker::models::game::{Game, GameMode, GameParams, GameTrait};
+    use poker::models::game::{Game, GameMode, GameParams, GameTrait, GameStats};
     use poker::models::hand::{Hand, HandTrait};
     use poker::models::player::{Player, PlayerTrait};
     use poker::traits::game::get_default_game_params;
@@ -442,6 +442,20 @@ pub mod actions {
             result
         }
 
+        // @nagxsan
+        fn update(ref self: ContractState, game_id: u64, updated_game_stats: GameStats) {
+            let mut world: dojo::world::WorldStorage = self.world_default();
+            let _game_stats: GameStats = world.read_model(game_id);
+            world.write_model(@updated_game_stats);
+        }
+
+        // @nagxsan
+        fn extract_mvp(self: @ContractState, game_id: u64) -> ContractAddress {
+            let mut world: dojo::world::WorldStorage = self.world_default();
+            let game_stats: GameStats = world.read_model(game_id);
+            game_stats.mvp
+        }
+
         fn _get_dealer(self: @ContractState, player: @Player) -> Option<Player> {
             let mut world = self.world_default();
             let game_id: u64 = *player.extract_current_game_id();
@@ -710,7 +724,7 @@ pub mod actions {
             world.emit_event(@round_resolved);
         }
 
-        // @Birdmannn
+        // @Birdmannn, @nagxsan
         fn _resolve_game(
             ref self: ContractState, ref game: Game, caller: ContractAddress, force: bool,
         ) {
@@ -734,9 +748,11 @@ pub mod actions {
             game.has_ended = true;
             game.next_player = Option::None;
             // the remaining fields would be left for stats
-            // TODO: require mvp. assigned to a dev.
+            let mvp = self.extract_mvp(game.id);
             let game_concluded = GameConcluded {
-                game_id: game.id, time_stamp: get_block_timestamp(), mvp: Zero::zero(),
+                game_id: game.id,
+                time_stamp: get_block_timestamp(),
+                mvp,
             };
             world.emit_event(@game_concluded);
         }
