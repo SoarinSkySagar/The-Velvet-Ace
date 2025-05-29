@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import WalletConnectModal from "../components/WalletConnectModal";
 import ArrowDown from "../../assets/icons/ArrowDown";
 import { useAccount } from "@starknet-react/core";
+import { truncateAddress } from "../../util";
 
 const LandingPage = () => {
   const [isMobile, setIsMobile] = useState<boolean>(false);
@@ -45,7 +46,7 @@ const LandingPage = () => {
               <div className="bg-yellow-300 w-[35px] h-[35px] rounded-[9px]"></div>
               <div className="mr-1">
                 <p className="text-xs font-light text-white">
-                  {account.address}
+                  {truncateAddress(account.address)}
                 </p>
                 <p className="font-bold text-white">$4000</p>
               </div>

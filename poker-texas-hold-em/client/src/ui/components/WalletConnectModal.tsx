@@ -8,9 +8,10 @@ type Props = {
   onClose: () => void;
 };
 
+type WalletIcon = string | { dark: string; light: string };
 type Wallet = {
   name: string;
-  icon: string;
+  icon: WalletIcon;
 };
 
 const WalletConnectModal = ({ isOpen, onClose }: Props) => {
@@ -31,10 +32,10 @@ const WalletConnectModal = ({ isOpen, onClose }: Props) => {
         if (connectors.length) {
           setSelectedWallet({
             name: wallet.name,
-            icon: wallet.icon.dark || wallet.icon,
+            icon: wallet.icon,
           });
           setIsWalletLoading(true);
-
+          onClose();
           connect({ connector: wallet });
           setIsWalletLoading(false);
         } else {
@@ -65,7 +66,11 @@ const WalletConnectModal = ({ isOpen, onClose }: Props) => {
             <div className="flex flex-col items-center justify-center gap-y-6">
               {selectedWallet?.icon && (
                 <img
-                  src={selectedWallet.icon.dark || selectedWallet.icon}
+                  src={
+                    typeof selectedWallet.icon === "object"
+                      ? selectedWallet.icon.dark
+                      : selectedWallet.icon
+                  }
                   className="rounded-full h-[74px] w-[74px]"
                   alt={`${selectedWallet.name} icon`}
                 />
@@ -96,7 +101,11 @@ const WalletConnectModal = ({ isOpen, onClose }: Props) => {
                     <div className="flex items-center gap-x-3">
                       {wallet.icon && (
                         <img
-                          src={wallet.icon.dark || wallet.icon}
+                          src={
+                            typeof wallet.icon === "object"
+                              ? wallet.icon.dark
+                              : wallet.icon
+                          }
                           alt={wallet.name}
                           className="w-8 h-8"
                         />

@@ -1,15 +1,10 @@
-export async function getCartridgeInstance() {
-  const [{ default: ControllerConnector }, { Connector }, { constants }] =
-    await Promise.all([
-      import("@cartridge/connector/controller"),
-      import("@starknet-react/core"),
-      import("starknet"),
-    ]);
+import ControllerConnector from "@cartridge/connector/controller";
+import { Connector } from "@starknet-react/core";
+import { constants } from "starknet";
 
-  const instance = new ControllerConnector({
-    chains: [{ rpcUrl: "https://api.cartridge.gg/x/starknet/mainnet" }],
-    defaultChainId: constants.StarknetChainId.SN_MAIN,
-  }) as unknown as InstanceType<typeof Connector>;
+const cartridgeInstance = new ControllerConnector({
+  chains: [{ rpcUrl: "https://api.cartridge.gg/x/starknet/mainnet" }],
+  defaultChainId: constants.StarknetChainId.SN_MAIN,
+}) as unknown as InstanceType<typeof Connector>;
 
-  return instance;
-}
+export default cartridgeInstance;

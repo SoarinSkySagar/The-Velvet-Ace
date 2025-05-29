@@ -1,4 +1,4 @@
-import { useEffect, useState, type PropsWithChildren } from "react";
+import type { PropsWithChildren } from "react";
 import { mainnet } from "@starknet-react/chains";
 import {
   jsonRpcProvider,
@@ -7,9 +7,9 @@ import {
   argent,
   braavos,
   useInjectedConnectors,
-  Connector,
 } from "@starknet-react/core";
 import { dojoConfig } from "../dojoConfig";
+import instance from "./lib/controller";
 import {
   predeployedAccounts,
   PredeployedAccountsConnector,
@@ -23,22 +23,12 @@ predeployedAccounts({
 }).then((p) => (pa = p));
 
 export default function StarknetProvider({ children }: PropsWithChildren) {
-  const [connectors, setConnectors] = useState<Connector[] | null>(null);
-
   const { connectors: injected } = useInjectedConnectors({
     recommended: [argent(), braavos()],
     includeRecommended: "always",
   });
 
-  useEffect(() => {
-    const loadConnector = async () => {
-      const instance = await import("./lib/controller").then((mod) =>
-        mod.getCartridgeInstance()
-      );
-      setConnectors([instance, ...injected]);
-    };
-    loadConnector();
-  }, []);
+  const connectors = [instance, ...injected, ...pa];
 
   const provider = jsonRpcProvider({
     rpc: () => ({ nodeUrl: dojoConfig.rpcUrl as string }),
