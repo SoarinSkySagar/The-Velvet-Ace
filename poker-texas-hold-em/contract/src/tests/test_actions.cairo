@@ -346,6 +346,8 @@ mod tests {
             params: get_default_game_params(),
             reshuffled: 0,
             should_end: false,
+            deck_root: 0,
+            dealt_cards_root: 0,
         };
 
         let player_1 = Player {
