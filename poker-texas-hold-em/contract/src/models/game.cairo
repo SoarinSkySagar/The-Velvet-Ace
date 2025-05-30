@@ -67,6 +67,14 @@ pub struct Game {
     reshuffled: u64,
 }
 
+#[derive(Drop, Clone, Serde)]
+#[dojo::model]
+pub struct GameStats {
+    #[key]
+    game_id: u64,
+    mvp: ContractAddress
+}
+
 // then we can implemnt a list node here
 #[derive(Drop, Serde, Copy, PartialEq)]
 pub struct Node {
