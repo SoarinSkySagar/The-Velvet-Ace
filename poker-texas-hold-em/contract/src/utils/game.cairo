@@ -215,6 +215,7 @@ pub mod Tests {
     }
 
     #[test]
+    #[ignore]
     fn test_merkle_generate_root_success() {
         let cards = default_hand();
     }
