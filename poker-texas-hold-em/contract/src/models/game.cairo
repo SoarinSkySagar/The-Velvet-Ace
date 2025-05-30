@@ -65,6 +65,8 @@ pub struct Game {
     current_bet: u256,
     params: GameParams,
     reshuffled: u64,
+    deck_root: felt252,
+    dealt_cards_root: felt252,
 }
 
 #[derive(Drop, Clone, Serde)]
@@ -72,7 +74,7 @@ pub struct Game {
 pub struct GameStats {
     #[key]
     game_id: u64,
-    mvp: ContractAddress
+    mvp: ContractAddress,
 }
 
 // then we can implemnt a list node here

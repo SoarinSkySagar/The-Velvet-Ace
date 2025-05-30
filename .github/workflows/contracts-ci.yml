@@ -2,12 +2,12 @@ name: Contracts CI
 on:
   push:
     branches: 
-      - main
-      - '**'
-  # pull_request:
-  #   branches: 
-  #     - main
-  #     - '**'
+      - "main"
+      - "v1"
+  pull_request:
+    branches: 
+      - "main"
+      - "v1"
 jobs:
   build-and-test:
     runs-on: ubuntu-latest

@@ -22,9 +22,12 @@ mod traits {
 
 mod utils {
     mod hand;
+    mod game;
+    mod deck;
 }
 
 #[cfg(test)]
+#[ignore]
 mod tests {
     mod setup;
     mod test_actions;

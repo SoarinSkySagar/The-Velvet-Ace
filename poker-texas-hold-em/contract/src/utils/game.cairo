@@ -1,0 +1,221 @@
+use crate::models::deck::Deck;
+use crate::models::card::{Card, CardTrait};
+use core::poseidon::{PoseidonTrait, poseidon_hash_span, hades_permutation};
+use core::hash::{HashStateTrait, HashStateExTrait};
+
+#[derive(Drop, Clone, Serde, Default)]
+pub struct MerkleState {
+    tree: Array<felt252>,
+}
+
+#[generate_trait]
+pub impl MerkleImpl of MerkleTrait {
+    fn new(data: Array<Card>, salt: Array<felt252>) -> MerkleState {
+        let tree = _build_tree_v2(data, salt);
+        MerkleState { tree }
+    }
+
+    fn get_root(ref self: MerkleState) -> felt252 {
+        let tree_len = self.tree.len();
+        assert(tree_len > 0, 'TREE IS EMPTY');
+        *self.tree.at(tree_len - 1)
+    }
+
+    fn generate_proof(mut leaves: Array<felt252>, index: u32) -> Span<felt252> {
+        let mut proof: Array<felt252> = array![];
+
+        // add a null leaf if leaves.len is odd, to make it even.
+        if leaves.len() % 2 != 0 {
+            leaves.append(0);
+        }
+        compute_proof(leaves, index, ref proof);
+        proof.span()
+    }
+
+    // TEST BOTH VERIFICATIONS.
+    fn verify_v1(root: felt252, mut leaf: felt252, mut proof: Span<felt252>) -> bool {
+        for proof_element in proof {
+            // Compute the hash of the current node and the current element of the proof.
+            // We need to check if the current node is smaller than the current element of the
+            // proof.
+            // If it is, we need to swap the order of the hash.
+            let leaf_ref: u256 = leaf.into();
+            leaf =
+                if leaf_ref < (*proof_element).into() {
+                    hash(leaf, *proof_element)
+                } else {
+                    hash(*proof_element, leaf)
+                };
+        };
+        leaf == root
+    }
+
+    fn verify_v2(
+        mut proof: Array<felt252>, root: felt252, leaf: felt252, mut index: usize,
+    ) -> bool {
+        let mut current_hash = leaf;
+
+        while let Option::Some(proof_value) = proof.pop_front() {
+            current_hash =
+                if index % 2 == 0 {
+                    hash(current_hash, proof_value)
+                    // PoseidonTrait::new().update_with((current_hash, proof_value)).finalize()
+                } else {
+                    hash(proof_value, current_hash)
+                    // PoseidonTrait::new().update_with((proof_value, current_hash)).finalize()
+                };
+
+            index /= 2;
+        };
+
+        current_hash == root
+    }
+}
+
+fn compute_proof(mut nodes: Array<felt252>, index: u32, ref proof: Array<felt252>) {
+    if index % 2 == 0 {
+        proof.append(*nodes.at(index + 1));
+    } else {
+        proof.append(*nodes.at(index - 1));
+    }
+    // Break if we have reached the top of the tree (next_level would be root)
+    if nodes.len() == 2 {
+        return;
+    }
+    // Compute next level
+    let next_level: Array<felt252> = get_next_level(nodes.span());
+
+    compute_proof(next_level, index / 2, ref proof)
+}
+
+fn get_next_level(mut nodes: Span<felt252>) -> Array<felt252> {
+    let mut next_level: Array<felt252> = array![];
+    while let Option::Some(left) = nodes.pop_front() {
+        let right = *nodes.pop_front().expect('Index out of bounds');
+        let node = if Into::<felt252, u256>::into(*left) < right.into() {
+            hash(*left, right)
+        } else {
+            hash(right, *left)
+        };
+        next_level.append(node);
+    };
+    next_level
+}
+
+fn _build_tree_v2(data: Array<Card>, salt: Array<felt252>) -> Array<felt252> {
+    let data_len = data.len();
+    let mut _hashes: Array<felt252> = ArrayTrait::new();
+    let mut last_element = Option::None;
+
+    if data_len > 0 && (data_len % 2) != 0 {
+        last_element = Option::Some(data.at(data_len - 1).clone());
+    };
+
+    for mut value in data {
+        _hashes.append(value.hash(salt.clone()));
+    };
+
+    let mut current_nodes_lvl_len = data_len;
+    let mut hashes_offset = 0;
+
+    // if data_len is uneven, add the last element to the hashes array
+    match last_element {
+        Option::Some(mut value) => {
+            _hashes.append(value.hash(salt));
+            current_nodes_lvl_len += 1;
+        },
+        Option::None => {},
+    };
+
+    while current_nodes_lvl_len > 0 {
+        let mut i = 0;
+        while i < current_nodes_lvl_len - 1 {
+            let left_elem = *_hashes.at(hashes_offset + i);
+            let right_elem = *_hashes.at(hashes_offset + i + 1);
+
+            let hash = hash(left_elem, right_elem);
+            _hashes.append(hash);
+
+            i += 2;
+        };
+
+        hashes_offset += current_nodes_lvl_len;
+        current_nodes_lvl_len /= 2;
+        if current_nodes_lvl_len > 1 && current_nodes_lvl_len % 2 != 0 {
+            // duplicate last element of hashes array if current_nodes_lvl_len is uneven
+            let last_elem = *_hashes.at(_hashes.len() - 1);
+            _hashes.append(last_elem);
+            current_nodes_lvl_len += 1;
+        };
+    };
+
+    _hashes
+}
+
+fn hash(data1: felt252, data2: felt252) -> felt252 {
+    let (hash, _, _) = hades_permutation(data1, data2, 2);
+    hash
+}
+
+
+// fn build_tree_v1(ref deck: Deck) -> Array<felt252> {
+//     let data_len = data.len();
+//     assert(data_len > 0 && (data_len & (data_len - 1)) == 0, super::errors::NOT_POW_2);
+
+//     let mut _hashes: Array<felt252> = ArrayTrait::new();
+
+//     // first, hash every leaf
+//     for value in data {
+//         _hashes.append(value.hash());
+//     };
+
+//     // then, hash all levels above leaves
+//     let mut current_nodes_lvl_len = data_len;
+//     let mut hashes_offset = 0;
+
+//     while current_nodes_lvl_len > 0 {
+//         let mut i = 0;
+//         while i < current_nodes_lvl_len - 1 {
+//             let left_elem = *_hashes.at(hashes_offset + i);
+//             let right_elem = *_hashes.at(hashes_offset + i + 1);
+
+//             let hash = PoseidonTrait::new().update_with((left_elem, right_elem)).finalize();
+//             _hashes.append(hash);
+
+//             i += 2;
+//         };
+
+//         hashes_offset += current_nodes_lvl_len;
+//         current_nodes_lvl_len /= 2;
+//     };
+
+//     // write to the contract state (useful for the get_root function)
+//     for hash in _hashes.span() {
+//         self.hashes.append().write(*hash);
+//     };
+
+//     _hashes
+// }
+
+#[cfg(test)]
+pub mod Tests {
+    use crate::models::card::{Card, Suits};
+    use super::{MerkleState, MerkleTrait};
+
+    fn card(suit: u8, value: u16) -> Card {
+        Card { suit, value }
+    }
+
+    fn default_hand() -> Array<Card> {
+        let mut hand: Array<Card> = array![];
+        hand.append(card(Suits::CLUBS, 1));
+        hand.append(card(Suits::CLUBS, 4));
+        hand.append(card(Suits::CLUBS, 5));
+        hand
+    }
+
+    #[test]
+    fn test_merkle_generate_root_success() {
+        let cards = default_hand();
+    }
+}

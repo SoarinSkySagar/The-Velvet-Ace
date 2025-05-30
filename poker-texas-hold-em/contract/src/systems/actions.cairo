@@ -445,6 +445,7 @@ pub mod actions {
         // @nagxsan
         fn update(ref self: ContractState, game_id: u64, updated_game_stats: GameStats) {
             let mut world: dojo::world::WorldStorage = self.world_default();
+            // remove this _game_stats in the future.
             let _game_stats: GameStats = world.read_model(game_id);
             world.write_model(@updated_game_stats);
         }
@@ -750,9 +751,7 @@ pub mod actions {
             // the remaining fields would be left for stats
             let mvp = self.extract_mvp(game.id);
             let game_concluded = GameConcluded {
-                game_id: game.id,
-                time_stamp: get_block_timestamp(),
-                mvp,
+                game_id: game.id, time_stamp: get_block_timestamp(), mvp,
             };
             world.emit_event(@game_concluded);
         }
