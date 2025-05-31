@@ -6,13 +6,14 @@ use core::hash::{HashStateTrait, HashStateExTrait};
 #[derive(Drop, Clone, Serde, Default)]
 pub struct MerkleState {
     tree: Array<felt252>,
+    leaves_len: u64,
 }
 
 #[generate_trait]
 pub impl MerkleImpl of MerkleTrait {
     fn new(data: Array<Card>, salt: Array<felt252>) -> MerkleState {
-        let tree = _build_tree_v2(data, salt);
-        MerkleState { tree }
+        let tree = _build_tree_v2(data.clone(), salt);
+        MerkleState { tree, leaves_len: data.len().into() }
     }
 
     fn get_root(ref self: MerkleState) -> felt252 {
@@ -21,7 +22,34 @@ pub impl MerkleImpl of MerkleTrait {
         *self.tree.at(tree_len - 1)
     }
 
-    fn generate_proof(mut leaves: Array<felt252>, index: u32) -> Array<felt252> {
+    fn generate_proof_v2(ref self: MerkleState, mut index: u64) -> Array<felt252> {
+        let data_length = self.leaves_len;
+        let mut proof: Array<felt252> = ArrayTrait::new();
+        let mut offset = 0;
+        let mut current_nodes_lvl_len = if data_length % 2 != 0 {
+            data_length + 1
+        } else {
+            data_length
+        };
+
+        while current_nodes_lvl_len > 1 {
+            let sibling_index = if index % 2 == 0 {
+                offset + index + 1
+            } else {
+                offset + index - 1
+            };
+            proof.append(*self.tree.at(sibling_index.try_into().unwrap()));
+            offset += current_nodes_lvl_len;
+            current_nodes_lvl_len /= 2;
+            index /= 2;
+            if current_nodes_lvl_len > 1 && current_nodes_lvl_len % 2 != 0 {
+                current_nodes_lvl_len += 1;
+            };
+        };
+        proof
+    }
+
+    fn generate_proof_v1(mut leaves: Array<felt252>, index: u32) -> Array<felt252> {
         let mut proof: Array<felt252> = array![];
 
         // add a null leaf if leaves.len is odd, to make it even.
@@ -133,6 +161,7 @@ fn _build_tree_v2(data: Array<Card>, salt: Array<felt252>) -> Array<felt252> {
             let left_elem = *_hashes.at(hashes_offset + i);
             let right_elem = *_hashes.at(hashes_offset + i + 1);
 
+            // let hash = PoseidonTrait::new().update_with((left_elem, right_elem)).finalize();
             let hash = hash(left_elem, right_elem);
             _hashes.append(hash);
 
@@ -157,46 +186,6 @@ fn hash(data1: felt252, data2: felt252) -> felt252 {
     hash
 }
 
-
-// fn build_tree_v1(ref deck: Deck) -> Array<felt252> {
-//     let data_len = data.len();
-//     assert(data_len > 0 && (data_len & (data_len - 1)) == 0, super::errors::NOT_POW_2);
-
-//     let mut _hashes: Array<felt252> = ArrayTrait::new();
-
-//     // first, hash every leaf
-//     for value in data {
-//         _hashes.append(value.hash());
-//     };
-
-//     // then, hash all levels above leaves
-//     let mut current_nodes_lvl_len = data_len;
-//     let mut hashes_offset = 0;
-
-//     while current_nodes_lvl_len > 0 {
-//         let mut i = 0;
-//         while i < current_nodes_lvl_len - 1 {
-//             let left_elem = *_hashes.at(hashes_offset + i);
-//             let right_elem = *_hashes.at(hashes_offset + i + 1);
-
-//             let hash = PoseidonTrait::new().update_with((left_elem, right_elem)).finalize();
-//             _hashes.append(hash);
-
-//             i += 2;
-//         };
-
-//         hashes_offset += current_nodes_lvl_len;
-//         current_nodes_lvl_len /= 2;
-//     };
-
-//     // write to the contract state (useful for the get_root function)
-//     for hash in _hashes.span() {
-//         self.hashes.append().write(*hash);
-//     };
-
-//     _hashes
-// }
-
 #[cfg(test)]
 pub mod Tests {
     use crate::models::card::{Card, Suits, Royals, CardTrait};
@@ -219,11 +208,11 @@ pub mod Tests {
     }
 
     #[test]
-    fn test_merkle_generate_root_success() {
+    fn test_merkle_generate_root_and_verification_success() {
         // root: 3265258184025689748944567234307789604284324313859921054492400796521367996981
         let cards = default_hand();
-        let mut merkle_tree = MerkleTrait::new(cards.clone(), salt());
-        let root = merkle_tree.get_root();
+        let mut merkle_state = MerkleTrait::new(cards.clone(), salt());
+        let root = merkle_state.get_root();
         println!("Root of cards: {}", root);
 
         let mut leaves: Array<felt252> = array![];
@@ -232,15 +221,33 @@ pub mod Tests {
             leaves.append(card.hash(salt()));
         };
 
-        // proof of first card, ACE of CLUBS
-        let proof = MerkleTrait::generate_proof(leaves.clone(), 0);
-        println!("Proof of Ace of clubs is {:?}", proof.span());
+        let proof = merkle_state.generate_proof_v2(0);
 
         // let's verify that ACE of CLUBS is in this root, using this proof.
-        
-        let v1 = MerkleTrait::verify_v1(root, *leaves.at(0), proof.span());
-        println!("verify_v1 of root returned: {}", v1);
-        let v2 = MerkleTrait::verify_v2(proof, root, *leaves.at(0), leaves.len());
-        println!("verify_v2 of root returned: {}", v2);
+        let verified = MerkleTrait::verify_v2(proof, root, *leaves.at(0), 0);
+        assert(verified, 'V2 VERIFICATION FAILED');
+    }
+
+    #[test]
+    fn test_merkle_verification_failure_on_invalid_proof() {
+        // root of the last test
+        let cards = default_hand();
+        let root: felt252 =
+            3265258184025689748944567234307789604284324313859921054492400796521367996981;
+        // proof of ACE of CLUBS on the last test.
+        let proof = array![
+            3044331186771646128379142839638382346410288533857569651221843248057032875529,
+            1482025689999262917428523866462686644709767517261250894155030474966436422230,
+        ];
+        let mut card0 = *cards.at(0);
+        let leaf0 = card0.hash(salt());
+        let verified = MerkleTrait::verify_v2(proof, root, leaf0, 0);
+        assert(verified, 'SHOULD VERIFY.');
+        let proof = array![
+            3044331186771646128379142839638382346410288533857569651221843248057032875529 + 1,
+            1482025689999262917428523866462686644709767517261250894155030474966436422230,
+        ];
+        let verified = MerkleTrait::verify_v2(proof, root, leaf0, 0);
+        assert(!verified, 'SHOULD NOT VERIFY');
     }
 }
