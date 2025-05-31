@@ -22,6 +22,8 @@ mod traits {
 
 mod utils {
     mod hand;
+    mod game;
+    mod deck;
 }
 
 #[cfg(test)]
