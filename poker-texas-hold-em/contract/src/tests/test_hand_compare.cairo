@@ -41,7 +41,7 @@ mod tests {
         }
     }
 
-    #[test]
+    #[test]  
     fn test_compare_one_pair_kicker_split_true() {
         let p1_addr = contract_address_const::<'P1'>();
         let p2_addr = contract_address_const::<'P2'>();

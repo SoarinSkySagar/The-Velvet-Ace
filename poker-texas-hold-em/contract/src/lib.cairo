@@ -27,7 +27,6 @@ mod utils {
 }
 
 #[cfg(test)]
-#[ignore]
 mod tests {
     mod setup;
     mod test_actions;

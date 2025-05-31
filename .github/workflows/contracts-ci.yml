@@ -1,4 +1,5 @@
 name: Contracts CI
+
 on:
   push:
     branches: 

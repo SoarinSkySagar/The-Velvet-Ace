@@ -21,7 +21,7 @@ pub impl MerkleImpl of MerkleTrait {
         *self.tree.at(tree_len - 1)
     }
 
-    fn generate_proof(mut leaves: Array<felt252>, index: u32) -> Span<felt252> {
+    fn generate_proof(mut leaves: Array<felt252>, index: u32) -> Array<felt252> {
         let mut proof: Array<felt252> = array![];
 
         // add a null leaf if leaves.len is odd, to make it even.
@@ -29,7 +29,7 @@ pub impl MerkleImpl of MerkleTrait {
             leaves.append(0);
         }
         compute_proof(leaves, index, ref proof);
-        proof.span()
+        proof
     }
 
     // TEST BOTH VERIFICATIONS.
@@ -199,8 +199,12 @@ fn hash(data1: felt252, data2: felt252) -> felt252 {
 
 #[cfg(test)]
 pub mod Tests {
-    use crate::models::card::{Card, Suits};
+    use crate::models::card::{Card, Suits, Royals, CardTrait};
     use super::{MerkleState, MerkleTrait};
+
+    fn salt() -> Array<felt252> {
+        array!['Salt1', 'Salt2', 'Salt3']
+    }
 
     fn card(suit: u8, value: u16) -> Card {
         Card { suit, value }
@@ -208,15 +212,35 @@ pub mod Tests {
 
     fn default_hand() -> Array<Card> {
         let mut hand: Array<Card> = array![];
-        hand.append(card(Suits::CLUBS, 1));
+        hand.append(card(Suits::CLUBS, Royals::ACE));
         hand.append(card(Suits::CLUBS, 4));
         hand.append(card(Suits::CLUBS, 5));
         hand
     }
 
     #[test]
-    #[ignore]
     fn test_merkle_generate_root_success() {
+        // root: 3265258184025689748944567234307789604284324313859921054492400796521367996981
         let cards = default_hand();
+        let mut merkle_tree = MerkleTrait::new(cards.clone(), salt());
+        let root = merkle_tree.get_root();
+        println!("Root of cards: {}", root);
+
+        let mut leaves: Array<felt252> = array![];
+        for i in 0..cards.len() {
+            let mut card = *cards.at(i);
+            leaves.append(card.hash(salt()));
+        };
+
+        // proof of first card, ACE of CLUBS
+        let proof = MerkleTrait::generate_proof(leaves.clone(), 0);
+        println!("Proof of Ace of clubs is {:?}", proof.span());
+
+        // let's verify that ACE of CLUBS is in this root, using this proof.
+        
+        let v1 = MerkleTrait::verify_v1(root, *leaves.at(0), proof.span());
+        println!("verify_v1 of root returned: {}", v1);
+        let v2 = MerkleTrait::verify_v2(proof, root, *leaves.at(0), leaves.len());
+        println!("verify_v2 of root returned: {}", v2);
     }
 }
