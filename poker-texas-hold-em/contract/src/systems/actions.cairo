@@ -2,7 +2,7 @@
 #[dojo::contract]
 pub mod actions {
     use starknet::{ContractAddress, get_caller_address, get_contract_address, get_block_timestamp};
-    use dojo::model::{ModelStorage, ModelValueStorage};
+    use dojo::model::{ModelStorage, ModelValueStorage, Model};
     use dojo::event::EventStorage;
     use poker::models::base::{
         GameErrors, Id, GameInitialized, CardDealt, HandCreated, HandResolved, RoundResolved,
@@ -262,6 +262,30 @@ pub mod actions {
 
         fn get_dealer(self: @ContractState) -> Option<Player> {
             Option::None
+        }
+
+        fn deal_community_card(ref self: ContractState, card: Card, game_id: u256) {}
+
+        fn showdown(
+            ref self: ContractState,
+            game_id: u64,
+            hands: Array<Hand>,
+            game_proofs: Array<Array<felt252>>,
+            dealt_card_proofs: Array<Array<felt252>>,
+            deck: Deck,
+            game_salt: Array<felt252>,
+            dealt_card_salt: Array<felt252>,
+        ) {
+            let mut world = self.world_default();
+            // assert that this game is valid
+            // NOTE: CALLER CAN BE ZERO, FOR NOW.
+            // assert that the game round has ended.
+            // check the game_params, if the game is verifiable
+            // else, users should use the `submit_card` endpoint.
+            // assert that the salt is not a used salt.
+            let mut game: Game = world.read_model(game_id);
+            // in the end, record this salt as a used salt
+        // set both roots to zero in the `resolve_game`
         }
 
 

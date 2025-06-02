@@ -52,10 +52,10 @@ pub struct Game {
     #[key]
     id: u64,
     in_progress: bool,
+    round_in_progress: bool,
     has_ended: bool,
     current_round: u8,
     should_end: bool,
-    round_in_progress: bool,
     current_player_count: u32,
     players: Array<ContractAddress>,
     deck: Array<u64>,
@@ -68,6 +68,14 @@ pub struct Game {
     deck_root: felt252,
     dealt_cards_root: felt252,
 }
+
+// #[derive(Drop, Copy, PartialEq, Default, Serde, Instrospect)]
+// pub enum RoundStatus {
+//     #[default]
+//     IsWaiting,
+//     InProgress,
+//     HasEnded,
+// }
 
 #[derive(Drop, Clone, Serde)]
 #[dojo::model]

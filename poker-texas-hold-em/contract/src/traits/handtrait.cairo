@@ -29,8 +29,7 @@ pub trait HandTrait {
     /// 1. A new Hand with the best 5 cards found
     /// 2. The rank of the hand as HandRank
     ///
-    /// # Panics
-    /// Panics if the total number of cards is not exactly 7
+    /// no panic
     fn rank(self: @Hand, community_cards: Array<Card>) -> (Hand, HandRank);
 
     /// @Birdmannn
