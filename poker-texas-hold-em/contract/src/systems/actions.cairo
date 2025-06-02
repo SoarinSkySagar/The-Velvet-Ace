@@ -785,16 +785,17 @@ pub mod actions {
 
             game.community_cards.append(card);
 
-            world.emit_event(
-                @CardDealt {
-                    game_id: game_id,
-                    player_id: get_contract_address(), // or use a special address for community cards
-                    deck_id: deck.id,
-                    time_stamp: get_block_timestamp(),
-                    card_value: card.value,
-                    card_suit: card.suit,
-                },
-            );
+            world
+                .emit_event(
+                    @CardDealt {
+                        game_id: game_id,
+                        player_id: get_contract_address(), // or use a special address for community cards
+                        deck_id: deck.id,
+                        time_stamp: get_block_timestamp(),
+                        card_suit: card.suit,
+                        card_value: card.value,
+                    },
+                );
 
             world.write_model(@deck);
             world.write_model(@game);
