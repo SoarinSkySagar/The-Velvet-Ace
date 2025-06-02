@@ -551,16 +551,6 @@ pub mod actions {
 
                     world.write_model(@deck); // should work, ;)
                     current_index += 1;
-
-                    world
-                        .emit_event(
-                            @CardDealt {
-                                game_id: *game_id,
-                                player_id: *player.id,
-                                deck_id: deck.id,
-                                time_stamp: starknet::get_block_timestamp(),
-                            },
-                        );
                 };
 
                 world.write_model(@hand);
@@ -794,6 +784,17 @@ pub mod actions {
             let card = deck.deal_card();
 
             game.community_cards.append(card);
+
+            world.emit_event(
+                @CardDealt {
+                    game_id: game_id,
+                    player_id: get_contract_address(), // or use a special address for community cards
+                    deck_id: deck.id,
+                    time_stamp: get_block_timestamp(),
+                    card_value: card.value,
+                    card_suit: card.suit,
+                },
+            );
 
             world.write_model(@deck);
             world.write_model(@game);
