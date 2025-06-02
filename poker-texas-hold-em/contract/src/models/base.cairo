@@ -25,8 +25,8 @@ pub struct CardDealt {
     pub player_id: ContractAddress,
     pub deck_id: u64,
     pub time_stamp: u64,
-    pub card_value: u8,
-    pub card_suit: u16,
+    pub card_suit: u8,
+    pub card_value: u16,
 }
 
 #[derive(Copy, Drop, Serde)]
