@@ -1,5 +1,8 @@
 use poker::models::game::{Game, GameParams};
+use poker::models::card::Card;
+use poker::models::hand::Hand;
 use poker::models::player::Player;
+use poker::models::deck::Deck;
 use starknet::ContractAddress;
 use poker::traits::game::get_default_game_params;
 
@@ -34,8 +37,20 @@ trait IActions<TContractState> {
     fn all_in(ref self: TContractState);
     fn buy_in(ref self: TContractState, no_of_chips: u256); // will call
     fn get_dealer(self: @TContractState) -> Option<Player>;
+    // remove
     fn get_rank(self: @TContractState, player_id: ContractAddress) -> ByteArray;
-
+    // to be called by the dealer, for now.
+    fn deal_community_card(ref self: TContractState, card: Card, game_id: u256);
+    fn showdown(
+        ref self: TContractState,
+        game_id: u64,
+        hands: Array<Hand>,
+        game_proofs: Array<Array<felt252>>,
+        dealt_card_proofs: Array<Array<felt252>>,
+        deck: Deck,
+        game_salt: Array<felt252>,
+        dealt_card_salt: Array<felt252>,
+    );
 
     /// All functions here might be extracted into a separate contract
     fn get_player(self: @TContractState, player_id: ContractAddress) -> Player;
