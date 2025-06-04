@@ -275,7 +275,7 @@ pub mod actions {
             deck: Deck,
             game_salt: Array<felt252>,
             dealt_card_salt: Array<felt252>,
-        ) {// let mut world = self.world_default();
+        ) { // let mut world = self.world_default();
         // assert that this game is valid
         // NOTE: CALLER CAN BE ZERO, FOR NOW.
         // assert that the game round has ended.

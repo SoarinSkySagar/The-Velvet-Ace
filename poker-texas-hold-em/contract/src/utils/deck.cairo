@@ -89,6 +89,7 @@ pub fn verify_game(
             if !deck_verified || !card_verified {
                 break;
             }
+            card_index += 1;
         };
     };
 
