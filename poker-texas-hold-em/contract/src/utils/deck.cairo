@@ -177,7 +177,7 @@ mod Tests {
     }
 
     #[test]
-    fn test_verify_game_on_wrong_proof() {// for a tw player game
+    fn test_verify_game_on_wrong_proof() { // for a tw player game
     // pub fn verify_game(
     //     community_cards: Array<Card>,
     //     hands: Array<Hand>,
