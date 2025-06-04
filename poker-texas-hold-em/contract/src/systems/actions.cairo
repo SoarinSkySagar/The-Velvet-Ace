@@ -10,12 +10,13 @@ pub mod actions {
     };
     use poker::models::card::{Card, CardTrait};
     use poker::models::deck::{Deck, DeckTrait};
-    use poker::models::game::{Game, GameMode, GameParams, GameTrait, GameStats};
+    use poker::models::game::{Game, GameMode, GameParams, GameTrait, GameStats, Salts};
     use poker::models::hand::{Hand, HandTrait};
     use poker::models::player::{Player, PlayerTrait};
     use poker::traits::game::get_default_game_params;
     use core::num::traits::Zero;
     use crate::systems::interface::IActions;
+    use crate::utils::deck::verify_game;
 
     pub const GAME: felt252 = 'GAME';
     pub const DECK: felt252 = 'DECK';
@@ -102,7 +103,7 @@ pub mod actions {
             world.write_model(@player);
         }
 
-        // @Birdmannn
+        /// @Birdmannn
         fn leave_game(ref self: ContractState) {
             let caller = get_caller_address();
             let mut world = self.world_default();
@@ -148,7 +149,7 @@ pub mod actions {
             world.write_model(@player);
         }
 
-        // @Birdmannn
+        /// @Birdmannn
         fn end_game(ref self: ContractState, game_id: u64, force: bool) {
             let caller = get_caller_address();
             let mut world = self.world_default();
@@ -264,7 +265,10 @@ pub mod actions {
             Option::None
         }
 
-        fn deal_community_card(ref self: ContractState, card: Card, game_id: u256) {}
+        fn deal_community_card(
+            ref self: ContractState, card: Card, game_id: u256,
+        ) { // verify signature on this function too.
+        }
 
         fn showdown(
             ref self: ContractState,
@@ -275,16 +279,38 @@ pub mod actions {
             deck: Deck,
             game_salt: Array<felt252>,
             dealt_card_salt: Array<felt252>,
-        ) { // let mut world = self.world_default();
-        // assert that this game is valid
-        // NOTE: CALLER CAN BE ZERO, FOR NOW.
-        // assert that the game round has ended.
-        // check the game_params, if the game is verifiable
-        // else, users should use the `submit_card` endpoint.
-        // assert that the salt is not a used salt.
-        // let mut game: Game = world.read_model(game_id);
-        // in the end, record this salt as a used salt
-        // set both roots to zero in the `resolve_game`
+        ) {
+            let (g, d) = (game_salt, dealt_card_salt);
+            assert(g.len() == 3 && d.len() == 3, 'INVALID SALT');
+            let mut world = self.world_default();
+
+            // verify signatures here
+
+            // these are snapshpts
+            let g_key = (*g.at(0), *g.at(1), *g.at(2));
+            let d_key = (*d.at(0), *d.at(1), *d.at(2));
+            let mut G: Salts = world.read_model(g_key);
+            let mut D: Salts = world.read_model(d_key);
+            let mut game: Game = world.read_model(game_id);
+            assert(!game.has_ended, GameErrors::GAME_ALREADY_ENDED);
+            // write the salt to invalidate. A wrong showdown disqualifies the whole game if
+            // actually any of the salts were valid.
+            assert(!G.used && !D.used, 'INVALID SALT');
+            world.write_member(Model::<Salts>::ptr_from_keys(g_key), selector!("used"), true);
+            world.write_member(Model::<Salts>::ptr_from_keys(d_key), selector!("used"), true);
+            assert(game.round_in_progress && game.community_cards.len() == 5, 'BAD REQUEST');
+
+            let (mut gp, mut dcp, mut dc) = (game_proofs, dealt_card_proofs, deck);
+            let deck_root: felt252 = game.deck_root;
+            let dealt_root: felt252 = game.dealt_cards_root;
+            // for now, the game houses the community cards. This will be changed.
+            let community_cards: Array<Card> = game.community_cards.clone();
+
+            let verified: bool = verify_game(
+                community_cards.clone(), hands.clone(), gp, dcp, dc, deck_root, dealt_root, g, d,
+            );
+
+            self._resolve_round_v2(hands, community_cards, verified);
         }
 
 
@@ -579,6 +605,32 @@ pub mod actions {
                 world.write_model(@hand);
                 world.write_model(player);
             };
+        }
+
+        fn _resolve_round_v2(
+            ref self: ContractState,
+            hands: Array<Hand>,
+            community_cards: Array<Card>,
+            verified: bool,
+        ) { // resolve root
+        // check if verified, by the way.
+        // DO NOT DELETE.
+        // in the future, check if the game should be verifiable, else, users should use the
+        // submit card endpoint.
+        // TODO: call `resolve_game()`, and update the `resolve_game()` with its appropriate
+        // logic.
+        // if game is not verified, read funds in the id, and split toegther with contract
+        // accordingly.
+        // perhaps let `resolve_game()` take in a bool to assert that the game was resolved
+        // accordingly.
+        // write a new internal function `resolve_v2`
+
+        // assert that this game is valid
+        // NOTE: CALLER CAN BE ZERO, FOR NOW.
+        // check the game_params, if the game is verifiable
+        // else, users should use the `submit_card` endpoint.
+        // set both roots to zero in the `resolve_game`
+        // set round_in_progress to false, by the way.
         }
 
         fn _resolve_hands(

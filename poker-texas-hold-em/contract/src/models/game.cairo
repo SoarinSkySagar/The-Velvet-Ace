@@ -1,5 +1,6 @@
 use starknet::ContractAddress;
 use super::card::Card;
+use super::hand::Hand;
 use poker::traits::game::GameTrait;
 use core::num::traits::Zero;
 
@@ -67,6 +68,18 @@ pub struct Game {
     reshuffled: u64,
     deck_root: felt252,
     dealt_cards_root: felt252,
+}
+
+#[derive(Drop, Serde, Copy)]
+#[dojo::model]
+pub struct Salts {
+    #[key]
+    id1: felt252,
+    #[key]
+    id2: felt252,
+    #[key]
+    id3: felt252,
+    used: bool,
 }
 
 // #[derive(Drop, Copy, PartialEq, Default, Serde, Instrospect)]
