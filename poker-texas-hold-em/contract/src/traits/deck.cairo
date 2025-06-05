@@ -74,8 +74,22 @@ pub impl DeckImpl of DeckTrait {
         self.cards = shuffled_cards;
     }
 
+    fn append(ref self: Deck, card: Card) {
+        self.cards.append(card);
+    }
+
     fn deal_card(ref self: Deck) -> Card {
         self.cards.pop_front().unwrap()
+    }
+
+    fn is_shuffled(ref self: Deck) -> bool {
+        // for the implementation, check if at least 1/2 of self.new_deck() is at a
+        // different position.
+        true
+    }
+
+    fn is_cards_distinct(ref self: Deck) -> bool {
+        true
     }
 }
 // assert after shuffling, that all cards remain distinct, and the deck is still 52 cards
