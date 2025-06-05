@@ -1,9 +1,13 @@
 name: Contracts CI
 on:
   push:
-    branches: ["main"]
+    branches: 
+      - main
+      - v1
   pull_request:
-    branches: ["main"]
+    branches: 
+      - main
+      - v1
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
