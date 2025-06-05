@@ -2,14 +2,6 @@
 version = 1
 
 [[package]]
-name = "erc721"
-version = "0.1.0"
-dependencies = [
- "openzeppelin",
- "snforge_std",
-]
-
-[[package]]
 name = "openzeppelin"
 version = "0.20.0"
 source = "registry+https://scarbs.xyz/"
@@ -138,4 +130,12 @@ version = "0.35.0"
 source = "git+https://github.com/foundry-rs/starknet-foundry.git?tag=v0.35.0#281bd6b3e84fb8d5cf2044763b04174d99457f20"
 dependencies = [
  "snforge_scarb_plugin",
+]
+
+[[package]]
+name = "tokens"
+version = "0.1.0"
+dependencies = [
+ "openzeppelin",
+ "snforge_std",
 ]

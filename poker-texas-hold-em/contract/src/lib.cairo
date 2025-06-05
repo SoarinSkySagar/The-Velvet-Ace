@@ -26,6 +26,7 @@ mod utils {
 
 #[cfg(test)]
 mod tests {
+    mod erc20;
     mod setup;
     mod test_actions;
     mod test_hand_compare;
