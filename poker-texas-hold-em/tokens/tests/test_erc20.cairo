@@ -168,10 +168,13 @@ mod tests {
         // Get emitted events
         let events = spy.get_events();
         assert(events.events.len() == 1, 'Tranfer event not emitted');
+
         // Verify Transfer event emission
-    // let expected_event = Transfer { from: owner, to: recipient, value: transfer_amount };
-    // let expected_events = array![(erc20_dispatcher.contract_address, expected_event)];
-    // spy.assert_emitted(@expected_events);
+        let expected_event = Event::Transfer(
+            Transfer { from: owner, to: recipient, value: transfer_amount },
+        );
+        let expected_events = array![(erc20_dispatcher.contract_address, expected_event)];
+        spy.assert_emitted(@expected_events);
     }
 
     #[test]
@@ -212,14 +215,15 @@ mod tests {
         let events = spy.get_events();
         assert(events.events.len() == 1, 'Upgrade event not emitted');
         // Verify upgrade event
-    // let expected_upgrade_event =
-    //     UpgradeEvent::Upgraded(Upgraded { class_hash: new_class_hash })
-    // ;
+        let expected_upgrade_event = UpgradeEvent::Upgraded(
+            Upgraded { class_hash: new_class_hash },
+        );
 
         // Assert that the event was emitted
-    // let expected_events = array![(upgradeable_dispatcher.contract_address,
-    // expected_upgrade_event)];
-    // spy.assert_emitted(@expected_events);
+        let expected_events = array![
+            (upgradeable_dispatcher.contract_address, expected_upgrade_event),
+        ];
+        spy.assert_emitted(@expected_events);
     }
 
     #[test]
