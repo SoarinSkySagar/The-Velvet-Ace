@@ -5,6 +5,9 @@ use starknet::ContractAddress;
 #[starknet::interface]
 pub trait IERC721<TContractState> {
     fn mint(ref self: TContractState, recipient: ContractAddress, token_id: u256);
+    fn transfer(
+        ref self: TContractState, from: ContractAddress, recipient: ContractAddress, token_id: u256,
+    );
 }
 
 #[starknet::contract]
@@ -15,6 +18,7 @@ pub mod ERC721 {
     use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::upgrades::UpgradeableComponent;
     use starknet::{ClassHash, ContractAddress};
+    use super::IERC721;
 
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
     component!(path: SRC5Component, storage: src5, event: SRC5Event);
@@ -75,6 +79,16 @@ pub mod ERC721 {
             self.ownable.assert_only_owner();
             // This method may lead to the loss of tokens if `recipient` is not the ERC721 receiver.
             self.erc721.mint(recipient, token_id);
+        }
+
+        // for testing purposes
+        fn transfer(
+            ref self: ContractState,
+            from: ContractAddress,
+            recipient: ContractAddress,
+            token_id: u256,
+        ) {
+            self.erc721.transfer(from, recipient, token_id);
         }
     }
 
