@@ -7,7 +7,7 @@ use snforge_std::{
 
 #[starknet::interface]
 trait IERC721Test<TContractState> {
-    fn safeMint(
+    fn mint(
         ref self: TContractState, recipient: ContractAddress, token_id: u256, data: Span<felt252>,
     );
     fn upgrade(ref self: TContractState, new_class_hash: ClassHash);
