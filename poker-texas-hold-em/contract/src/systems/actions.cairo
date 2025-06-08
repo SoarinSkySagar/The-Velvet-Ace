@@ -2,6 +2,10 @@
 #[dojo::contract]
 pub mod actions {
     use core::num::traits::Zero;
+    use core::ecdsa::{check_ecdsa_signature, recover_public_key};
+    use core::poseidon::poseidon_hash_span;
+    use starknet::{ContractAddress, get_caller_address, get_contract_address, get_block_timestamp};
+
     use dojo::event::EventStorage;
     use dojo::model::{Model, ModelStorage, ModelValueStorage};
     use poker::models::base::{
@@ -14,7 +18,6 @@ pub mod actions {
     use poker::models::hand::{Hand, HandTrait};
     use poker::models::player::{Player, PlayerTrait};
     use poker::traits::game::get_default_game_params;
-    use starknet::{ContractAddress, get_block_timestamp, get_caller_address, get_contract_address};
     use crate::systems::interface::IActions;
     use crate::utils::deck::verify_game;
 
@@ -279,19 +282,71 @@ pub mod actions {
             deck: Deck,
             game_salt: Array<felt252>,
             dealt_card_salt: Array<felt252>,
+            signature_r: Array<felt252>,
+            signature_s: Array<felt252>,
+            signature_y_parity: Array<bool>, // to recover the public key
+            nonce: u64,
         ) {
             let (g, d) = (game_salt, dealt_card_salt);
             assert(g.len() == 3 && d.len() == 3, 'INVALID SALT');
-            let mut world = self.world_default();
 
-            // verify signatures here
+            let mut world = self.world_default();
+            let mut game: Game = world.read_model(game_id);
+
+            // @augustin-v: verify signatures here
+            let hands_len: u32 = hands.len();
+            assert(signature_r.len() == hands_len, 'SIGNATURE R LENGTH MISMATCH');
+            assert(signature_s.len() == hands_len, 'SIGNATURE S LENGTH MISMATCH');
+            // for array bounds safety
+            assert(signature_y_parity.len() == hands_len, 'SIGNATURE Y_PARITY LEN MISMATCH');
+
+            assert(nonce == game.nonce, 'INVALID NONCE');
+
+            // increment nonce to prevent replay attacks
+            game.nonce += 1;
+            let mut i: u32 = 0;
+            while i < hands_len {
+                let hand: @Hand = hands.at(i);
+                let r: felt252 = *signature_r.at(i);
+                let s: felt252 = *signature_s.at(i);
+                let y_parity: bool = *signature_y_parity.at(i);
+
+                // message hash: Poseidon hash of hand + nonce
+                let mut hash_input: Array<felt252> = array![];
+                hand.serialize(ref hash_input);
+                ArrayTrait::append(ref hash_input, nonce.into());
+                let message_hash: felt252 = poseidon_hash_span(hash_input.span());
+
+                // Recover public key as felt252
+                let recovered_pubkey: Option<felt252> = recover_public_key(
+                    message_hash, r, s, y_parity,
+                );
+                assert(recovered_pubkey.is_some(), 'SIGNATURE RECOVERY FAILED');
+                let pubkey_felt: felt252 = recovered_pubkey.unwrap();
+
+                // get player address from hand's player
+                let player: Player = world.read_model(*hand.player);
+                // compare recovered pubkey with stored pub_key
+                assert(pubkey_felt == player.pub_key, 'INVALID PUB KEY');
+
+                // verify player is in current game and in round
+                assert(player.in_round && player.is_in_game(game_id), 'PLAYER NOT IN ROUND');
+
+                // verify ECDSA signature as additional check
+                let signature_valid: bool = check_ecdsa_signature(
+                    message_hash, player.pub_key, r, s,
+                );
+                assert(signature_valid, 'INVALID SIGNATURE');
+
+                i += 1;
+            };
+            world.write_model(@game);
 
             // these are snapshpts
             let g_key = (*g.at(0), *g.at(1), *g.at(2));
             let d_key = (*d.at(0), *d.at(1), *d.at(2));
             let mut G: Salts = world.read_model(g_key);
             let mut D: Salts = world.read_model(d_key);
-            let mut game: Game = world.read_model(game_id);
             assert(!game.has_ended, GameErrors::GAME_ALREADY_ENDED);
             // write the salt to invalidate. A wrong showdown disqualifies the whole game if
             // actually any of the salts were valid.

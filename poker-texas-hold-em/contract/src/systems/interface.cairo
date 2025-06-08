@@ -50,6 +50,10 @@ trait IActions<TContractState> {
         deck: Deck,
         game_salt: Array<felt252>,
         dealt_card_salt: Array<felt252>,
+        signature_r: Array<felt252>,
+        signature_s: Array<felt252>,
+        signature_y_parity: Array<bool>, // to recover the public key
+        nonce: u64,
     );
 
     /// All functions here might be extracted into a separate contract
