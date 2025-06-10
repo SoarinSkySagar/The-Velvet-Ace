@@ -4,19 +4,8 @@ use snforge_std::{
     stop_cheat_caller_address,
 };
 use openzeppelin::upgrades::interface::{IUpgradeableDispatcherTrait, IUpgradeableDispatcher};
-
-#[starknet::interface]
-trait NFT<NContractState> {
-    fn mint(ref self: NContractState, recipient: ContractAddress, token_id: u256);
-    fn balance_of(self: @NContractState, account: ContractAddress) -> u256;
-    fn owner_of(self: @NContractState, token_id: u256) -> ContractAddress;
-    fn transfer(
-        ref self: NContractState, from: ContractAddress, recipient: ContractAddress, token_id: u256,
-    );
-    fn name(self: @NContractState) -> ByteArray;
-    fn symbol(self: @NContractState) -> ByteArray;
-    fn token_uri(self: @NContractState, token_id: u256) -> ByteArray;
-}
+use openzeppelin::token::erc721::interface::{ERC721ABIDispatcherTrait as NFTDispatcherTrait, ERC721ABIDispatcher as NFTDispatcher};
+use tokens::erc721::{IERC721DispatcherTrait, IERC721Dispatcher};
 
 #[cfg(test)]
 mod tests {
@@ -111,6 +100,7 @@ mod tests {
         // Step 1: Initializing
         let contract_address = deploy_contract();
         let dispatcher = NFTDispatcher { contract_address };
+        let tokens_dispatcher = IERC721Dispatcher { contract_address }; // Using the interface in implemented ERC721 for minting
 
         // Step 2: Setting up mint data
         let recipient: ContractAddress = USER();
@@ -118,7 +108,7 @@ mod tests {
 
         // Step 3: Call as owner to mint a token
         start_cheat_caller_address(contract_address, OWNER());
-        dispatcher.mint(recipient, token_id);
+        tokens_dispatcher.mint(recipient, token_id);
         stop_cheat_caller_address(contract_address);
 
         // Step 4: Check ownership and balance
@@ -135,6 +125,7 @@ mod tests {
         // Step 1: Initializing
         let contract_address = deploy_contract();
         let dispatcher = NFTDispatcher { contract_address };
+        let tokens_dispatcher = IERC721Dispatcher { contract_address }; // Using the interface in implemented ERC721 for minting
 
         // Step 2: Setting up mint data
         let recipient: ContractAddress = setup_receiver();
@@ -142,7 +133,7 @@ mod tests {
 
         // Step 3: Call as owner to mint a token
         start_cheat_caller_address(contract_address, OWNER());
-        dispatcher.mint(recipient, token_id);
+        tokens_dispatcher.mint(recipient, token_id);
         stop_cheat_caller_address(contract_address);
 
         // Step 4: Verify ownership and balance
@@ -151,10 +142,11 @@ mod tests {
     }
 
     #[test]
-    fn test_token_owner_can_tranfer() {
+    fn test_approved_can_transfer_from() {
         // Step 1: Initializing
         let contract_address = deploy_contract();
         let dispatcher = NFTDispatcher { contract_address };
+        let tokens_dispatcher = IERC721Dispatcher { contract_address }; // Using the interface in implemented ERC721 for minting
 
         // Step 2: Setting up mint data
         let recipient: ContractAddress = USER();
@@ -162,13 +154,18 @@ mod tests {
 
         // Step 3: Call as owner to mint a token
         start_cheat_caller_address(contract_address, OWNER());
-        dispatcher.mint(recipient, token_id);
+        tokens_dispatcher.mint(recipient, token_id);
         stop_cheat_caller_address(contract_address);
 
-        // Step 4: Transfer the token
+        // Step 4: Approve the new/non-owner to transfer
         let new_owner: ContractAddress = NEWUSER();
         start_cheat_caller_address(contract_address, recipient);
-        dispatcher.transfer(recipient, new_owner, token_id);
+        dispatcher.approve(new_owner, token_id);
+        stop_cheat_caller_address(contract_address);
+
+        // Step 5: Transfer the token
+        start_cheat_caller_address(contract_address, new_owner);
+        dispatcher.transfer_from(recipient, new_owner, token_id);
         stop_cheat_caller_address(contract_address);
 
         assert(dispatcher.owner_of(token_id) == new_owner, 'Wrong owner after transfer');
@@ -177,11 +174,12 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: 'ERC721: invalid sender')]
-    fn test_owner_cannot_transfer_non_owned_token() {
+    #[should_panic(expected: 'ERC721: unauthorized caller')]
+    fn test_unapproved_cannot_transfer_token() {
         // Step 1: Initializing
         let contract_address = deploy_contract();
         let dispatcher = NFTDispatcher { contract_address };
+        let tokens_dispatcher = IERC721Dispatcher { contract_address }; // Using the interface in implemented ERC721 for minting
 
         // Step 2: Setting up mint data
         let recipient: ContractAddress = USER();
@@ -189,14 +187,54 @@ mod tests {
 
         // Step 3: Call as owner to mint a token
         start_cheat_caller_address(contract_address, OWNER());
-        dispatcher.mint(recipient, token_id);
+        tokens_dispatcher.mint(recipient, token_id);
         stop_cheat_caller_address(contract_address);
 
-        // Step 4: Attempt to transfer the token as non-owner
+        // Step 4: Attempt to transfer the token as non-owner without approval
         let new_owner: ContractAddress = NEWUSER();
-        start_cheat_caller_address(contract_address, OWNER());
-        dispatcher.transfer(OWNER(), new_owner, token_id);
+        start_cheat_caller_address(contract_address, new_owner);
+        dispatcher.transfer_from(OWNER(), new_owner, token_id);
     }
+
+    #[test]
+    #[should_panic(expected: 'ERC721: invalid token ID')]
+    fn test_transfer_from_nonexistent_token() {
+        // Step 1: Initializing
+        let contract_address = deploy_contract();
+        let dispatcher = NFTDispatcher { contract_address };
+        let tokens_dispatcher = IERC721Dispatcher { contract_address }; // Using the interface in implemented ERC721 for minting
+
+        let recipient: ContractAddress = USER();
+        let invalid_token_id: u256 = 1; // Token is not minted yet
+
+        // Step 2: Attempt to transfer an invalid token ID
+        start_cheat_caller_address(contract_address, recipient);
+        // Token owner can transfer to anyone without approval
+        dispatcher.transfer_from(recipient, recipient, invalid_token_id);
+    }
+
+    #[test]
+    #[should_panic(expected: 'ERC721: invalid receiver')]
+    fn test_mint_to_invalid_receiver() {
+        // Step 1: Initializing
+        let contract_address = deploy_contract();
+        let dispatcher = NFTDispatcher { contract_address };
+        let tokens_dispatcher = IERC721Dispatcher { contract_address }; // Using the interface in implemented ERC721 for minting
+
+        // Step 2: Setting up mint data
+        let recipient: ContractAddress = USER();
+        let token_id: u256 = 1;
+
+        // Step 3: Call as owner to mint a token
+        start_cheat_caller_address(contract_address, OWNER());
+        tokens_dispatcher.mint(recipient, token_id);
+
+        // Step 4: Attempt to transfer to an invalid/zero receiver
+        // Token owner needs no approval to transfer
+        let invalid_receiver: ContractAddress = contract_address_const::<0>();
+        dispatcher.transfer_from(recipient, invalid_receiver, token_id);
+    }
+
 
     //== Should NOT allow users to mint tokens ==//
     #[test]
@@ -204,14 +242,14 @@ mod tests {
     fn test_users_cannot_mint() {
         // - Step 1: Initializing
         let contract_address = deploy_contract();
-        let dispatcher = NFTDispatcher { contract_address };
+        let tokens_dispatcher = IERC721Dispatcher { contract_address }; // Using the interface in implemented ERC721 for minting
 
         // - Step 2: Setting up mint data
         let recipient: ContractAddress = USER();
         let token_id: u256 = 1;
 
         // - Step 3: Not owner tries to mint token
-        dispatcher.mint(recipient, token_id);
+        tokens_dispatcher.mint(recipient, token_id);
     }
 
     //== Should allow the owner to upgrade the contract ==//
