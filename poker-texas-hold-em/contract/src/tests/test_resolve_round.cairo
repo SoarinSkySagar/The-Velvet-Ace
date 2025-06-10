@@ -109,6 +109,7 @@ mod tests {
             should_end: false,
             deck_root: 0,
             dealt_cards_root: 0,
+            nonce: 0,
         };
 
         let player_1 = Player {
@@ -121,6 +122,7 @@ mod tests {
             is_dealer: false,
             in_round: true,
             out: (0, 0),
+            pub_key: 0x1,
         };
 
         let player_2 = Player {
@@ -133,6 +135,7 @@ mod tests {
             is_dealer: false,
             in_round: true,
             out: (0, 0),
+            pub_key: 0x2,
         };
 
         let player_3 = Player {
@@ -145,6 +148,7 @@ mod tests {
             is_dealer: false,
             in_round: true,
             out: (0, 0),
+            pub_key: 0x3,
         };
 
         world.write_model(@game);
