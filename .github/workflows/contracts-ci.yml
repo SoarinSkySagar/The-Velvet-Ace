@@ -2,19 +2,19 @@ name: Contracts CI
 
 on:
   push:
-    branches: 
+    branches:
       - main
-      - '**'
+      - "**"
     paths:
-      - '**'
-      - '**'
+      - "**"
+      - "**"
   pull_request:
-    branches: 
+    branches:
       - main
-      - '**'
+      - "**"
     paths:
-      - '**'
-      - '**'
+      - "**"
+      - "**"
 jobs:
   build-and-test:
     runs-on: ubuntu-latest

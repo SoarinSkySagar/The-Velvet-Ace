@@ -23,6 +23,7 @@ pub struct Player {
     is_dealer: bool,
     in_round: bool,
     out: (u64, u64),
+    pub_key: felt252,
 }
 /// Write struct for player stats
 /// Include an alias, if necessary, and add it as key.
@@ -40,6 +41,7 @@ impl PlayerDefault of Default<Player> {
             is_dealer: false,
             in_round: false,
             out: (0, 0),
+            pub_key: 0,
         }
     }
 }
