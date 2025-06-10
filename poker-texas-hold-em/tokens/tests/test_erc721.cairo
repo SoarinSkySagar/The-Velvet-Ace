@@ -4,7 +4,9 @@ use snforge_std::{
     stop_cheat_caller_address,
 };
 use openzeppelin::upgrades::interface::{IUpgradeableDispatcherTrait, IUpgradeableDispatcher};
-use openzeppelin::token::erc721::interface::{ERC721ABIDispatcherTrait as NFTDispatcherTrait, ERC721ABIDispatcher as NFTDispatcher};
+use openzeppelin::token::erc721::interface::{
+    ERC721ABIDispatcherTrait as NFTDispatcherTrait, ERC721ABIDispatcher as NFTDispatcher,
+};
 use tokens::erc721::{IERC721DispatcherTrait, IERC721Dispatcher};
 
 #[cfg(test)]
@@ -100,7 +102,9 @@ mod tests {
         // Step 1: Initializing
         let contract_address = deploy_contract();
         let dispatcher = NFTDispatcher { contract_address };
-        let tokens_dispatcher = IERC721Dispatcher { contract_address }; // Using the interface in implemented ERC721 for minting
+        let tokens_dispatcher = IERC721Dispatcher {
+            contract_address,
+        }; // Using the interface in implemented ERC721 for minting
 
         // Step 2: Setting up mint data
         let recipient: ContractAddress = USER();
@@ -125,7 +129,9 @@ mod tests {
         // Step 1: Initializing
         let contract_address = deploy_contract();
         let dispatcher = NFTDispatcher { contract_address };
-        let tokens_dispatcher = IERC721Dispatcher { contract_address }; // Using the interface in implemented ERC721 for minting
+        let tokens_dispatcher = IERC721Dispatcher {
+            contract_address,
+        }; // Using the interface in implemented ERC721 for minting
 
         // Step 2: Setting up mint data
         let recipient: ContractAddress = setup_receiver();
@@ -146,7 +152,9 @@ mod tests {
         // Step 1: Initializing
         let contract_address = deploy_contract();
         let dispatcher = NFTDispatcher { contract_address };
-        let tokens_dispatcher = IERC721Dispatcher { contract_address }; // Using the interface in implemented ERC721 for minting
+        let tokens_dispatcher = IERC721Dispatcher {
+            contract_address,
+        }; // Using the interface in implemented ERC721 for minting
 
         // Step 2: Setting up mint data
         let recipient: ContractAddress = USER();
@@ -179,7 +187,9 @@ mod tests {
         // Step 1: Initializing
         let contract_address = deploy_contract();
         let dispatcher = NFTDispatcher { contract_address };
-        let tokens_dispatcher = IERC721Dispatcher { contract_address }; // Using the interface in implemented ERC721 for minting
+        let tokens_dispatcher = IERC721Dispatcher {
+            contract_address,
+        }; // Using the interface in implemented ERC721 for minting
 
         // Step 2: Setting up mint data
         let recipient: ContractAddress = USER();
@@ -202,7 +212,9 @@ mod tests {
         // Step 1: Initializing
         let contract_address = deploy_contract();
         let dispatcher = NFTDispatcher { contract_address };
-        let tokens_dispatcher = IERC721Dispatcher { contract_address }; // Using the interface in implemented ERC721 for minting
+        let tokens_dispatcher = IERC721Dispatcher {
+            contract_address,
+        }; // Using the interface in implemented ERC721 for minting
 
         let recipient: ContractAddress = USER();
         let invalid_token_id: u256 = 1; // Token is not minted yet
@@ -219,7 +231,9 @@ mod tests {
         // Step 1: Initializing
         let contract_address = deploy_contract();
         let dispatcher = NFTDispatcher { contract_address };
-        let tokens_dispatcher = IERC721Dispatcher { contract_address }; // Using the interface in implemented ERC721 for minting
+        let tokens_dispatcher = IERC721Dispatcher {
+            contract_address,
+        }; // Using the interface in implemented ERC721 for minting
 
         // Step 2: Setting up mint data
         let recipient: ContractAddress = USER();
@@ -242,7 +256,9 @@ mod tests {
     fn test_users_cannot_mint() {
         // - Step 1: Initializing
         let contract_address = deploy_contract();
-        let tokens_dispatcher = IERC721Dispatcher { contract_address }; // Using the interface in implemented ERC721 for minting
+        let tokens_dispatcher = IERC721Dispatcher {
+            contract_address,
+        }; // Using the interface in implemented ERC721 for minting
 
         // - Step 2: Setting up mint data
         let recipient: ContractAddress = USER();
