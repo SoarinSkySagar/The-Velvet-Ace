@@ -1,13 +1,14 @@
 use starknet::{ContractAddress, contract_address_const};
 use snforge_std::{
     declare, ContractClassTrait, DeclareResultTrait, get_class_hash, start_cheat_caller_address,
-    stop_cheat_caller_address,
+    stop_cheat_caller_address, spy_events, EventSpyTrait, EventSpyAssertionsTrait,
 };
 use openzeppelin::upgrades::interface::{IUpgradeableDispatcherTrait, IUpgradeableDispatcher};
 use openzeppelin::token::erc721::interface::{
     ERC721ABIDispatcherTrait as NFTDispatcherTrait, ERC721ABIDispatcher as NFTDispatcher,
 };
 use tokens::erc721::{IERC721DispatcherTrait, IERC721Dispatcher};
+use openzeppelin::token::erc721::ERC721Component::{Event, Transfer, Approval};
 
 #[cfg(test)]
 mod tests {
@@ -51,6 +52,10 @@ mod tests {
         new_user
     }
 
+    fn zero() -> ContractAddress {
+        contract_address_const::<0>()
+    }
+
     //////////////////////////////////
     //===> Setup & Initializing <===//
     //////////////////////////////////
@@ -81,7 +86,7 @@ mod tests {
     }
 
     /////////////////////////////
-    //===> Ownership Tests <===//
+    //===> Comprehensive Tests <===//
     /////////////////////////////
 
     #[test]
@@ -105,6 +110,7 @@ mod tests {
         let tokens_dispatcher = IERC721Dispatcher {
             contract_address,
         }; // Using the interface in implemented ERC721 for minting
+        let mut spy = spy_events();
 
         // Step 2: Setting up mint data
         let recipient: ContractAddress = USER();
@@ -122,6 +128,21 @@ mod tests {
         // Step 5: Check token URI
         let expected = format!("{}{}", URI(), token_id);
         assert(dispatcher.token_uri(token_id) == expected, 'Owner token URI mismatch');
+
+        // Step 8: Get all emitted events
+        let events = spy.get_events();
+        assert(events.events.len() == 1, 'Incorrect number of events');
+
+        // Step 9: Verify expected event sequence
+        let expected_events = array![
+            // Minting creates a Transfer event
+            (
+                contract_address,
+                Event::Transfer(Transfer { from: zero(), to: recipient, token_id: token_id }),
+            ),
+        ];
+
+        spy.assert_emitted(@expected_events);
     }
 
     #[test]
@@ -155,6 +176,7 @@ mod tests {
         let tokens_dispatcher = IERC721Dispatcher {
             contract_address,
         }; // Using the interface in implemented ERC721 for minting
+        let mut spy = spy_events();
 
         // Step 2: Setting up mint data
         let recipient: ContractAddress = USER();
@@ -176,9 +198,38 @@ mod tests {
         dispatcher.transfer_from(recipient, new_owner, token_id);
         stop_cheat_caller_address(contract_address);
 
+        // Step 6: Verify state changes
         assert(dispatcher.owner_of(token_id) == new_owner, 'Wrong owner after transfer');
         assert(dispatcher.balance_of(new_owner) == 1, 'Wrong balance of new owner');
         assert(dispatcher.balance_of(recipient) == 0, 'Wrong balance of previous owner');
+
+        // Step 7: Get all emitted events
+        let events = spy.get_events();
+        assert(events.events.len() == 3, 'Incorrect number of events');
+
+        // Step 8: Verify expected event sequence
+        let expected_events = array![
+            // Minting creates a Transfer event
+            (
+                contract_address,
+                Event::Transfer(Transfer { from: zero(), to: recipient, token_id: token_id }),
+            ),
+            // Approval event
+            (
+                contract_address,
+                Event::Approval(
+                    Approval { owner: recipient, approved: new_owner, token_id: token_id },
+                ),
+            ),
+            // Transfer event
+            (
+                contract_address,
+                Event::Transfer(Transfer { from: recipient, to: new_owner, token_id: token_id }),
+            ),
+        ];
+
+        // Step 9: Assert all expected events were emitted
+        spy.assert_emitted(@expected_events);
     }
 
     #[test]
@@ -212,9 +263,6 @@ mod tests {
         // Step 1: Initializing
         let contract_address = deploy_contract();
         let dispatcher = NFTDispatcher { contract_address };
-        let tokens_dispatcher = IERC721Dispatcher {
-            contract_address,
-        }; // Using the interface in implemented ERC721 for minting
 
         let recipient: ContractAddress = USER();
         let invalid_token_id: u256 = 1; // Token is not minted yet
@@ -245,7 +293,7 @@ mod tests {
 
         // Step 4: Attempt to transfer to an invalid/zero receiver
         // Token owner needs no approval to transfer
-        let invalid_receiver: ContractAddress = contract_address_const::<0>();
+        let invalid_receiver: ContractAddress = zero();
         dispatcher.transfer_from(recipient, invalid_receiver, token_id);
     }
 
@@ -318,4 +366,3 @@ mod tests {
         dispatcher.upgrade(new_class_hash);
     }
 }
-
