@@ -275,7 +275,7 @@ mod tests {
 
     #[test]
     #[should_panic(expected: 'ERC721: invalid receiver')]
-    fn test_mint_to_invalid_receiver() {
+    fn test_transfer_to_invalid_receiver() {
         // Step 1: Initializing
         let contract_address = deploy_contract();
         let dispatcher = NFTDispatcher { contract_address };
