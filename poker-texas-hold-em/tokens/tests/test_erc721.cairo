@@ -1,4 +1,4 @@
-use starknet::{ContractAddress, contract_address_const};
+use starknet::{ContractAddress, contract_address_const, ClassHash};
 use snforge_std::{
     declare, ContractClassTrait, DeclareResultTrait, get_class_hash, start_cheat_caller_address,
     stop_cheat_caller_address, spy_events, EventSpyTrait, EventSpyAssertionsTrait,
@@ -76,6 +76,20 @@ mod tests {
 
         // Step 4: Return contract address
         contract_address
+    }
+
+    //== Helper function to declare the contract class hash for upgrades ==//
+    fn declare_upgrade_class() -> ClassHash {
+        let new_contract_class = declare("ERC721").unwrap().contract_class();
+
+        let mut constructor_calldata: Array::<felt252> = array![];
+        Serde::serialize(@OWNER(), ref constructor_calldata);
+        Serde::serialize(@NAME(), ref constructor_calldata);
+        Serde::serialize(@SYMBOL(), ref constructor_calldata);
+        Serde::serialize(@URI(), ref constructor_calldata);
+
+        let (new_contract_address, _) = new_contract_class.deploy(@constructor_calldata).unwrap();
+        get_class_hash(new_contract_address)
     }
 
     // Helper function to declare and deploy the receiver mock
@@ -322,20 +336,9 @@ mod tests {
         // Step 1: Deploy the initial contract
         let contract_address = deploy_contract();
         let dispatcher = IUpgradeableDispatcher { contract_address };
+        let new_class_hash = declare_upgrade_class();
 
-        // Step 2: New contract setup
-        let new_contract_class = declare("ERC721").unwrap().contract_class();
-
-        let mut constructor_calldata: Array::<felt252> = array![];
-        Serde::serialize(@OWNER(), ref constructor_calldata);
-        Serde::serialize(@NAME(), ref constructor_calldata);
-        Serde::serialize(@SYMBOL(), ref constructor_calldata);
-        Serde::serialize(@URI(), ref constructor_calldata);
-
-        let (new_contract_address, _) = new_contract_class.deploy(@constructor_calldata).unwrap();
-        let new_class_hash = get_class_hash(new_contract_address);
-
-        // Step 3: Set the caller to be the contract owner
+        // Step 2: Set the caller to be the contract owner
         start_cheat_caller_address(contract_address, OWNER());
 
         // Step 4: Upgrade the contract using the upgrade function
@@ -349,18 +352,7 @@ mod tests {
         // Step 1: Deploy the initial contract
         let contract_address = deploy_contract();
         let dispatcher = IUpgradeableDispatcher { contract_address };
-
-        // Step 2: New contract setup
-        let new_contract_class = declare("ERC721").unwrap().contract_class();
-
-        let mut constructor_calldata: Array::<felt252> = array![];
-        Serde::serialize(@OWNER(), ref constructor_calldata);
-        Serde::serialize(@NAME(), ref constructor_calldata);
-        Serde::serialize(@SYMBOL(), ref constructor_calldata);
-        Serde::serialize(@URI(), ref constructor_calldata);
-
-        let (new_contract_address, _) = new_contract_class.deploy(@constructor_calldata).unwrap();
-        let new_class_hash = get_class_hash(new_contract_address);
+        let new_class_hash = declare_upgrade_class();
 
         // Step 3: Upgrade the contract using the upgrade function (fails)
         dispatcher.upgrade(new_class_hash);
