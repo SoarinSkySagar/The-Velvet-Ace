@@ -23,21 +23,9 @@
 * May the force be with you ☪️✋🏻
 * Of course, if you have any questions (Which I bet you'd have, one billion per cent), you can branch here or here. Happy Hacks 😊💙
 
+## **Help?**
+<!-- Optional: Add any additional resources, references, or motivational quotes -->
+If you want it, you can have it. Find it! I left everything this world has to offer [**there**](https://t.me/+tqBpITsr5mllZDQ0) -- ***Pirate Gol D. Roger***
+
 ---
 
-## **Checklist** (for contributors)
-- [ ] Code is strongly typed
-- [ ] Proper documentation added
-- [ ] Username added to modified functions
-- [ ] Code repetition avoided
-- [ ] Related issues referenced
-- [ ] Testing completed
-
-## **Labels**
-<!-- Add relevant labels: bug, enhancement, feature, documentation, etc. -->
-
-## **Priority**
-<!-- Add priority level: low, medium, high, critical -->
-
-## **Assignees**
-<!-- Tag relevant team members if applicable -->
