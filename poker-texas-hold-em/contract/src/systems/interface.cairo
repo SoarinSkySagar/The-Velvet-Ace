@@ -51,10 +51,15 @@ trait IActions<TContractState> {
         deck: Deck,
         game_salt: Array<felt252>,
         dealt_card_salt: Array<felt252>,
+        signature_r: Array<felt252>,
+        signature_s: Array<felt252>,
+        signature_y_parity: Array<bool>, // to recover the public key
+        nonce: u64,
     );
 
     /// All functions here might be extracted into a separate contract
     fn get_player(self: @TContractState, player_id: ContractAddress) -> Player;
     fn get_game(self: @TContractState, game_id: u64) -> Game;
     fn set_alias(self: @TContractState, alias: felt252);
+    fn resolve_round(ref self: TContractState, game_id: u64);
 }

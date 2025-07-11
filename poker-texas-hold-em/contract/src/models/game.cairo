@@ -68,6 +68,7 @@ pub struct Game {
     reshuffled: u64,
     deck_root: felt252,
     dealt_cards_root: felt252,
+    nonce: u64,
 }
 
 #[derive(Drop, Serde, Copy)]

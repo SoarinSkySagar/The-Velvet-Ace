@@ -2,19 +2,19 @@ name: Contracts CI
 
 on:
   push:
-    branches: 
+    branches:
       - main
-      - '**'
+      - "**"
     paths:
-      - '**'
-      - '**'
+      - "**"
+      - "**"
   pull_request:
-    branches: 
+    branches:
       - main
-      - '**'
+      - "**"
     paths:
-      - '**'
-      - '**'
+      - "**"
+      - "**"
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -58,9 +58,9 @@ jobs:
           cd poker-texas-hold-em/contract
           scarb fmt --check
 
-      - name: ERC721
+      - name: Tokens
         run: |
-          cd poker-texas-hold-em/erc721
+          cd poker-texas-hold-em/tokens
           scarb build
           snforge test
           scarb fmt --check

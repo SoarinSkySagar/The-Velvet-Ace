@@ -1,5 +1,5 @@
 [package]
-name = "erc721"
+name = "tokens"
 version = "0.1.0"
 edition = "2024_07"
 
@@ -12,3 +12,6 @@ openzeppelin = "0.20.0"
 
 [[target.starknet-contract]]
 casm = true
+
+[scripts]
+test = "snforge test"
