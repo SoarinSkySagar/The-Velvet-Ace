@@ -270,6 +270,8 @@ pub mod actions {
         ) { // verify signature on this function too.
         }
 
+        fn submit_card(ref self: ContractState, card: felt252) {}
+
         fn showdown(
             ref self: ContractState,
             game_id: u64,
@@ -286,7 +288,6 @@ pub mod actions {
 
             // verify signatures here
 
-            // these are snapshpts
             let g_key = (*g.at(0), *g.at(1), *g.at(2));
             let d_key = (*d.at(0), *d.at(1), *d.at(2));
             let mut G: Salts = world.read_model(g_key);
@@ -295,9 +296,9 @@ pub mod actions {
             assert(!game.has_ended, GameErrors::GAME_ALREADY_ENDED);
             // write the salt to invalidate. A wrong showdown disqualifies the whole game if
             // actually any of the salts were valid.
-            assert(!G.used && !D.used, 'INVALID SALT');
             world.write_member(Model::<Salts>::ptr_from_keys(g_key), selector!("used"), true);
             world.write_member(Model::<Salts>::ptr_from_keys(d_key), selector!("used"), true);
+            assert(!G.used && !D.used, 'INVALID SALT');
             assert(game.round_in_progress && game.community_cards.len() == 5, 'BAD REQUEST');
 
             let (mut gp, mut dcp, mut dc) = (game_proofs, dealt_card_proofs, deck);
@@ -619,7 +620,7 @@ pub mod actions {
         // submit card endpoint.
         // TODO: call `resolve_game()`, and update the `resolve_game()` with its appropriate
         // logic.
-        // if game is not verified, read funds in the id, and split toegther with contract
+        // if game is not verified, read funds in the id, and split together with contract
         // accordingly.
         // perhaps let `resolve_game()` take in a bool to assert that the game was resolved
         // accordingly.
