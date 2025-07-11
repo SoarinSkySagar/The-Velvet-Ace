@@ -316,7 +316,7 @@ pub mod actions {
                 // message hash: Poseidon hash of hand + nonce
                 let mut hash_input: Array<felt252> = array![];
                 hand.serialize(ref hash_input);
-                ArrayTrait::append(ref hash_input, nonce.into());
+                hash_input.append(nonce.into());
                 let message_hash: felt252 = poseidon_hash_span(hash_input.span());
 
                 // Recover public key as felt252
