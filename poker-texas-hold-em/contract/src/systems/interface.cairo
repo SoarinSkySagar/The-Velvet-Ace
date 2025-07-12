@@ -41,7 +41,9 @@ trait IActions<TContractState> {
     fn get_rank(self: @TContractState, player_id: ContractAddress) -> ByteArray;
     // to be called by the dealer, for now.
     fn deal_community_card(ref self: TContractState, card: Card, game_id: u256);
-    fn submit_card(ref self: TContractState, card: felt252);    // here, a player can only be in one game at a time.
+    fn submit_card(
+        ref self: TContractState, card: felt252,
+    ); // here, a player can only be in one game at a time.
     fn showdown(
         ref self: TContractState,
         game_id: u64,

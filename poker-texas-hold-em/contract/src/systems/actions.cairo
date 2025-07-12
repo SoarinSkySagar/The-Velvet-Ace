@@ -270,7 +270,16 @@ pub mod actions {
 
         fn deal_community_card(
             ref self: ContractState, card: Card, game_id: u256,
-        ) { // verify signature on this function too.
+        ) { // verify signature on this function too. in the future
+            // the caller of this function must have some amount of money staked in the game
+            // if the showdown fails to be verified, then the stake is gone.
+            let mut world = self.world_default();
+            let g_key = Model::<Game>::ptr_from_keys(game_id);
+            let in_progress: bool = world.read_member(g_key, selector!("in_progress"));
+            let mut community_cards: Array<Card> = world.read_member(g_key, selector!("community_cards"));
+            assert(in_progress && community_cards.len() <= 5, 'INVALID DEALING');
+            community_cards.append(card);
+            world.write_member(g_key, selector!("community_cards"), community_cards);
         }
 
         fn submit_card(ref self: ContractState, card: felt252) {}

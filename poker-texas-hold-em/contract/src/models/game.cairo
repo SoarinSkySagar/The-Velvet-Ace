@@ -99,7 +99,7 @@ pub struct GameStats {
     mvp: ContractAddress,
 }
 
-// then we can implemnt a list node here
+// then we can implement a list node here
 #[derive(Drop, Serde, Copy, PartialEq)]
 pub struct Node {
     pub val: ContractAddress,
