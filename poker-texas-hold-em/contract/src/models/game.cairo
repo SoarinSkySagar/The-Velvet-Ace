@@ -69,6 +69,10 @@ pub struct Game {
     deck_root: felt252,
     dealt_cards_root: felt252,
     nonce: u64,
+    community_dealing: bool,
+    showdown: bool,
+    round_count: u64,
+    highest_staker: Option<ContractAddress>,
 }
 
 #[derive(Drop, Serde, Copy)]

@@ -10,7 +10,7 @@ pub mod actions {
     use dojo::model::{Model, ModelStorage, ModelValueStorage};
     use poker::models::base::{
         CardDealt, GameConcluded, GameErrors, GameInitialized, HandCreated, HandResolved, Id,
-        PlayerJoined, PlayerLeft, RoundResolved, RoundStarted,
+        PlayerJoined, PlayerLeft, RoundResolved, RoundStarted, RoundEnded, CommunityCardDealt,
     };
     use poker::models::card::{Card, CardTrait};
     use poker::models::deck::{Deck, DeckTrait};
@@ -269,17 +269,30 @@ pub mod actions {
         }
 
         fn deal_community_card(
-            ref self: ContractState, card: Card, game_id: u256,
+            ref self: ContractState, card: Card, game_id: u64,
         ) { // verify signature on this function too. in the future
             // the caller of this function must have some amount of money staked in the game
             // if the showdown fails to be verified, then the stake is gone.
             let mut world = self.world_default();
-            let g_key = Model::<Game>::ptr_from_keys(game_id);
-            let in_progress: bool = world.read_member(g_key, selector!("in_progress"));
-            let mut community_cards: Array<Card> = world.read_member(g_key, selector!("community_cards"));
-            assert(in_progress && community_cards.len() <= 5, 'INVALID DEALING');
+            let community_dealing: bool = world
+                .read_member(Model::<Game>::ptr_from_keys(game_id), selector!("community_dealing"));
+            let mut community_cards: Array<Card> = world
+                .read_member(Model::<Game>::ptr_from_keys(game_id), selector!("community_cards"));
+            assert(community_dealing && community_cards.len() <= 5, 'INVALID DEALING');
             community_cards.append(card);
-            world.write_member(g_key, selector!("community_cards"), community_cards);
+            world
+                .write_member(
+                    Model::<Game>::ptr_from_keys(game_id),
+                    selector!("community_cards"),
+                    community_cards,
+                );
+            world
+                .write_member(
+                    Model::<Game>::ptr_from_keys(game_id), selector!("community_dealing"), false,
+                );
+
+            let event = CommunityCardDealt { game_id, card };
+            world.emit_event(@event);
         }
 
         fn submit_card(ref self: ContractState, card: felt252) {}
@@ -303,6 +316,7 @@ pub mod actions {
 
             let mut world = self.world_default();
             let mut game: Game = world.read_model(game_id);
+            assert(game.showdown, 'INVALID CALL'); // check the position of this line.
 
             // @augustin-v: verify signatures here
             let hands_len: u32 = hands.len();
@@ -435,6 +449,7 @@ pub mod actions {
 
             // Retrieve the game model associated with the player's game_id
             let game: Game = world.read_model(game_id);
+            assert(!game.community_dealing, 'INVALID CALL');
 
             // Ensure the player has chips to play
             assert(player.chips > 0, GameErrors::PLAYER_OUT_OF_CHIPS);
@@ -488,7 +503,7 @@ pub mod actions {
 
             // Check if all community cards are dealt (5 cards in Texas Hold'em)
             if game.community_cards.len() == 5 {
-                return self._resolve_round(game_id);
+                game.showdown = true;
             }
 
             // Find the caller's index in the players array
@@ -501,6 +516,16 @@ pub mod actions {
             // TODO: Crosscheck after_play, and adjust... may not be needed.
             if player.current_bet > game.current_bet {
                 game.current_bet = player.current_bet; // Raise updates the current bet
+                game.highest_staker = Option::Some(caller);
+            } else if let Option::Some(highest_staker) = game.highest_staker {
+                if highest_staker == caller {
+                    // bet has gone round
+                    if game.community_cards.len() == 5 {
+                        game.showdown = true;
+                    } else {
+                        game.community_dealing = true;
+                    }
+                }
             }
 
             world.write_model(@player);
@@ -511,12 +536,20 @@ pub mod actions {
 
             if next_player_option.is_none() {
                 // No active players remain, resolve the round
-                self._resolve_round(game_id);
+                game.showdown = true;
             } else {
                 game.next_player = next_player_option;
             }
 
             world.write_model(@game);
+
+            if game.showdown {
+                let timestamp = get_block_timestamp();
+                let round_number = game.round_count;
+                let no_of_players = game.current_player_count;
+                let event = RoundEnded { game_id, timestamp, round_number, no_of_players };
+                world.emit_event(@event);
+            }
         }
 
         fn find_player_index(
