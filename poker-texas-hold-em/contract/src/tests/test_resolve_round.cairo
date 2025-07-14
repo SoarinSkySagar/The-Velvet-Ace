@@ -110,6 +110,10 @@ mod tests {
             deck_root: 0,
             dealt_cards_root: 0,
             nonce: 0,
+            community_dealing: false,
+            showdown: false,
+            round_count: 0,
+            highest_staker: Option::None,
         };
 
         let player_1 = Player {

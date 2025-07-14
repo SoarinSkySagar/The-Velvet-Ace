@@ -4,6 +4,7 @@
 /// Events
 use poker::models::game::GameParams;
 use starknet::ContractAddress;
+use poker::models::card::Card;
 
 /// EVENTS
 
@@ -98,6 +99,24 @@ pub struct RoundStarted {
     pub small_blind_player: ContractAddress,
     pub next_player: ContractAddress,
     pub no_of_players: u32,
+}
+
+#[derive(Drop, Serde)]
+#[dojo::event]
+pub struct RoundEnded {
+    #[key]
+    pub game_id: u64,
+    pub timestamp: u64,
+    pub round_number: u64,
+    pub no_of_players: u32,
+}
+
+#[derive(Drop, Serde)]
+#[dojo::event]
+pub struct CommunityCardDealt {
+    #[key]
+    pub game_id: u64,
+    pub card: Card,
 }
 
 /// MODEL

@@ -69,6 +69,10 @@ pub struct Game {
     deck_root: felt252,
     dealt_cards_root: felt252,
     nonce: u64,
+    community_dealing: bool,
+    showdown: bool,
+    round_count: u64,
+    highest_staker: Option<ContractAddress>,
 }
 
 #[derive(Drop, Serde, Copy)]
@@ -99,7 +103,7 @@ pub struct GameStats {
     mvp: ContractAddress,
 }
 
-// then we can implemnt a list node here
+// then we can implement a list node here
 #[derive(Drop, Serde, Copy, PartialEq)]
 pub struct Node {
     pub val: ContractAddress,
