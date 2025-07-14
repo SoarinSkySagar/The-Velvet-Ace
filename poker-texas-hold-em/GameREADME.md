@@ -127,3 +127,44 @@ fn clone_array(cards: @Array<Card>) -> Array<Card> {
 
 /// New
 
+fn initialize_game1(ref self: ContractState, game_params: Option<GameParams>) -> u64 {
+            // Get the caller address
+            let caller: ContractAddress = get_caller_address();
+            let mut world = self.world_default();
+            let mut player: Player = world.read_model(caller);
+
+            // Ensure the player is not already in a game
+            let (is_locked, _) = player.locked;
+            assert(!is_locked, GameErrors::PLAYER_ALREADY_LOCKED);
+
+            let game_id: u64 = self.generate_id(GAME);
+
+            let mut deck_ids: Array<u64> = array![self.generate_id(DECK)];
+            if let Option::Some(params) = game_params {
+                // say the maximum number of decks is 10.
+                let deck_len = params.no_of_decks;
+                assert(deck_len > 0 && deck_len <= 10, GameErrors::INVALID_GAME_PARAMS);
+                for _ in 0..deck_len - 1 {
+                    deck_ids.append(self.generate_id(DECK));
+                };
+            }
+
+            // Create new game
+            let mut game: Game = Default::default();
+
+            player.enter(ref game);
+            // Save updated player and game state
+            world.write_model(@player);
+            world.write_model(@game);
+
+            let game_initialized = GameInitialized {
+                game_id: game_id,
+                player: caller,
+                game_params: game.params,
+                time_stamp: get_block_timestamp(),
+            };
+
+            world.emit_event(@game_initialized);
+            game_id
+        }
+

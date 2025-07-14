@@ -21,6 +21,16 @@ trait IActions<TContractState> {
     ///
     /// TODO: Might require a function that lets and admin eject a player
     fn initialize_game(ref self: TContractState, game_params: Option<GameParams>) -> u64;
+    fn start_game(
+        ref self: TContractState,
+        game_id: u64,
+        deck_root: felt252,
+        message: Array<Hand>,
+        signature_r: Array<felt252>,
+        signature_s: Array<felt252>,
+        signature_y_parity: Array<bool>,
+        nonce: u64,
+    );
     fn join_game(ref self: TContractState, game_id: u64);
     fn leave_game(ref self: TContractState);
     fn end_game(ref self: TContractState, game_id: u64, force: bool);

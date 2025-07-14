@@ -8,6 +8,7 @@ pub mod actions {
 
     use dojo::event::EventStorage;
     use dojo::model::{Model, ModelStorage, ModelValueStorage};
+    use dojo::world::WorldStorage;
     use poker::models::base::{
         CardDealt, GameConcluded, GameErrors, GameInitialized, HandCreated, HandResolved, Id,
         PlayerJoined, PlayerLeft, RoundResolved, RoundStarted, RoundEnded, CommunityCardDealt,
@@ -28,8 +29,10 @@ pub mod actions {
 
     #[abi(embed_v0)]
     impl ActionsImpl of IActions<ContractState> {
-        fn initialize_game(ref self: ContractState, game_params: Option<GameParams>) -> u64 {
-            // Get the caller address
+        fn initialize_game(
+            ref self: ContractState, game_params: Option<GameParams>,
+        ) -> u64 { // the game is not ownable for now
+            // do not submit the original hand.
             let caller: ContractAddress = get_caller_address();
             let mut world = self.world_default();
             let mut player: Player = world.read_model(caller);
@@ -39,30 +42,8 @@ pub mod actions {
             assert(!is_locked, GameErrors::PLAYER_ALREADY_LOCKED);
 
             let game_id: u64 = self.generate_id(GAME);
-
-            let mut deck_ids: Array<u64> = array![self.generate_id(DECK)];
-            if let Option::Some(params) = game_params {
-                // say the maximum number of decks is 10.
-                let deck_len = params.no_of_decks;
-                assert(deck_len > 0 && deck_len <= 10, GameErrors::INVALID_GAME_PARAMS);
-                for _ in 0..deck_len - 1 {
-                    deck_ids.append(self.generate_id(DECK));
-                };
-            }
-
-            // Create new game
             let mut game: Game = Default::default();
-            let decks = game.init(game_params, game_id, deck_ids);
-
-            player.enter(ref game);
-            // Save updated player and game state
-            world.write_model(@player);
-            world.write_model(@game);
-
-            // Save available decks
-            for deck in decks {
-                world.write_model(@deck);
-            };
+            game.init(game_params, game_id);
 
             let game_initialized = GameInitialized {
                 game_id: game_id,
@@ -73,6 +54,38 @@ pub mod actions {
 
             world.emit_event(@game_initialized);
             game_id
+        }
+
+        fn start_game(
+            ref self: ContractState,
+            game_id: u64,
+            deck_root: felt252,
+            message: Array<Hand>,
+            signature_r: Array<felt252>,
+            signature_s: Array<felt252>,
+            signature_y_parity: Array<bool>,
+            nonce: u64,
+        ) {
+            // crosscheck that the message.len() == total number of players in the game.
+            // assert the game is waiting... that is game.current_round == 0.
+            let mut world = self.world_default();
+            let mut game: Game = world.read_model(game_id);
+            assert(game.current_round == 0, 'GAME NOT WAITING');
+
+            // implement start logic here
+
+            self
+                .verify_signature_params(
+                    game_id,
+                    ref world,
+                    game_id,
+                    hands,
+                    signature_r,
+                    signature_s,
+                    signature_y_parity,
+                    game.nonce,
+                    nonce,
+                );
         }
 
         /// @Birdmannn
@@ -298,6 +311,7 @@ pub mod actions {
 
         fn submit_card(ref self: ContractState, card: felt252) {}
 
+        /// @Birdmannn, @augustin-v
         fn showdown(
             ref self: ContractState,
             game_id: u64,
@@ -318,7 +332,101 @@ pub mod actions {
             let mut world = self.world_default();
             let mut game: Game = world.read_model(game_id);
             assert(game.showdown, 'INVALID CALL'); // check the position of this line.
+            let game_nonce = game.nonce;
+            game.nonce += 1;
+            self
+                .verify_signature_params(
+                    ref world,
+                    game_id,
+                    hands.clone(),
+                    signature_r,
+                    signature_s,
+                    signature_y_parity,
+                    game_nonce,
+                    nonce,
+                );
+            world.write_model(@game);
 
+            let g_key = (*g.at(0), *g.at(1), *g.at(2));
+            let d_key = (*d.at(0), *d.at(1), *d.at(2));
+            let mut G: Salts = world.read_model(g_key);
+            let mut D: Salts = world.read_model(d_key);
+            assert(!game.has_ended, GameErrors::GAME_ALREADY_ENDED);
+            // write the salt to invalidate. A wrong showdown disqualifies the whole game if
+            // actually any of the salts were valid.
+            world.write_member(Model::<Salts>::ptr_from_keys(g_key), selector!("used"), true);
+            world.write_member(Model::<Salts>::ptr_from_keys(d_key), selector!("used"), true);
+            assert(!G.used && !D.used, 'INVALID SALT');
+            assert(game.round_in_progress && game.community_cards.len() == 5, 'BAD REQUEST');
+
+            let (mut gp, mut dcp, mut dc) = (game_proofs, dealt_card_proofs, deck);
+            let deck_root: felt252 = game.deck_root;
+            let dealt_root: felt252 = game.dealt_cards_root;
+            // for now, the game houses the community cards. This will be changed.
+            let community_cards: Array<Card> = game.community_cards.clone();
+
+            let verified: bool = verify_game(
+                community_cards.clone(), hands.clone(), gp, dcp, dc, deck_root, dealt_root, g, d,
+            );
+
+            self._resolve_round_v2(game_id, hands, community_cards, verified);
+        }
+
+        fn get_player(self: @ContractState, player_id: ContractAddress) -> Player {
+            let world = self.world_default();
+            world.read_model(player_id)
+        }
+
+        fn get_game(self: @ContractState, game_id: u64) -> Game {
+            let world = self.world_default();
+            world.read_model(game_id)
+        }
+
+        fn set_alias(self: @ContractState, alias: felt252) {
+            let caller: ContractAddress = get_caller_address();
+            assert(caller != Zero::zero(), 'ZERO CALLER');
+            let mut world = self.world_default();
+            let mut player: Player = world.read_model(caller);
+            let check: Player = world.read_model(alias.clone());
+            assert(check.id == Zero::zero(), 'ALIAS UPDATE FAILED');
+            player.alias = alias;
+
+            world.write_model(@player);
+        }
+
+        fn resolve_round(ref self: ContractState, game_id: u64) {
+            self._resolve_round(game_id);
+        }
+    }
+
+    #[generate_trait]
+    impl InternalImpl of InternalTrait {
+        /// Use the default namespace "poker". This function is handy since the ByteArray
+        /// can't be const.
+        fn world_default(self: @ContractState) -> WorldStorage {
+            self.world(@"poker")
+        }
+
+        fn generate_id(self: @ContractState, target: felt252) -> u64 {
+            let mut world = self.world_default();
+            let mut game_id: Id = world.read_model(target);
+            let mut id = game_id.nonce + 1;
+            game_id.nonce = id;
+            world.write_model(@game_id);
+            id
+        }
+
+        fn verify_signature_params(
+            ref self: ContractState,
+            ref world: WorldStorage,
+            game_id: u64,
+            hands: Array<Hand>,
+            signature_r: Array<felt252>,
+            signature_s: Array<felt252>,
+            signature_y_parity: Array<bool>, // to recover the public key
+            game_nonce: u64,
+            nonce: u64,
+        ) {
             // @augustin-v: verify signatures here
             let hands_len: u32 = hands.len();
             assert(signature_r.len() == hands_len, 'SIGNATURE R LENGTH MISMATCH');
@@ -326,10 +434,9 @@ pub mod actions {
             // for array bounds safety
             assert(signature_y_parity.len() == hands_len, 'SIGNATURE Y_PARITY LEN MISMATCH');
 
-            assert(nonce == game.nonce, 'INVALID NONCE');
+            assert(nonce == game_nonce, 'INVALID NONCE');
 
             // increment nonce to prevent replay attacks
-            game.nonce += 1;
             let mut i: u32 = 0;
             while i < hands_len {
                 let hand: @Hand = hands.at(i);
@@ -366,76 +473,6 @@ pub mod actions {
 
                 i += 1;
             };
-            world.write_model(@game);
-
-            let g_key = (*g.at(0), *g.at(1), *g.at(2));
-            let d_key = (*d.at(0), *d.at(1), *d.at(2));
-            let mut G: Salts = world.read_model(g_key);
-            let mut D: Salts = world.read_model(d_key);
-            assert(!game.has_ended, GameErrors::GAME_ALREADY_ENDED);
-            // write the salt to invalidate. A wrong showdown disqualifies the whole game if
-            // actually any of the salts were valid.
-            world.write_member(Model::<Salts>::ptr_from_keys(g_key), selector!("used"), true);
-            world.write_member(Model::<Salts>::ptr_from_keys(d_key), selector!("used"), true);
-            assert(!G.used && !D.used, 'INVALID SALT');
-            assert(game.round_in_progress && game.community_cards.len() == 5, 'BAD REQUEST');
-
-            let (mut gp, mut dcp, mut dc) = (game_proofs, dealt_card_proofs, deck);
-            let deck_root: felt252 = game.deck_root;
-            let dealt_root: felt252 = game.dealt_cards_root;
-            // for now, the game houses the community cards. This will be changed.
-            let community_cards: Array<Card> = game.community_cards.clone();
-
-            let verified: bool = verify_game(
-                community_cards.clone(), hands.clone(), gp, dcp, dc, deck_root, dealt_root, g, d,
-            );
-
-            self._resolve_round_v2(game_id, hands, community_cards, verified);
-        }
-
-
-        fn get_player(self: @ContractState, player_id: ContractAddress) -> Player {
-            let world = self.world_default();
-            world.read_model(player_id)
-        }
-
-        fn get_game(self: @ContractState, game_id: u64) -> Game {
-            let world = self.world_default();
-            world.read_model(game_id)
-        }
-
-        fn set_alias(self: @ContractState, alias: felt252) {
-            let caller: ContractAddress = get_caller_address();
-            assert(caller != Zero::zero(), 'ZERO CALLER');
-            let mut world = self.world_default();
-            let mut player: Player = world.read_model(caller);
-            let check: Player = world.read_model(alias.clone());
-            assert(check.id == Zero::zero(), 'ALIAS UPDATE FAILED');
-            player.alias = alias;
-
-            world.write_model(@player);
-        }
-
-        fn resolve_round(ref self: ContractState, game_id: u64) {
-            self._resolve_round(game_id);
-        }
-    }
-
-    #[generate_trait]
-    impl InternalImpl of InternalTrait {
-        /// Use the default namespace "poker". This function is handy since the ByteArray
-        /// can't be const.
-        fn world_default(self: @ContractState) -> dojo::world::WorldStorage {
-            self.world(@"poker")
-        }
-
-        fn generate_id(self: @ContractState, target: felt252) -> u64 {
-            let mut world = self.world_default();
-            let mut game_id: Id = world.read_model(target);
-            let mut id = game_id.nonce + 1;
-            game_id.nonce = id;
-            world.write_model(@game_id);
-            id
         }
 
         // @LaGodxy
@@ -717,8 +754,75 @@ pub mod actions {
             community_cards: Array<Card>,
             verified: bool,
         ) { // resolve root
+            // let mut world = self.world_default();
+            // let mut game: Game = world.read_model(game_id);
+
+            // assert(game.in_progress, GameErrors::GAME_NOT_IN_PROGRESS);
+            // assert(game.round_in_progress, GameErrors::ROUND_NOT_IN_PROGRESS);
+
+            // // Collect players with valid hands, skipping those with empty hands
+            // let mut valid_players: Array<Player> = array![];
+            // let mut all_player_addresses: Array<ContractAddress> = array![];
+
+            // for player_address in game.players.span() {
+            //     let player: Player = world.read_model(*player_address);
+            //     let hand: Hand = world.read_model(*player_address);
+            //     all_player_addresses.append(*player_address);
+
+            //     // Skip players with empty hands (they didn't submit cards)
+            //     if hand.cards.len() == 0 {
+            //         continue;
+            //     }
+            //     valid_players.append(player);
+            // };
+
+            // assert(valid_players.len() > 0, 'No valid hands to resolve round');
+
+            // // Update game state for the next round
+            // game.current_round += 1;
+            // game.round_in_progress = false;
+            // game.community_cards = array![];
+            // game.current_bet = 0;
+
+            // // Reset player states for ALL players (not just valid ones)
+            // for player_address in game.players.span() {
+            //     let mut player_copy: Player = world.read_model(*player_address);
+            //     if player_copy.is_in_game(game_id) {
+            //         player_copy.current_bet = 0;
+            //         player_copy.in_round = true;
+            //         world.write_model(@player_copy);
+            //     }
+            // };
+
+            // // Save the game state before cleaning roots
+            // world.write_model(@game);
+
+            // // Clean up game state and reset merkle tree roots
+            // self._cleanup_game_data(game_id, all_player_addresses.span());
+
+            // // Check if the game allows new players to join
+            // let can_join = game.is_allowable();
+            // if game.should_end {
+            //     self._resolve_game(ref game, get_contract_address(), false);
+            // }
+
+            // let (winning_hands, _) = self._extract_winner();
+            // let mut winners = array![];
+            // for i in 0..winning_hands.len() {
+            //     let winner = winning_hands.at(i);
+            //     winners.append(*winner.player);
+            // };
+            // let pot = game.pot;
+
+            // let round_resolved = RoundResolved {
+            //     game_id: game_id, can_join: can_join, winners: winners, pot: pot,
+            // };
+            // world.emit_event(@round_resolved);
             let mut world = self.world_default();
             let mut game: Game = world.read_model(game_id);
+            let params = game.params;
+            if !verified { // deduct funds. but first we need to initialize the game properly.
+            }
             // check if verified, by the way.
             // DO NOT DELETE.
             // in the future, check if the game should be verifiable, else, users should use the

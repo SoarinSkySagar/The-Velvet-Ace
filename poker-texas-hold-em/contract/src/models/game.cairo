@@ -15,6 +15,13 @@ pub enum GameMode {
     Tournament: bool,
 }
 
+#[derive(Copy, Drop, Serde, Default, Introspect, PartialEq)]
+pub enum ShowdownType {
+    #[default]
+    Gathered, // Showdown happens at once, all cards are gathered
+    Splitted,
+}
+
 /// The kicker_split is checked when comparing hands.
 #[derive(Copy, Drop, Serde, Default, Introspect, PartialEq)]
 pub struct GameParams {

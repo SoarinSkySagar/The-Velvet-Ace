@@ -8,9 +8,7 @@ use starknet::ContractAddress;
 #[generate_trait]
 pub impl GameImpl of GameTrait {
     /// @Birdmannn
-    fn init(
-        ref self: Game, game_params: Option<GameParams>, id: u64, deck_ids: Array<u64>,
-    ) -> Array<Deck> {
+    fn init(ref self: Game, game_params: Option<GameParams>, id: u64) {
         // Set game parameters (either custom or default)
         // check the number of decks in game.
         let params = match game_params {
@@ -23,21 +21,7 @@ pub impl GameImpl of GameTrait {
             Option::None => get_default_game_params(),
         };
 
-        // Prepare decks for the game
-        let mut decks: Array<Deck> = array![];
-        for deck_id in deck_ids.clone() {
-            let mut deck: Deck = Default::default();
-            deck.id = deck_id;
-            deck.new_deck();
-            deck.shuffle();
-            decks.append(deck);
-        };
-
-        // Create game instance
-        self.deck = deck_ids;
         self.params = params;
-
-        decks
     }
 
     fn is_initialized(self: @Game) -> bool {
