@@ -268,6 +268,7 @@ pub mod actions {
             Option::None
         }
 
+        /// @Birdmannn
         fn deal_community_card(
             ref self: ContractState, card: Card, game_id: u64,
         ) { // verify signature on this function too. in the future
@@ -490,7 +491,7 @@ pub mod actions {
             );
         }
 
-        /// @Reentrancy
+        /// @Reentrancy, @Birdmannn
         fn after_play(ref self: ContractState, caller: ContractAddress) {
             let mut world = self.world_default();
             let mut player: Player = world.read_model(caller);
