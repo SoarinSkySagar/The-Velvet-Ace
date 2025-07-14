@@ -390,7 +390,7 @@ pub mod actions {
                 community_cards.clone(), hands.clone(), gp, dcp, dc, deck_root, dealt_root, g, d,
             );
 
-            self._resolve_round_v2(hands, community_cards, verified);
+            self._resolve_round_v2(game_id, hands, community_cards, verified);
         }
 
 
@@ -712,28 +712,33 @@ pub mod actions {
 
         fn _resolve_round_v2(
             ref self: ContractState,
+            game_id: u64,
             hands: Array<Hand>,
             community_cards: Array<Card>,
             verified: bool,
         ) { // resolve root
-        // check if verified, by the way.
-        // DO NOT DELETE.
-        // in the future, check if the game should be verifiable, else, users should use the
-        // submit card endpoint.
-        // TODO: call `resolve_game()`, and update the `resolve_game()` with its appropriate
-        // logic.
-        // if game is not verified, read funds in the id, and split together with contract
-        // accordingly.
-        // perhaps let `resolve_game()` take in a bool to assert that the game was resolved
-        // accordingly.
-        // write a new internal function `resolve_v2`
+            let mut world = self.world_default();
+            let mut game: Game = world.read_model(game_id);
+            // check if verified, by the way.
+            // DO NOT DELETE.
+            // in the future, check if the game should be verifiable, else, users should use the
+            // submit card endpoint.
+            // TODO: call `resolve_game()`, and update the `resolve_game()` with its appropriate
+            // logic.
+            // if game is not verified, read funds in the id, and split together with contract
+            // accordingly.
+            // perhaps let `resolve_game()` take in a bool to assert that the game was resolved
+            // accordingly.
+            // write a new internal function `resolve_v2`
 
-        // assert that this game is valid
-        // NOTE: CALLER CAN BE ZERO, FOR NOW.
-        // check the game_params, if the game is verifiable
-        // else, users should use the `submit_card` endpoint.
-        // set both roots to zero in the `resolve_game`
-        // set round_in_progress to false, by the way.
+            // assert that this game is valid
+            // NOTE: CALLER CAN BE ZERO, FOR NOW.
+            // check the game_params, if the game is verifiable
+            // else, users should use the `submit_card` endpoint.
+            // set both roots to zero in the `resolve_game`
+            // set round_in_progress to false, by the way.
+            // update the round_count
+            game.showdown = false;
         }
 
         fn _resolve_hands(
