@@ -66,6 +66,7 @@ pub struct PlayerJoined {
     pub player_id: ContractAddress,
     pub player_count: u32,
     pub expected_no_of_players: u32,
+    pub can_start: bool,
 }
 
 #[derive(Drop, Serde)]

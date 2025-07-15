@@ -44,6 +44,7 @@ pub mod actions {
             let game_id: u64 = self.generate_id(GAME);
             let mut game: Game = Default::default();
             game.init(game_params, game_id);
+            player.enter(ref game);
 
             let game_initialized = GameInitialized {
                 game_id: game_id,
@@ -52,11 +53,14 @@ pub mod actions {
                 time_stamp: get_block_timestamp(),
             };
 
+            world.write_model(@game);
+            world.write_model(@player);
+
             world.emit_event(@game_initialized);
             game_id
         }
 
-        fn start_game(
+        fn start_round(
             ref self: ContractState,
             game_id: u64,
             deck_root: felt252,
@@ -76,16 +80,21 @@ pub mod actions {
 
             self
                 .verify_signature_params(
-                    game_id,
                     ref world,
                     game_id,
-                    hands,
+                    message,
                     signature_r,
                     signature_s,
                     signature_y_parity,
                     game.nonce,
                     nonce,
                 );
+
+            game.current_round += 1;
+            game.round_count += 1;
+            let mut players: Array<Player> = world.read_models(game.players.span());
+            self._start_round(game_id, ref players);
+            world.write_model(@game);
         }
 
         /// @Birdmannn
@@ -103,17 +112,10 @@ pub mod actions {
                 player_id: caller,
                 player_count: game.current_player_count,
                 expected_no_of_players: game.params.max_no_of_players,
+                can_start,
             };
 
             world.emit_event(@player_joined);
-
-            // if can_start, then the game is ready to be started.
-            if can_start { // TODO:
-            // **************************************
-            //      CALL START ROUND FUNCTION
-            // **************************************
-            // ASSERT THAT THE START_ROUND EMITS A GAMESTARTED EVENT.
-            }
 
             world.write_model(@game);
             world.write_model(@player);
@@ -185,9 +187,12 @@ pub mod actions {
             let mut player: Player = world.read_model(get_caller_address());
 
             self.before_play(player.id);
-            let game: Game = world.read_model(*player.extract_current_game_id());
+            let game_id = *player.extract_current_game_id();
+            let cb = selector!("current_bet");
+            let game_current_bet = world.read_member(Model::<Game>::ptr_from_keys(game_id), cb);
+
             assert!(
-                player.current_bet == game.current_bet,
+                player.current_bet == game_current_bet,
                 "Your bet is not matched with the table. You must call, raise, or fold.",
             );
 
@@ -200,8 +205,23 @@ pub mod actions {
             let mut player: Player = world.read_model(get_caller_address());
             self.before_play(player.id);
 
-            let mut game: Game = world.read_model(*player.extract_current_game_id());
-            let amount_to_call = game.current_bet - player.current_bet;
+            let game_id = *player.extract_current_game_id();
+
+            let cb = selector!("current_bet");
+            let game_current_bet = world.read_member(Model::<Game>::ptr_from_keys(game_id), cb);
+
+            let params_ = selector!("params");
+            let pot_ = selector!("pot");
+            let mut game_pot: u256 = world.read_member(Model::<Game>::ptr_from_keys(game_id), pot_);
+            let params: GameParams = world
+                .read_member(Model::<Game>::ptr_from_keys(game_id), params_);
+
+            let mut amount_to_call: u256 = 0;
+            if game_pot == params.small_blind.into() {
+                amount_to_call = params.small_blind.into() * 2;
+            } else {
+                amount_to_call = game_current_bet - player.current_bet;
+            }
 
             assert!(amount_to_call > 0, "Your bet is already equal to the current bet.");
 
@@ -209,10 +229,10 @@ pub mod actions {
 
             player.chips -= amount_to_call;
             player.current_bet += amount_to_call;
-            game.pot += amount_to_call;
+            game_pot += amount_to_call;
 
             world.write_model(@player);
-            world.write_model(@game);
+            world.write_member(Model::<Game>::ptr_from_keys(game_id), pot_, game_pot);
 
             self.after_play(player.id);
         }
@@ -235,10 +255,23 @@ pub mod actions {
             let mut player: Player = world.read_model(get_caller_address());
             self.before_play(player.id);
 
-            let mut game: Game = world.read_model(*player.extract_current_game_id());
+            let game_id = *player.extract_current_game_id();
+            let cb = selector!("current_bet");
+            let mut game_current_bet = world.read_member(Model::<Game>::ptr_from_keys(game_id), cb);
 
-            let amount_to_call = game.current_bet - player.current_bet;
+            let params_ = selector!("params");
+            let pot_ = selector!("pot");
+            let mut game_pot: u256 = world.read_member(Model::<Game>::ptr_from_keys(game_id), pot_);
+            let params: GameParams = world
+                .read_member(Model::<Game>::ptr_from_keys(game_id), params_);
+
+            let amount_to_call = game_current_bet - player.current_bet;
             let total_required = amount_to_call + no_of_chips;
+            if game_pot == params.small_blind.into() {
+                assert!(
+                    no_of_chips > game_pot * 2, "Raise amount should be > twice the small blind.",
+                );
+            }
 
             assert!(no_of_chips > 0, "Raise amount must be greater than zero.");
 
@@ -246,11 +279,12 @@ pub mod actions {
 
             player.chips -= total_required;
             player.current_bet += total_required;
-            game.pot += total_required;
-            game.current_bet = player.current_bet;
+            game_pot += total_required;
+            game_current_bet = player.current_bet;
 
             world.write_model(@player);
-            world.write_model(@game);
+            world.write_member(Model::<Game>::ptr_from_keys(game_id), cb, game_current_bet);
+            world.write_member(Model::<Game>::ptr_from_keys(game_id), pot_, game_pot);
 
             self.after_play(player.id);
         }
@@ -300,6 +334,7 @@ pub mod actions {
                     selector!("community_cards"),
                     community_cards,
                 );
+            if community_cards.len() == 1 {}
             world
                 .write_member(
                     Model::<Game>::ptr_from_keys(game_id), selector!("community_dealing"), false,
@@ -1145,10 +1180,10 @@ pub mod actions {
             let mut world = self.world_default();
             let mut game: Game = world.read_model(game_id);
 
-            let next_dealer_opt: Option<Player> = self._get_dealer(players.at(0));
-            assert(next_dealer_opt.is_some(), 'Dealer not found');
-            let next_dealer = next_dealer_opt.unwrap();
-            world.write_model(@next_dealer);
+            let dealer_opt: Option<Player> = self._get_dealer(players.at(0));
+            assert(dealer_opt.is_some(), 'Dealer not found');
+            let dealer = dealer_opt.unwrap();
+            world.write_model(@dealer);
 
             // Get dealer index so that you can assign blinds
             let mut dealer_index = 0;
@@ -1156,18 +1191,19 @@ pub mod actions {
             let mut i = 0;
             while i < total_players {
                 let current_player = players.at(i);
-                assert(current_player.is_in_game(game_id), GameErrors::PLAYER_NOT_IN_GAME);
-                if current_player == @next_dealer {
+                assert(
+                    current_player.is_in_game(game_id) && *current_player.in_round,
+                    GameErrors::PLAYER_NOT_IN_GAME,
+                );
+                if current_player == @dealer {
                     dealer_index = i;
                     break;
                 }
                 i += 1;
             };
 
-            // Post blinds now you have dealer index. Player to the left for small blind, right for
-            //     big blind.
-            // We are taking 0 to length as left to right, so dealer_index - 1 for small blind,
-            //     dealer_index + 1 for big blind
+            // player to the right, small blind, then that's all.
+            // set the next_player accordingly
             let sb_index = (dealer_index + 1) % total_players;
             let sb_address = players.at(sb_index);
 
@@ -1177,26 +1213,13 @@ pub mod actions {
             sb_player.current_bet = sb_amount.into();
             world.write_model(@sb_player);
 
-            let bb_amount = game.params.big_blind;
-            game.pot = (sb_amount + bb_amount).into();
-            game.current_bet = bb_amount.into();
+            game.pot = sb_amount.into();
 
             // Reset previous game state
             game.round_in_progress = true;
             game.community_cards = array![];
             // set raises remaining back to the maximum number
             // set the game actions taken back to 0
-
-            // Shuffle decks
-            for deck_id in game.deck.span() {
-                let mut deck: Deck = world.read_model(*deck_id);
-                deck.new_deck();
-                deck.shuffle();
-                world.write_model(@deck);
-            };
-
-            // Deal hole cards
-            self._deal_hands(ref players);
 
             // set player turn, to the player immediately right of the big blind, so that the engine
             //     Knows whose turn it is.
@@ -1209,8 +1232,8 @@ pub mod actions {
                 .emit_event(
                     @RoundStarted {
                         game_id,
-                        dealer: next_dealer.id,
-                        current_game_bet: bb_amount.into(),
+                        dealer: dealer.id,
+                        current_game_bet: sb_amount.into(),
                         small_blind_player: sb_player.id,
                         next_player: *next_player.id,
                         no_of_players: players.len(),

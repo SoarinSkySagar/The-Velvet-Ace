@@ -21,7 +21,7 @@ trait IActions<TContractState> {
     ///
     /// TODO: Might require a function that lets and admin eject a player
     fn initialize_game(ref self: TContractState, game_params: Option<GameParams>) -> u64;
-    fn start_game(
+    fn start_round(
         ref self: TContractState,
         game_id: u64,
         deck_root: felt252,
