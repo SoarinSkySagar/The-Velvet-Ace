@@ -12,6 +12,14 @@ pub struct Hand {
     cards: Array<Card>,
 }
 
+#[derive(Serde, Drop, Clone, Debug, PartialEq)]
+#[dojo::model]
+pub struct Proofs {
+    #[key]
+    player: ContractAddress,
+    proof: Array<Array<felt252>>,
+}
+
 /// This is the hand ranks of player hand cards plus part of the community cards to make it 5 in
 /// total
 /// ROYAL_FLUSH: Ace, King, Queen, Jack and 10, all of the same suit.

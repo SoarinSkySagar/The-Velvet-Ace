@@ -52,5 +52,6 @@ fn get_default_game_params() -> GameParams {
         kicker_split: true,
         min_amount_of_chips: 100,
         blind_spacing: 10,
+        showdown_type: Default::default(),
     }
 }

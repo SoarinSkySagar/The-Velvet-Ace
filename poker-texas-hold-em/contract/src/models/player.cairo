@@ -24,6 +24,8 @@ pub struct Player {
     in_round: bool,
     out: (u64, u64),
     pub_key: felt252,
+    locked_chips: u256,
+    is_blacklisted: bool // TODO: should be integrated in the future.
 }
 /// Write struct for player stats
 /// Include an alias, if necessary, and add it as key.

@@ -19,7 +19,7 @@ pub enum GameMode {
 pub enum ShowdownType {
     #[default]
     Gathered, // Showdown happens at once, all cards are gathered
-    Splitted,
+    Splitted: u256 // then this would be the default amount for the stake
 }
 
 /// The kicker_split is checked when comparing hands.
@@ -34,6 +34,7 @@ pub struct GameParams {
     kicker_split: bool,
     min_amount_of_chips: u256,
     blind_spacing: u16,
+    showdown_type: ShowdownType,
 }
 
 /// id - the game id
@@ -108,6 +109,7 @@ pub struct GameStats {
     #[key]
     game_id: u64,
     mvp: ContractAddress,
+    round_end_time: u64,
 }
 
 // then we can implement a list node here
