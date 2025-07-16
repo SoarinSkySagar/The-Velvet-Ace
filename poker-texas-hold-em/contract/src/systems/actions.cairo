@@ -8,14 +8,17 @@ pub mod actions {
 
     use dojo::event::EventStorage;
     use dojo::model::{Model, ModelStorage, ModelValueStorage};
+    use dojo::world::WorldStorage;
     use poker::models::base::{
         CardDealt, GameConcluded, GameErrors, GameInitialized, HandCreated, HandResolved, Id,
         PlayerJoined, PlayerLeft, RoundResolved, RoundStarted, RoundEnded, CommunityCardDealt,
     };
     use poker::models::card::{Card, CardTrait};
     use poker::models::deck::{Deck, DeckTrait};
-    use poker::models::game::{Game, GameMode, GameParams, GameStats, GameTrait, Salts};
-    use poker::models::hand::{Hand, HandTrait};
+    use poker::models::game::{
+        Game, GameMode, GameParams, GameStats, GameTrait, Salts, ShowdownType,
+    };
+    use poker::models::hand::{Hand, HandTrait, Proofs};
     use poker::models::player::{Player, PlayerTrait};
     use poker::traits::game::get_default_game_params;
     use crate::systems::interface::IActions;
@@ -24,12 +27,20 @@ pub mod actions {
     pub const GAME: felt252 = 'GAME';
     pub const DECK: felt252 = 'DECK';
     pub const MAX_NO_OF_CHIPS: u128 = 100000; /// for test, 1 chip = 1 usd.
+    pub const DEFAULT_SHOWDOWN_DURATION: u64 = 60 * 6; // five minutes for showdown, default
+    // might be changed accordingly based on the number of players
 
+    // fn init() {
+
+    // }
 
     #[abi(embed_v0)]
     impl ActionsImpl of IActions<ContractState> {
-        fn initialize_game(ref self: ContractState, game_params: Option<GameParams>) -> u64 {
-            // Get the caller address
+        /// Birdmannn
+        fn initialize_game(
+            ref self: ContractState, game_params: Option<GameParams>,
+        ) -> u64 { // the game is not ownable for now
+            // do not submit the original hand.
             let caller: ContractAddress = get_caller_address();
             let mut world = self.world_default();
             let mut player: Player = world.read_model(caller);
@@ -39,30 +50,9 @@ pub mod actions {
             assert(!is_locked, GameErrors::PLAYER_ALREADY_LOCKED);
 
             let game_id: u64 = self.generate_id(GAME);
-
-            let mut deck_ids: Array<u64> = array![self.generate_id(DECK)];
-            if let Option::Some(params) = game_params {
-                // say the maximum number of decks is 10.
-                let deck_len = params.no_of_decks;
-                assert(deck_len > 0 && deck_len <= 10, GameErrors::INVALID_GAME_PARAMS);
-                for _ in 0..deck_len - 1 {
-                    deck_ids.append(self.generate_id(DECK));
-                };
-            }
-
-            // Create new game
             let mut game: Game = Default::default();
-            let decks = game.init(game_params, game_id, deck_ids);
-
+            game.init(game_params, game_id);
             player.enter(ref game);
-            // Save updated player and game state
-            world.write_model(@player);
-            world.write_model(@game);
-
-            // Save available decks
-            for deck in decks {
-                world.write_model(@deck);
-            };
 
             let game_initialized = GameInitialized {
                 game_id: game_id,
@@ -71,8 +61,49 @@ pub mod actions {
                 time_stamp: get_block_timestamp(),
             };
 
+            world.write_model(@game);
+            world.write_model(@player);
+
             world.emit_event(@game_initialized);
             game_id
+        }
+
+        /// @Birdmannn
+        fn start_round(
+            ref self: ContractState,
+            game_id: u64,
+            deck_root: felt252,
+            message: Array<Hand>,
+            signature_r: Array<felt252>,
+            signature_s: Array<felt252>,
+            signature_y_parity: Array<bool>,
+            nonce: u64,
+        ) {
+            // crosscheck that the message.len() == total number of players in the game.
+            // assert the game is waiting... that is game.current_round == 0.
+            let mut world = self.world_default();
+            let mut game: Game = world.read_model(game_id);
+            assert(game.current_round == 0, 'GAME NOT WAITING');
+
+            // implement start logic here
+
+            self
+                .verify_signature_params(
+                    ref world,
+                    game_id,
+                    message,
+                    signature_r,
+                    signature_s,
+                    signature_y_parity,
+                    game.nonce,
+                    nonce,
+                );
+
+            game.current_round += 1;
+            game.round_count += 1;
+            let mut players: Array<Player> = world.read_models(game.players.span());
+            self._start_round(game_id, ref players);
+            world.write_model(@game);
         }
 
         /// @Birdmannn
@@ -90,17 +121,10 @@ pub mod actions {
                 player_id: caller,
                 player_count: game.current_player_count,
                 expected_no_of_players: game.params.max_no_of_players,
+                can_start,
             };
 
             world.emit_event(@player_joined);
-
-            // if can_start, then the game is ready to be started.
-            if can_start { // TODO:
-            // **************************************
-            //      CALL START ROUND FUNCTION
-            // **************************************
-            // ASSERT THAT THE START_ROUND EMITS A GAMESTARTED EVENT.
-            }
 
             world.write_model(@game);
             world.write_model(@player);
@@ -172,9 +196,12 @@ pub mod actions {
             let mut player: Player = world.read_model(get_caller_address());
 
             self.before_play(player.id);
-            let game: Game = world.read_model(*player.extract_current_game_id());
+            let game_id = *player.extract_current_game_id();
+            let cb = selector!("current_bet");
+            let game_current_bet = world.read_member(Model::<Game>::ptr_from_keys(game_id), cb);
+
             assert!(
-                player.current_bet == game.current_bet,
+                player.current_bet == game_current_bet,
                 "Your bet is not matched with the table. You must call, raise, or fold.",
             );
 
@@ -187,8 +214,23 @@ pub mod actions {
             let mut player: Player = world.read_model(get_caller_address());
             self.before_play(player.id);
 
-            let mut game: Game = world.read_model(*player.extract_current_game_id());
-            let amount_to_call = game.current_bet - player.current_bet;
+            let game_id = *player.extract_current_game_id();
+
+            let cb = selector!("current_bet");
+            let game_current_bet = world.read_member(Model::<Game>::ptr_from_keys(game_id), cb);
+
+            let params_ = selector!("params");
+            let pot_ = selector!("pot");
+            let mut game_pot: u256 = world.read_member(Model::<Game>::ptr_from_keys(game_id), pot_);
+            let params: GameParams = world
+                .read_member(Model::<Game>::ptr_from_keys(game_id), params_);
+
+            let mut amount_to_call: u256 = 0;
+            if game_pot == params.small_blind.into() {
+                amount_to_call = params.small_blind.into() * 2;
+            } else {
+                amount_to_call = game_current_bet - player.current_bet;
+            }
 
             assert!(amount_to_call > 0, "Your bet is already equal to the current bet.");
 
@@ -196,10 +238,10 @@ pub mod actions {
 
             player.chips -= amount_to_call;
             player.current_bet += amount_to_call;
-            game.pot += amount_to_call;
+            game_pot += amount_to_call;
 
             world.write_model(@player);
-            world.write_model(@game);
+            world.write_member(Model::<Game>::ptr_from_keys(game_id), pot_, game_pot);
 
             self.after_play(player.id);
         }
@@ -222,10 +264,23 @@ pub mod actions {
             let mut player: Player = world.read_model(get_caller_address());
             self.before_play(player.id);
 
-            let mut game: Game = world.read_model(*player.extract_current_game_id());
+            let game_id = *player.extract_current_game_id();
+            let cb = selector!("current_bet");
+            let mut game_current_bet = world.read_member(Model::<Game>::ptr_from_keys(game_id), cb);
 
-            let amount_to_call = game.current_bet - player.current_bet;
+            let params_ = selector!("params");
+            let pot_ = selector!("pot");
+            let mut game_pot: u256 = world.read_member(Model::<Game>::ptr_from_keys(game_id), pot_);
+            let params: GameParams = world
+                .read_member(Model::<Game>::ptr_from_keys(game_id), params_);
+
+            let amount_to_call = game_current_bet - player.current_bet;
             let total_required = amount_to_call + no_of_chips;
+            if game_pot == params.small_blind.into() {
+                assert!(
+                    no_of_chips > game_pot * 2, "Raise amount should be > twice the small blind.",
+                );
+            }
 
             assert!(no_of_chips > 0, "Raise amount must be greater than zero.");
 
@@ -233,11 +288,12 @@ pub mod actions {
 
             player.chips -= total_required;
             player.current_bet += total_required;
-            game.pot += total_required;
-            game.current_bet = player.current_bet;
+            game_pot += total_required;
+            game_current_bet = player.current_bet;
 
             world.write_model(@player);
-            world.write_model(@game);
+            world.write_member(Model::<Game>::ptr_from_keys(game_id), cb, game_current_bet);
+            world.write_member(Model::<Game>::ptr_from_keys(game_id), pot_, game_pot);
 
             self.after_play(player.id);
         }
@@ -285,8 +341,9 @@ pub mod actions {
                 .write_member(
                     Model::<Game>::ptr_from_keys(game_id),
                     selector!("community_cards"),
-                    community_cards,
+                    community_cards.clone(),
                 );
+            if community_cards.len() == 1 {}
             world
                 .write_member(
                     Model::<Game>::ptr_from_keys(game_id), selector!("community_dealing"), false,
@@ -296,8 +353,41 @@ pub mod actions {
             world.emit_event(@event);
         }
 
-        fn submit_card(ref self: ContractState, card: felt252) {}
+        /// @Birdmannn
+        /// This function takes in a hand that contains hashed cards. When the Game uses a showdown
+        /// type of `Splitted`, the SALT is never revealed, and the game is never "verified"
+        /// TODO: In the future, the owner of the game would be forced to stake a huge amount
+        /// when initializing the game, and also be forced to submit all game proofs after each
+        /// round.
+        fn submit_hand(ref self: ContractState, hand: Hand, proof: Array<Array<felt252>>) {
+            let caller = get_caller_address();
+            let mut world = self.world_default();
+            let mut player: Player = world.read_model(caller);
+            let game_id = player.extract_current_game_id();
 
+            assert(player.in_round, 'PLAYER NOT IN ROUND');
+            let mut game: Game = world.read_model(game_id);
+
+            assert(game.in_progress, GameErrors::GAME_NOT_IN_PROGRESS);
+            assert(game.round_in_progress, GameErrors::ROUND_NOT_IN_PROGRESS);
+            assert(
+                game.params.showdown_type != ShowdownType::Gathered, 'INVALID CALL FOR GAME PARAMS',
+            );
+
+            let rt = selector!("round_end_time");
+            let end_time = world.read_member(Model::<GameStats>::ptr_from_keys(game_id), rt);
+            let duration = end_time + DEFAULT_SHOWDOWN_DURATION;
+            assert(get_block_timestamp() <= duration, 'DURATION EXCEEDED');
+
+            // When all hands have been counted and are complete, call the resolve_game_v2,
+            // and adjust the function. to tally all hands and rank them
+            assert(hand.player == caller, 'HAND ID NOT CALLER');
+            world.write_model(@hand);
+            let proof = Proofs { player: hand.player, proof };
+            world.write_model(@proof);
+        }
+
+        /// @Birdmannn, @augustin-v
         fn showdown(
             ref self: ContractState,
             game_id: u64,
@@ -318,7 +408,101 @@ pub mod actions {
             let mut world = self.world_default();
             let mut game: Game = world.read_model(game_id);
             assert(game.showdown, 'INVALID CALL'); // check the position of this line.
+            let game_nonce = game.nonce;
+            game.nonce += 1;
+            self
+                .verify_signature_params(
+                    ref world,
+                    game_id,
+                    hands.clone(),
+                    signature_r,
+                    signature_s,
+                    signature_y_parity,
+                    game_nonce,
+                    nonce,
+                );
+            world.write_model(@game);
 
+            let g_key = (*g.at(0), *g.at(1), *g.at(2));
+            let d_key = (*d.at(0), *d.at(1), *d.at(2));
+            let mut G: Salts = world.read_model(g_key);
+            let mut D: Salts = world.read_model(d_key);
+            assert(!game.has_ended, GameErrors::GAME_ALREADY_ENDED);
+            // write the salt to invalidate. A wrong showdown disqualifies the whole game if
+            // actually any of the salts were valid.
+            world.write_member(Model::<Salts>::ptr_from_keys(g_key), selector!("used"), true);
+            world.write_member(Model::<Salts>::ptr_from_keys(d_key), selector!("used"), true);
+            assert(!G.used && !D.used, 'INVALID SALT');
+            assert(game.round_in_progress && game.community_cards.len() == 5, 'BAD REQUEST');
+
+            let (mut gp, mut dcp, mut dc) = (game_proofs, dealt_card_proofs, deck);
+            let deck_root: felt252 = game.deck_root;
+            let dealt_root: felt252 = game.dealt_cards_root;
+            // for now, the game houses the community cards. This will be changed.
+            let community_cards: Array<Card> = game.community_cards.clone();
+
+            let verified: bool = verify_game(
+                community_cards.clone(), hands.clone(), gp, dcp, dc, deck_root, dealt_root, g, d,
+            );
+
+            self._resolve_round_v2(game_id, hands, community_cards, verified);
+        }
+
+        fn get_player(self: @ContractState, player_id: ContractAddress) -> Player {
+            let world = self.world_default();
+            world.read_model(player_id)
+        }
+
+        fn get_game(self: @ContractState, game_id: u64) -> Game {
+            let world = self.world_default();
+            world.read_model(game_id)
+        }
+
+        fn set_alias(self: @ContractState, alias: felt252) {
+            let caller: ContractAddress = get_caller_address();
+            assert(caller != Zero::zero(), 'ZERO CALLER');
+            let mut world = self.world_default();
+            let mut player: Player = world.read_model(caller);
+            let check: Player = world.read_model(alias.clone());
+            assert(check.id == Zero::zero(), 'ALIAS UPDATE FAILED');
+            player.alias = alias;
+
+            world.write_model(@player);
+        }
+
+        fn resolve_round(ref self: ContractState, game_id: u64) {
+            self._resolve_round(game_id);
+        }
+    }
+
+    #[generate_trait]
+    impl InternalImpl of InternalTrait {
+        /// Use the default namespace "poker". This function is handy since the ByteArray
+        /// can't be const.
+        fn world_default(self: @ContractState) -> WorldStorage {
+            self.world(@"poker")
+        }
+
+        fn generate_id(self: @ContractState, target: felt252) -> u64 {
+            let mut world = self.world_default();
+            let mut game_id: Id = world.read_model(target);
+            let mut id = game_id.nonce + 1;
+            game_id.nonce = id;
+            world.write_model(@game_id);
+            id
+        }
+
+        fn verify_signature_params(
+            ref self: ContractState,
+            ref world: WorldStorage,
+            game_id: u64,
+            hands: Array<Hand>,
+            signature_r: Array<felt252>,
+            signature_s: Array<felt252>,
+            signature_y_parity: Array<bool>, // to recover the public key
+            game_nonce: u64,
+            nonce: u64,
+        ) {
             // @augustin-v: verify signatures here
             let hands_len: u32 = hands.len();
             assert(signature_r.len() == hands_len, 'SIGNATURE R LENGTH MISMATCH');
@@ -326,10 +510,9 @@ pub mod actions {
             // for array bounds safety
             assert(signature_y_parity.len() == hands_len, 'SIGNATURE Y_PARITY LEN MISMATCH');
 
-            assert(nonce == game.nonce, 'INVALID NONCE');
+            assert(nonce == game_nonce, 'INVALID NONCE');
 
             // increment nonce to prevent replay attacks
-            game.nonce += 1;
             let mut i: u32 = 0;
             while i < hands_len {
                 let hand: @Hand = hands.at(i);
@@ -366,76 +549,6 @@ pub mod actions {
 
                 i += 1;
             };
-            world.write_model(@game);
-
-            let g_key = (*g.at(0), *g.at(1), *g.at(2));
-            let d_key = (*d.at(0), *d.at(1), *d.at(2));
-            let mut G: Salts = world.read_model(g_key);
-            let mut D: Salts = world.read_model(d_key);
-            assert(!game.has_ended, GameErrors::GAME_ALREADY_ENDED);
-            // write the salt to invalidate. A wrong showdown disqualifies the whole game if
-            // actually any of the salts were valid.
-            world.write_member(Model::<Salts>::ptr_from_keys(g_key), selector!("used"), true);
-            world.write_member(Model::<Salts>::ptr_from_keys(d_key), selector!("used"), true);
-            assert(!G.used && !D.used, 'INVALID SALT');
-            assert(game.round_in_progress && game.community_cards.len() == 5, 'BAD REQUEST');
-
-            let (mut gp, mut dcp, mut dc) = (game_proofs, dealt_card_proofs, deck);
-            let deck_root: felt252 = game.deck_root;
-            let dealt_root: felt252 = game.dealt_cards_root;
-            // for now, the game houses the community cards. This will be changed.
-            let community_cards: Array<Card> = game.community_cards.clone();
-
-            let verified: bool = verify_game(
-                community_cards.clone(), hands.clone(), gp, dcp, dc, deck_root, dealt_root, g, d,
-            );
-
-            self._resolve_round_v2(game_id, hands, community_cards, verified);
-        }
-
-
-        fn get_player(self: @ContractState, player_id: ContractAddress) -> Player {
-            let world = self.world_default();
-            world.read_model(player_id)
-        }
-
-        fn get_game(self: @ContractState, game_id: u64) -> Game {
-            let world = self.world_default();
-            world.read_model(game_id)
-        }
-
-        fn set_alias(self: @ContractState, alias: felt252) {
-            let caller: ContractAddress = get_caller_address();
-            assert(caller != Zero::zero(), 'ZERO CALLER');
-            let mut world = self.world_default();
-            let mut player: Player = world.read_model(caller);
-            let check: Player = world.read_model(alias.clone());
-            assert(check.id == Zero::zero(), 'ALIAS UPDATE FAILED');
-            player.alias = alias;
-
-            world.write_model(@player);
-        }
-
-        fn resolve_round(ref self: ContractState, game_id: u64) {
-            self._resolve_round(game_id);
-        }
-    }
-
-    #[generate_trait]
-    impl InternalImpl of InternalTrait {
-        /// Use the default namespace "poker". This function is handy since the ByteArray
-        /// can't be const.
-        fn world_default(self: @ContractState) -> dojo::world::WorldStorage {
-            self.world(@"poker")
-        }
-
-        fn generate_id(self: @ContractState, target: felt252) -> u64 {
-            let mut world = self.world_default();
-            let mut game_id: Id = world.read_model(target);
-            let mut id = game_id.nonce + 1;
-            game_id.nonce = id;
-            world.write_model(@game_id);
-            id
         }
 
         // @LaGodxy
@@ -549,6 +662,12 @@ pub mod actions {
                 let round_number = game.round_count;
                 let no_of_players = game.current_player_count;
                 let event = RoundEnded { game_id, timestamp, round_number, no_of_players };
+                world
+                    .write_member(
+                        Model::<GameStats>::ptr_from_keys(game_id),
+                        selector!("round_end_time"),
+                        timestamp,
+                    );
                 world.emit_event(@event);
             }
         }
@@ -671,74 +790,82 @@ pub mod actions {
             result
         }
 
-        fn _deal_hands(
-            ref self: ContractState, ref players: Array<Player>,
-        ) { // deal hands for each player in the array
-            assert(!players.is_empty(), 'Players cannot be empty');
-
-            let first_player = players.at(0);
-            let game_id = first_player.extract_current_game_id();
-
-            for player in players.span() {
-                let current_game_id = player.extract_current_game_id();
-                assert(current_game_id == game_id, 'Players in different games');
-            };
-
-            let mut world = self.world_default();
-            let game: Game = world.read_model(*game_id);
-            // TODO: Check the number of decks, and deal card from each deck equally
-            let deck_ids: Array<u64> = game.deck;
-
-            // let mut deck: Deck = world.read_model(game_id);
-            let mut current_index: usize = 0;
-            for mut player in players.span() {
-                let mut hand: Hand = world.read_model(*player.id);
-                hand.new_hand();
-
-                for _ in 0_u8..2_u8 {
-                    let index = current_index % deck_ids.len();
-                    let deck_id: u64 = *deck_ids.at(index);
-                    let mut deck: Deck = world.read_model(deck_id);
-                    hand.add_card(deck.deal_card());
-
-                    world.write_model(@deck); // should work, ;)
-                    current_index += 1;
-                };
-
-                world.write_model(@hand);
-                world.write_model(player);
-            };
-        }
-
         fn _resolve_round_v2(
             ref self: ContractState,
             game_id: u64,
             hands: Array<Hand>,
             community_cards: Array<Card>,
             verified: bool,
-        ) { // resolve root
+        ) {
             let mut world = self.world_default();
             let mut game: Game = world.read_model(game_id);
-            // check if verified, by the way.
-            // DO NOT DELETE.
-            // in the future, check if the game should be verifiable, else, users should use the
-            // submit card endpoint.
-            // TODO: call `resolve_game()`, and update the `resolve_game()` with its appropriate
-            // logic.
-            // if game is not verified, read funds in the id, and split together with contract
-            // accordingly.
-            // perhaps let `resolve_game()` take in a bool to assert that the game was resolved
-            // accordingly.
-            // write a new internal function `resolve_v2`
+            assert(game.in_progress, GameErrors::GAME_NOT_IN_PROGRESS);
+            assert(game.round_in_progress, GameErrors::ROUND_NOT_IN_PROGRESS);
 
-            // assert that this game is valid
-            // NOTE: CALLER CAN BE ZERO, FOR NOW.
-            // check the game_params, if the game is verifiable
-            // else, users should use the `submit_card` endpoint.
-            // set both roots to zero in the `resolve_game`
-            // set round_in_progress to false, by the way.
-            // update the round_count
+            // if !verified && game.params.showdown_type == ShowdownType::Splitted { // deduct
+            // funds. but first we need to initialize the game properly.
+            //     // TODO: Implement things that should be done only when the `submit_card`
+            //     endpoint is called.
+            //     // de
+            // TODO: WE WILL USE THIS PARTICULAR LOGIC DURING THE `SUBMIT_CARD`
+
+            // // Collect players with valid hands, skipping those with empty hands
+            // let mut valid_players: Array<Player> = array![];
+            // let mut all_player_addresses: Array<ContractAddress> = array![];
+
+            // for player_address in game.players.span() {
+            //     let player: Player = world.read_model(*player_address);
+            //     let hand: Hand = world.read_model(*player_address);
+            //     all_player_addresses.append(*player_address);
+
+            //     // Skip players with empty hands (they didn't submit cards)
+            //     if hand.cards.len() == 0 {
+            //         continue;
+            //     }
+            //     valid_players.append(player);
+            // };
+
+            // assert(valid_players.len() > 0, 'No valid hands to resolve round');
+            // }  OR PUT THIS FUNCTION IN THE SUBMIT_CARD DIRECTLY
+
+            // // Update game state for the next round
+            game.current_round += 1;
+            game.round_in_progress = false;
+            game.community_cards = array![];
+            game.current_bet = 0;
             game.showdown = false;
+
+            game.deck_root = 0;
+            game.dealt_cards_root = 0;
+            world.write_model(@game);
+
+            let can_join = game.is_allowable();
+            // if game.should_end {
+            //     self._resolve_game(ref game, get_contract_address(), false);
+            // }
+
+            // Reset player states for ALL players (not just valid ones)
+            for player_address in game.players.span() {
+                let mut player: Player = world.read_model(*player_address);
+                if player.is_in_game(game_id) && player.refresh_stake(ref game) {
+                    player.current_bet = 0;
+                    player.in_round = true;
+                    world.write_model(@player);
+                }
+            };
+
+            let (winning_hands, _) = self._extract_winner();
+            let mut winners = array![];
+            for i in 0..winning_hands.len() {
+                let winner = winning_hands.at(i);
+                winners.append(*winner.player);
+            };
+            let pot = game.pot;
+
+            let round_resolved = RoundResolved {
+                game_id: game_id, can_join: can_join, winners: winners, pot: pot,
+            };
+            world.emit_event(@round_resolved);
         }
 
         fn _resolve_hands(
@@ -901,36 +1028,6 @@ pub mod actions {
             world.emit_event(@round_resolved);
         }
 
-        /// @NathaliaBarreiros
-        ///
-        /// Centralizes cleanup of all player hand data and resets game state.
-        /// Ensures all stored cards are properly cleared from world state.
-        ///
-        /// # Arguments
-        /// * `game_id` - The ID of the game being cleaned up
-        /// * `players` - Span of all player addresses that participated in the game
-        fn _cleanup_game_data(
-            ref self: ContractState, game_id: u64, players: Span<ContractAddress>,
-        ) {
-            let mut world = self.world_default();
-            let mut game: Game = world.read_model(game_id);
-
-            // Reset both merkle tree roots to zero
-            game.deck_root = 0;
-            game.dealt_cards_root = 0;
-            world.write_model(@game);
-
-            // Clean up all player hands
-            let mut i: u32 = 0;
-            while i < players.len() {
-                let player_address = *players.at(i);
-                let mut hand: Hand = world.read_model(player_address);
-                hand.new_hand(); // Clear all cards from this player's hand
-                world.write_model(@hand);
-                i += 1;
-            };
-        }
-
         // @Birdmannn, @nagxsan
         fn _resolve_game(
             ref self: ContractState, ref game: Game, caller: ContractAddress, force: bool,
@@ -1041,10 +1138,10 @@ pub mod actions {
             let mut world = self.world_default();
             let mut game: Game = world.read_model(game_id);
 
-            let next_dealer_opt: Option<Player> = self._get_dealer(players.at(0));
-            assert(next_dealer_opt.is_some(), 'Dealer not found');
-            let next_dealer = next_dealer_opt.unwrap();
-            world.write_model(@next_dealer);
+            let dealer_opt: Option<Player> = self._get_dealer(players.at(0));
+            assert(dealer_opt.is_some(), 'Dealer not found');
+            let dealer = dealer_opt.unwrap();
+            world.write_model(@dealer);
 
             // Get dealer index so that you can assign blinds
             let mut dealer_index = 0;
@@ -1052,18 +1149,19 @@ pub mod actions {
             let mut i = 0;
             while i < total_players {
                 let current_player = players.at(i);
-                assert(current_player.is_in_game(game_id), GameErrors::PLAYER_NOT_IN_GAME);
-                if current_player == @next_dealer {
+                assert(
+                    current_player.is_in_game(game_id) && *current_player.in_round,
+                    GameErrors::PLAYER_NOT_IN_GAME,
+                );
+                if current_player == @dealer {
                     dealer_index = i;
                     break;
                 }
                 i += 1;
             };
 
-            // Post blinds now you have dealer index. Player to the left for small blind, right for
-            //     big blind.
-            // We are taking 0 to length as left to right, so dealer_index - 1 for small blind,
-            //     dealer_index + 1 for big blind
+            // player to the right, small blind, then that's all.
+            // set the next_player accordingly
             let sb_index = (dealer_index + 1) % total_players;
             let sb_address = players.at(sb_index);
 
@@ -1073,26 +1171,13 @@ pub mod actions {
             sb_player.current_bet = sb_amount.into();
             world.write_model(@sb_player);
 
-            let bb_amount = game.params.big_blind;
-            game.pot = (sb_amount + bb_amount).into();
-            game.current_bet = bb_amount.into();
+            game.pot = sb_amount.into();
 
             // Reset previous game state
             game.round_in_progress = true;
             game.community_cards = array![];
             // set raises remaining back to the maximum number
             // set the game actions taken back to 0
-
-            // Shuffle decks
-            for deck_id in game.deck.span() {
-                let mut deck: Deck = world.read_model(*deck_id);
-                deck.new_deck();
-                deck.shuffle();
-                world.write_model(@deck);
-            };
-
-            // Deal hole cards
-            self._deal_hands(ref players);
 
             // set player turn, to the player immediately right of the big blind, so that the engine
             //     Knows whose turn it is.
@@ -1105,8 +1190,8 @@ pub mod actions {
                 .emit_event(
                     @RoundStarted {
                         game_id,
-                        dealer: next_dealer.id,
-                        current_game_bet: bb_amount.into(),
+                        dealer: dealer.id,
+                        current_game_bet: sb_amount.into(),
                         small_blind_player: sb_player.id,
                         next_player: *next_player.id,
                         no_of_players: players.len(),

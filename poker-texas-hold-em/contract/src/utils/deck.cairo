@@ -102,6 +102,45 @@ fn verify(
     MerkleTrait::verify_v2(proof, root, card.hash(salt), index)
 }
 
+// fn _deal_hands(
+//     ref self: ContractState, ref players: Array<Player>,
+// ) { // deal hands for each player in the array
+//     assert(!players.is_empty(), 'Players cannot be empty');
+
+//     let first_player = players.at(0);
+//     let game_id = first_player.extract_current_game_id();
+
+//     for player in players.span() {
+//         let current_game_id = player.extract_current_game_id();
+//         assert(current_game_id == game_id, 'Players in different games');
+//     };
+
+//     let mut world = self.world_default();
+//     let game: Game = world.read_model(*game_id);
+//     // TODO: Check the number of decks, and deal card from each deck equally
+//     let deck_ids: Array<u64> = game.deck;
+
+//     // let mut deck: Deck = world.read_model(game_id);
+//     let mut current_index: usize = 0;
+//     for mut player in players.span() {
+//         let mut hand: Hand = world.read_model(*player.id);
+//         hand.new_hand();
+
+//         for _ in 0_u8..2_u8 {
+//             let index = current_index % deck_ids.len();
+//             let deck_id: u64 = *deck_ids.at(index);
+//             let mut deck: Deck = world.read_model(deck_id);
+//             hand.add_card(deck.deal_card());
+
+//             world.write_model(@deck); // should work, ;)
+//             current_index += 1;
+//         };
+
+//         world.write_model(@hand);
+//         world.write_model(player);
+//     };
+// }
+
 #[cfg(test)]
 mod Tests {
     use super::verify_game;
@@ -177,7 +216,7 @@ mod Tests {
     }
 
     #[test]
-    fn test_verify_game_on_wrong_proof() { // for a tw player game
+    fn test_verify_game_on_wrong_proof() { // for a two player game
     // pub fn verify_game(
     //     community_cards: Array<Card>,
     //     hands: Array<Hand>,

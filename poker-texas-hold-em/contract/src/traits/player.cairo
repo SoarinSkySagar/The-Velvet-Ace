@@ -1,5 +1,5 @@
 use poker::models::player::Player;
-use poker::models::game::Game;
+use poker::models::game::{Game, ShowdownType};
 use poker::models::base::GameErrors;
 use super::game::GameTrait;
 
@@ -29,10 +29,10 @@ pub impl PlayerImpl of PlayerTrait {
         let (is_locked, _) = self.locked;
         assert(!is_locked, GameErrors::PLAYER_ALREADY_LOCKED);
         // Ensure player has enough chips for the game
-        assert(self.chips >= game.params.min_amount_of_chips, GameErrors::INSUFFICIENT_CHIP);
         assert(game.is_initialized(), GameErrors::GAME_NOT_INITIALIZED);
         assert(!game.has_ended, GameErrors::GAME_ALREADY_ENDED);
         assert(game.is_allowable(), GameErrors::ENTRY_DISALLOWED);
+        assert(self.refresh_stake(ref game), GameErrors::INSUFFICIENT_CHIP);
 
         if (game.id, game.reshuffled) != self.out {
             // append. Player doesn't exist in the game
@@ -43,6 +43,22 @@ pub impl PlayerImpl of PlayerTrait {
         game.current_player_count += 1;
 
         game.current_player_count == game.params.max_no_of_players
+    }
+
+    fn refresh_stake(ref self: Player, ref game: Game) -> bool {
+        if let ShowdownType::Splitted(stake) = game.params.showdown_type {
+            if stake >= self.chips {
+                return false;
+            }
+            let amt = self.chips - stake;
+            if game.params.min_amount_of_chips >= amt {
+                return false;
+            }
+            self.chips -= stake;
+            self.locked_chips += stake;
+            return true;
+        }
+        true
     }
 
     fn extract_current_game_id(self: @Player) -> @u64 {

@@ -21,6 +21,16 @@ trait IActions<TContractState> {
     ///
     /// TODO: Might require a function that lets and admin eject a player
     fn initialize_game(ref self: TContractState, game_params: Option<GameParams>) -> u64;
+    fn start_round(
+        ref self: TContractState,
+        game_id: u64,
+        deck_root: felt252,
+        message: Array<Hand>,
+        signature_r: Array<felt252>,
+        signature_s: Array<felt252>,
+        signature_y_parity: Array<bool>,
+        nonce: u64,
+    );
     fn join_game(ref self: TContractState, game_id: u64);
     fn leave_game(ref self: TContractState);
     fn end_game(ref self: TContractState, game_id: u64, force: bool);
@@ -41,9 +51,10 @@ trait IActions<TContractState> {
     fn get_rank(self: @TContractState, player_id: ContractAddress) -> ByteArray;
     // to be called by the dealer, for now.
     fn deal_community_card(ref self: TContractState, card: Card, game_id: u64);
-    fn submit_card(
-        ref self: TContractState, card: felt252,
-    ); // here, a player can only be in one game at a time.
+    fn submit_hand(
+        ref self: TContractState, hand: Hand, proof: Array<Array<felt252>>,
+    ); // here, a player can only be in one game at a time.. and here, the cards in the hand are hashed
+    fn compute_round(ref self: TContractState, game_id: u64, salt: Array<felt252>);
     fn showdown(
         ref self: TContractState,
         game_id: u64,

@@ -66,6 +66,7 @@ pub struct PlayerJoined {
     pub player_id: ContractAddress,
     pub player_count: u32,
     pub expected_no_of_players: u32,
+    pub can_start: bool,
 }
 
 #[derive(Drop, Serde)]
@@ -127,6 +128,14 @@ pub struct Id {
     #[key]
     pub id: felt252,
     pub nonce: u64,
+}
+
+#[derive(Serde, Copy, Drop, PartialEq)]
+#[dojo::model]
+pub struct CData {
+    #[key]
+    pub id: felt252,
+    pub amount: u256 // to hold funds for now
 }
 
 pub mod GameErrors {
