@@ -26,7 +26,22 @@ pub struct Player {
     pub_key: felt252,
     locked_chips: u256,
     is_blacklisted: bool, // TODO: should be integrated in the future.
-    eligible_pots: u8,
+    eligible_pots: u8
+}
+/// Write struct for player stats
+/// Include an alias, if necessary, and add it as key.
+#[derive(Copy, Drop, Serde, Debug, PartialEq, Hash)]
+#[dojo::model]
+pub struct PlayerStats {
+    #[key]
+    alias: felt252,
+    games_played: u64,
+    games_won: u64,
+    hands_played: u64,
+    hands_won: u64,
+    total_chips_won: u256,
+    total_chips_lost: u256,
+    biggest_win: u256,
 }
 
 impl ContractAddressDefault of Default<ContractAddress> {
