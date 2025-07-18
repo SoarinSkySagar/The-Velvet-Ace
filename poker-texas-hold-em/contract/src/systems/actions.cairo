@@ -384,7 +384,7 @@ pub mod actions {
             let caller = get_caller_address();
             let mut world = self.world_default();
             let mut player: Player = world.read_model(caller);
-            let game_id = player.extract_current_game_id();
+            let game_id = *player.extract_current_game_id();
 
             assert(player.in_round, 'PLAYER NOT IN ROUND');
             let mut game: Game = world.read_model(game_id);
@@ -407,6 +407,8 @@ pub mod actions {
             let proof = Proofs { player: hand.player, proof };
             world.write_model(@proof);
         }
+
+        fn compute_round(ref self: ContractState, game_id: u64, salt: Array<felt252>) {}
 
         /// @Birdmannn, @augustin-v
         fn showdown(
@@ -491,8 +493,7 @@ pub mod actions {
             world.write_model(@player);
         }
 
-        fn resolve_round(ref self: ContractState, game_id: u64) {
-            self._resolve_round(game_id);
+        fn resolve_round(ref self: ContractState, game_id: u64) {// self._resolve_round_v2(game_id);
         }
     }
 
@@ -525,7 +526,7 @@ pub mod actions {
                 // adjust previous pot and new pot, then proceed.
                 // increment player's eligible pots, if applicable
                 let index = player.eligible_pots.into() - 1;
-                let mut previous_pot = game_pots.at(index);
+                let mut previous_pot = *game_pots.at(index);
                 // adjust with offset
                 let previous_offset = world.read_member(Model::<Game>::ptr_from_keys(game_id), po);
                 player.chips -= previous_offset;
@@ -987,10 +988,14 @@ pub mod actions {
                 let winner = winning_hands.at(i);
                 winners.append(*winner.player);
             };
-            let pot = game.pot;
+
+            let mut tpot = 0; // total pot
+            for pot in game.pots {
+                tpot += pot;
+            };
 
             let round_resolved = RoundResolved {
-                game_id: game_id, can_join: can_join, winners: winners, pot: pot,
+                game_id: game_id, can_join: can_join, winners: winners, pot: tpot,
             };
             world.emit_event(@round_resolved);
         }
@@ -1067,92 +1072,6 @@ pub mod actions {
             };
 
             world.emit_event(@HandResolved { game_id: game_id, players: resolved_players });
-        }
-
-        /// @psychemist, @Birdmannn, @NathaliaBarreiros
-        ///
-        /// Resolves the current round and prepares the game for the next round.
-        /// Implements issue #144: skips players with empty hands and resets game roots.
-        ///
-        /// This function:
-        /// 1. Validates game state and separates players with valid hands from empty ones
-        /// 2. Updates game state (increments round counter, resets flags)
-        /// 3. Resets player states for ALL players (not just valid ones)
-        /// 4. Cleans all player hands and resets merkle tree roots via _cleanup_game_data
-        /// 5. Checks if new players can join based on game parameters
-        /// 6. Emits appropriate events
-        ///
-        /// This function validates game state, processes players with valid hands,
-        /// skips players with empty hands gracefully, resets all player hands,
-        /// and ensures both merkle tree roots are reset to zero for security.
-        ///
-        /// # Arguments
-        /// * `game_id` - The ID of the game whose round is being resolved
-        fn _resolve_round(ref self: ContractState, game_id: u64) {
-            let mut world = self.world_default();
-            let mut game: Game = world.read_model(game_id);
-
-            assert(game.in_progress, GameErrors::GAME_NOT_IN_PROGRESS);
-            assert(game.round_in_progress, GameErrors::ROUND_NOT_IN_PROGRESS);
-
-            // Collect players with valid hands, skipping those with empty hands
-            let mut valid_players: Array<Player> = array![];
-            let mut all_player_addresses: Array<ContractAddress> = array![];
-
-            for player_address in game.players.span() {
-                let player: Player = world.read_model(*player_address);
-                let hand: Hand = world.read_model(*player_address);
-                all_player_addresses.append(*player_address);
-
-                // Skip players with empty hands (they didn't submit cards)
-                if hand.cards.len() == 0 {
-                    continue;
-                }
-                valid_players.append(player);
-            };
-
-            assert(valid_players.len() > 0, 'No valid hands to resolve round');
-
-            // Update game state for the next round
-            game.current_round += 1;
-            game.round_in_progress = false;
-            game.community_cards = array![];
-            game.current_bet = 0;
-
-            // Reset player states for ALL players (not just valid ones)
-            for player_address in game.players.span() {
-                let mut player_copy: Player = world.read_model(*player_address);
-                if player_copy.is_in_game(game_id) {
-                    player_copy.current_bet = 0;
-                    player_copy.in_round = true;
-                    world.write_model(@player_copy);
-                }
-            };
-
-            // Save the game state before cleaning roots
-            world.write_model(@game);
-
-            // Clean up game state and reset merkle tree roots
-            self._cleanup_game_data(game_id, all_player_addresses.span());
-
-            // Check if the game allows new players to join
-            let can_join = game.is_allowable();
-            if game.should_end {
-                self._resolve_game(ref game, get_contract_address(), false);
-            }
-
-            let (winning_hands, _) = self._extract_winner();
-            let mut winners = array![];
-            for i in 0..winning_hands.len() {
-                let winner = winning_hands.at(i);
-                winners.append(*winner.player);
-            };
-            let pot = game.pot;
-
-            let round_resolved = RoundResolved {
-                game_id: game_id, can_join: can_join, winners: winners, pot: pot,
-            };
-            world.emit_event(@round_resolved);
         }
 
         // @Birdmannn, @nagxsan
@@ -1298,7 +1217,7 @@ pub mod actions {
             sb_player.current_bet = sb_amount.into();
             world.write_model(@sb_player);
 
-            game.pot = sb_amount.into();
+            game.pots = array![sb_amount.into()];
 
             // Reset previous game state
             game.round_in_progress = true;
