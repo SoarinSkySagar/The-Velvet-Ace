@@ -220,11 +220,14 @@ pub mod actions {
             let game_current_bet = world.read_member(Model::<Game>::ptr_from_keys(game_id), cb);
 
             let params_ = selector!("params");
-            let pot_ = selector!("pot");
-            let mut game_pot: u256 = world.read_member(Model::<Game>::ptr_from_keys(game_id), pot_);
+            let pot_ = selector!("pots");
+            let mut game_pots: Array<u256> = world
+                .read_member(Model::<Game>::ptr_from_keys(game_id), pot_);
             let params: GameParams = world
                 .read_member(Model::<Game>::ptr_from_keys(game_id), params_);
 
+            // fix this pot.
+            let mut game_pot = *game_pots.at(game_pots.len() - 1);
             let mut amount_to_call: u256 = 0;
             if game_pot == params.small_blind.into() {
                 amount_to_call = params.small_blind.into() * 2;
@@ -269,10 +272,18 @@ pub mod actions {
             let mut game_current_bet = world.read_member(Model::<Game>::ptr_from_keys(game_id), cb);
 
             let params_ = selector!("params");
-            let pot_ = selector!("pot");
-            let mut game_pot: u256 = world.read_member(Model::<Game>::ptr_from_keys(game_id), pot_);
+            let pot_ = selector!("pots");
+            let mut game_pots: Array<u256> = world
+                .read_member(Model::<Game>::ptr_from_keys(game_id), pot_);
             let params: GameParams = world
                 .read_member(Model::<Game>::ptr_from_keys(game_id), params_);
+
+            assert!(
+                no_of_chips > game_current_bet, "Raise amount is less than the game's current bet.",
+            );
+
+            // adjust this pot accordingly
+            let mut game_pot = *game_pots.at(game_pots.len() - 1);
 
             let amount_to_call = game_current_bet - player.current_bet;
             let total_required = amount_to_call + no_of_chips;
@@ -283,7 +294,6 @@ pub mod actions {
             }
 
             assert!(no_of_chips > 0, "Raise amount must be greater than zero.");
-
             assert!(player.chips >= total_required, "You don't have enough chips to raise.");
 
             player.chips -= total_required;
@@ -301,8 +311,19 @@ pub mod actions {
         /// @dub_zn
         fn all_in(ref self: ContractState) {
             let mut world = self.world_default();
-            let player: Player = world.read_model(get_caller_address());
-            self.raise(player.chips);
+            let mut player: Player = world.read_model(get_caller_address());
+            self.before_play(player.id);
+            // check the previous pot here.
+            let game_id: u64 = *player.extract_current_game_id();
+            let amount = player.chips;
+
+            let cb = selector!("current_bet");
+            let mut game_current_bet = world.read_member(Model::<Game>::ptr_from_keys(game_id), cb);
+            if amount < game_current_bet {
+                self.adjust_pot(game_id, ref player, game_current_bet);
+            }
+            world.write_model(@player);
+            self.after_play(player.id);
         }
 
         fn get_rank(self: @ContractState, player_id: ContractAddress) -> ByteArray {
@@ -490,6 +511,112 @@ pub mod actions {
             game_id.nonce = id;
             world.write_model(@game_id);
             id
+        }
+
+        fn adjust_stake(
+            ref self: ContractState, game_id: u64, mut amount: u256, ref player: Player,
+        ) {
+            let mut world = self.world_default();
+            let pot_ = selector!("pots");
+            let po = selector!("previous_offset");
+            let mut game_pots: Array<u256> = world
+                .read_member(Model::<Game>::ptr_from_keys(game_id), pot_);
+            if player.eligible_pots.into() < game_pots.len() {
+                // adjust previous pot and new pot, then proceed.
+                // increment player's eligible pots, if applicable
+                let index = player.eligible_pots.into() - 1;
+                let mut previous_pot = game_pots.at(index);
+                // adjust with offset
+                let previous_offset = world.read_member(Model::<Game>::ptr_from_keys(game_id), po);
+                player.chips -= previous_offset;
+                if amount > previous_offset {
+                    amount -= previous_offset;
+                    // add offset to the previous pot
+                    previous_pot += previous_offset;
+                } else { // adjust re-adjust previous pot
+                }
+
+                player.eligible_pots += 1;
+                // resolve pots
+            }
+        }
+
+        fn adjust_pot(
+            ref self: ContractState, game_id: u64, ref player: Player, game_current_bet: u256,
+        ) {
+            let mut world = self.world_default();
+            let pot_ = selector!("pots");
+            let p = selector!("players");
+            let po = selector!("previous_offset");
+            let mut game_pots: Array<u256> = world
+                .read_member(Model::<Game>::ptr_from_keys(game_id), pot_);
+            let game_players: Array<ContractAddress> = world
+                .read_member(Model::<Game>::ptr_from_keys(game_id), p);
+
+            let mut target_index = 0;
+            let mut current_pot = *game_pots.at(game_pots.len() - 1);
+            let amount = player.chips;
+            // we are only adjusting the current pot, and resolving the next pot for the betting
+
+            // let offset = game_current_bet - amount;
+            // all player's current bet must match then, then create a new pot
+            let stmt = player.eligible_pots.into() == game_pots.len();
+            let mut new_pot_: bool = false;
+            let mut new_pot: u256 = if stmt {
+                new_pot_ = true;
+                0
+            } else {
+                current_pot
+            };
+
+            if !stmt {
+                target_index = player.eligible_pots.into() - 1;
+                current_pot = *game_pots.at(target_index); // === game.pots.len() - 2
+            }
+
+            player.current_bet += amount;
+            player.chips = 0;
+            let players: Array<Player> = world.read_models(game_players.span());
+
+            for i in 0..players.len() {
+                let mut pp = *players.at(i);
+                if pp.is_in_game(game_id)
+                    && pp.in_round
+                    && pp.eligible_pots.into() == game_pots.len() {
+                    if pp.current_bet > player.current_bet {
+                        let offset = pp.current_bet - player.current_bet;
+                        // subtract the offset from the pot, and update state accordingly
+                        current_pot -= offset;
+                        new_pot += offset;
+                        // NOTE:
+                        // pp.current_bet = offset; This line is commented out to avoid
+                        // miscalculation and loss of funds during the `call` operation. If it is to
+                        // be used in the future by any means, then the `call` function must be
+                        // adjusted appropriately.
+                        pp.eligible_pots += 1;
+                        world.write_model(@pp);
+                        world.write_member(Model::<Game>::ptr_from_keys(game_id), po, offset);
+                    }
+                }
+            };
+
+            if new_pot_ {
+                game_pots.append(new_pot);
+            } else {
+                // resolve pot at that index.
+                let mut game_pots_ref = array![];
+                for i in 0..game_pots.len() {
+                    if i == target_index.into() {
+                        game_pots_ref.append(current_pot);
+                        game_pots_ref.append(new_pot);
+                        break; // usually the last two. break afterwards
+                    }
+                    game_pots_ref.append(*game_pots.at(i));
+                };
+                game_pots = game_pots_ref;
+            }
+            player.current_bet = 0; // the player is maxed out. This value is used for checks.
+            world.write_member(Model::<Game>::ptr_from_keys(game_id), pot_, game_pots);
         }
 
         fn verify_signature_params(
