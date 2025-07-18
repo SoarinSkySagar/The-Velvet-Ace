@@ -10,7 +10,7 @@ use poker::traits::player::PlayerTrait;
 
 // FOR NOW, NO PLAYER CAN HAVE MORE THAN ONE HAND.
 // Go to all functions that use player as a parameter, and remove the snapshot
-#[derive(Copy, Drop, Serde, Debug, PartialEq, Hash)]
+#[derive(Copy, Drop, Serde, Debug, Default, PartialEq, Hash)]
 #[dojo::model]
 pub struct Player {
     #[key]
@@ -25,7 +25,8 @@ pub struct Player {
     out: (u64, u64),
     pub_key: felt252,
     locked_chips: u256,
-    is_blacklisted: bool // TODO: should be integrated in the future.
+    is_blacklisted: bool, // TODO: should be integrated in the future.
+    eligible_pots: u8,
 }
 /// Write struct for player stats
 /// Include an alias, if necessary, and add it as key.
@@ -42,21 +43,11 @@ pub struct PlayerStats {
     total_chips_lost: u256,
     biggest_win: u256,
 }
-impl PlayerDefault of Default<Player> {
+
+impl ContractAddressDefault of Default<ContractAddress> {
     #[inline(always)]
-    fn default() -> Player {
-        Player {
-            id: Zero::zero(),
-            alias: '',
-            chips: 0,
-            current_bet: 0,
-            total_rounds: 0,
-            locked: (false, 0),
-            is_dealer: false,
-            in_round: false,
-            out: (0, 0),
-            pub_key: 0,
-        }
+    fn default() -> ContractAddress {
+        Zero::zero()
     }
 }
 

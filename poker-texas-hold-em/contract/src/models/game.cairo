@@ -15,13 +15,6 @@ pub enum GameMode {
     Tournament: bool,
 }
 
-#[derive(Copy, Drop, Serde, Default, Introspect, PartialEq)]
-pub enum ShowdownType {
-    #[default]
-    Gathered, // Showdown happens at once, all cards are gathered
-    Splitted: u256 // then this would be the default amount for the stake
-}
-
 /// The kicker_split is checked when comparing hands.
 #[derive(Copy, Drop, Serde, Default, Introspect, PartialEq)]
 pub struct GameParams {
@@ -35,6 +28,13 @@ pub struct GameParams {
     min_amount_of_chips: u256,
     blind_spacing: u16,
     showdown_type: ShowdownType,
+}
+
+#[derive(Copy, Drop, Serde, Default, Introspect, PartialEq)]
+pub enum ShowdownType {
+    #[default]
+    Gathered,
+    Splitted: u256,
 }
 
 /// id - the game id
@@ -70,7 +70,8 @@ pub struct Game {
     deck: Array<u64>,
     next_player: Option<ContractAddress>,
     community_cards: Array<Card>,
-    pot: u256,
+    pots: Array<u256>,
+    previous_offset: u256,
     current_bet: u256,
     params: GameParams,
     reshuffled: u64,

@@ -41,6 +41,7 @@ pub impl PlayerImpl of PlayerTrait {
         self.locked = (true, game.id);
         self.in_round = true;
         game.current_player_count += 1;
+        self.eligible_pots = 1;
 
         game.current_player_count == game.params.max_no_of_players
     }
@@ -59,6 +60,13 @@ pub impl PlayerImpl of PlayerTrait {
             return true;
         }
         true
+    }
+
+    fn is_maxed(self: @Player, game: @Game) -> bool {
+        self.is_in_game(*game.id)
+            && *self.chips == 0
+            && *self.eligible_pots < game.pots.len().try_into().unwrap()
+            && *self.current_bet == 0
     }
 
     fn extract_current_game_id(self: @Player) -> @u64 {
