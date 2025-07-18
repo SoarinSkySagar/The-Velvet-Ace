@@ -130,13 +130,13 @@ pub struct Id {
     pub nonce: u64,
 }
 
-#[derive(Serde, Copy, Drop, PartialEq)]
-#[dojo::model]
-pub struct CData {
-    #[key]
-    pub id: felt252,
-    pub amount: u256 // to hold funds for now
-}
+// #[derive(Serde, Copy, Drop, PartialEq)]
+// #[dojo::model]
+// pub struct CData {
+//     #[key]
+//     pub id: felt252,
+//     pub amount: u256 // to hold funds for now
+// }
 
 pub mod GameErrors {
     pub const GAME_NOT_INITIALIZED: felt252 = 'GAME NOT INITIALIZED';

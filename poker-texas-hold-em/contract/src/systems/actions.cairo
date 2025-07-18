@@ -16,7 +16,7 @@ pub mod actions {
     use poker::models::card::{Card, CardTrait};
     use poker::models::deck::{Deck, DeckTrait};
     use poker::models::game::{
-        Game, GameMode, GameParams, GameStats, GameTrait, Salts, ShowdownType,
+        Game, GameMode, GameParams, GameStats, GameTrait, Salts // ShowdownType,
     };
     use poker::models::hand::{Hand, HandTrait, Proofs};
     use poker::models::player::{Player, PlayerTrait};
@@ -391,9 +391,10 @@ pub mod actions {
 
             assert(game.in_progress, GameErrors::GAME_NOT_IN_PROGRESS);
             assert(game.round_in_progress, GameErrors::ROUND_NOT_IN_PROGRESS);
-            assert(
-                game.params.showdown_type != ShowdownType::Gathered, 'INVALID CALL FOR GAME PARAMS',
-            );
+            // assert(
+            //     game.params.showdown_type != ShowdownType::Gathered, 'INVALID CALL FOR GAME
+            //     PARAMS',
+            // );
 
             let rt = selector!("round_end_time");
             let end_time = world.read_member(Model::<GameStats>::ptr_from_keys(game_id), rt);
@@ -493,7 +494,9 @@ pub mod actions {
             world.write_model(@player);
         }
 
-        fn resolve_round(ref self: ContractState, game_id: u64) {// self._resolve_round_v2(game_id);
+        fn resolve_round(
+            ref self: ContractState, game_id: u64,
+        ) { // self._resolve_round_v2(game_id);
         }
     }
 
@@ -978,6 +981,7 @@ pub mod actions {
                 if player.is_in_game(game_id) && player.refresh_stake(ref game) {
                     player.current_bet = 0;
                     player.in_round = true;
+                    player.eligible_pots = 0;
                     world.write_model(@player);
                 }
             };

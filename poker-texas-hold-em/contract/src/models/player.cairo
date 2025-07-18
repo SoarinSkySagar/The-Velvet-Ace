@@ -26,7 +26,7 @@ pub struct Player {
     pub_key: felt252,
     locked_chips: u256,
     is_blacklisted: bool, // TODO: should be integrated in the future.
-    eligible_pots: u8
+    eligible_pots: u8,
 }
 /// Write struct for player stats
 /// Include an alias, if necessary, and add it as key.
