@@ -16,7 +16,7 @@ pub mod actions {
     use poker::models::card::{Card, CardTrait};
     use poker::models::deck::{Deck, DeckTrait};
     use poker::models::game::{
-        Game, GameMode, GameParams, GameStats, GameTrait, Salts // ShowdownType,
+        Game, GameMode, GameParams, GameStats, GameTrait, Salts, ShowdownType,
     };
     use poker::models::hand::{Hand, HandTrait, Proofs};
     use poker::models::player::{Player, PlayerTrait};
@@ -239,9 +239,11 @@ pub mod actions {
 
             assert!(player.chips >= amount_to_call, "You don't have enough chips to call.");
 
-            player.chips -= amount_to_call;
-            player.current_bet += amount_to_call;
-            game_pot += amount_to_call;
+            if !self.adjust_stake(game_id, amount_to_call, ref player) {
+                player.chips -= amount_to_call;
+                player.current_bet += amount_to_call;
+                game_pot += amount_to_call;
+            }
 
             world.write_model(@player);
             world.write_member(Model::<Game>::ptr_from_keys(game_id), pot_, game_pot);
@@ -296,9 +298,11 @@ pub mod actions {
             assert!(no_of_chips > 0, "Raise amount must be greater than zero.");
             assert!(player.chips >= total_required, "You don't have enough chips to raise.");
 
-            player.chips -= total_required;
-            player.current_bet += total_required;
-            game_pot += total_required;
+            if !self.adjust_stake(game_id, amount_to_call, ref player) {
+                player.chips -= total_required;
+                player.current_bet += total_required;
+                game_pot += total_required;
+            }
             game_current_bet = player.current_bet;
 
             world.write_model(@player);
@@ -391,10 +395,11 @@ pub mod actions {
 
             assert(game.in_progress, GameErrors::GAME_NOT_IN_PROGRESS);
             assert(game.round_in_progress, GameErrors::ROUND_NOT_IN_PROGRESS);
-            // assert(
-            //     game.params.showdown_type != ShowdownType::Gathered, 'INVALID CALL FOR GAME
-            //     PARAMS',
-            // );
+            assert!(
+                game.params.showdown_type != ShowdownType::Gathered,
+                "INVALID CALL FOR GAME
+                PARAMS",
+            );
 
             let rt = selector!("round_end_time");
             let end_time = world.read_member(Model::<GameStats>::ptr_from_keys(game_id), rt);
@@ -519,7 +524,9 @@ pub mod actions {
 
         fn adjust_stake(
             ref self: ContractState, game_id: u64, mut amount: u256, ref player: Player,
-        ) {
+        ) -> bool {
+            // This function would be used only for stakes greater than the game's current bet
+            // matches the previous pot, and adds the remainder to the current pot
             let mut world = self.world_default();
             let pot_ = selector!("pots");
             let po = selector!("previous_offset");
@@ -532,17 +539,20 @@ pub mod actions {
                 let mut previous_pot = *game_pots.at(index);
                 // adjust with offset
                 let previous_offset = world.read_member(Model::<Game>::ptr_from_keys(game_id), po);
-                player.chips -= previous_offset;
-                if amount > previous_offset {
-                    amount -= previous_offset;
-                    // add offset to the previous pot
-                    previous_pot += previous_offset;
-                } else { // adjust re-adjust previous pot
-                }
+                player.chips -= amount;
+                amount -= previous_offset;
+                previous_pot += previous_offset;
 
+                let mut current_pot = *game_pots.at(game_pots.len() - 1);
+                current_pot += amount;
+
+                let game_pots_ = self.refresh_pots(game_pots, index, previous_pot, current_pot);
+                world.write_member(Model::<Game>::ptr_from_keys(game_id), pot_, game_pots_);
                 player.eligible_pots += 1;
-                // resolve pots
+                world.write_model(@player);
+                return true;
             }
+            false
         }
 
         fn adjust_pot(
@@ -608,19 +618,29 @@ pub mod actions {
                 game_pots.append(new_pot);
             } else {
                 // resolve pot at that index.
-                let mut game_pots_ref = array![];
-                for i in 0..game_pots.len() {
-                    if i == target_index.into() {
-                        game_pots_ref.append(current_pot);
-                        game_pots_ref.append(new_pot);
-                        break; // usually the last two. break afterwards
-                    }
-                    game_pots_ref.append(*game_pots.at(i));
-                };
-                game_pots = game_pots_ref;
+                game_pots = self.refresh_pots(game_pots, target_index, current_pot, new_pot);
             }
             player.current_bet = 0; // the player is maxed out. This value is used for checks.
             world.write_member(Model::<Game>::ptr_from_keys(game_id), pot_, game_pots);
+        }
+
+        fn refresh_pots(
+            ref self: ContractState,
+            game_pots: Array<u256>,
+            target_index: u32,
+            current_pot: u256,
+            new_pot: u256,
+        ) -> Array<u256> {
+            let mut game_pots_ref = array![];
+            for i in 0..game_pots.len() {
+                if i == target_index {
+                    game_pots_ref.append(current_pot);
+                    game_pots_ref.append(new_pot);
+                    break; // usually the last two. break afterwards
+                }
+                game_pots_ref.append(*game_pots.at(i));
+            };
+            game_pots_ref
         }
 
         fn verify_signature_params(
@@ -935,6 +955,7 @@ pub mod actions {
 
             // if !verified && game.params.showdown_type == ShowdownType::Splitted { // deduct
             // funds. but first we need to initialize the game properly.
+            // probably refresh the stake here.
             //     // TODO: Implement things that should be done only when the `submit_card`
             //     endpoint is called.
             //     // de

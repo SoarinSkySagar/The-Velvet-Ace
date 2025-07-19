@@ -22,6 +22,13 @@ pub impl PlayerImpl of PlayerTrait {
         self.in_round = false;
         self.locked = (false, 0);
 
+        if let ShowdownType::Splitted(stake) = game.params.showdown_type {
+            if self.locked_chips == stake {
+                self.chips += stake;
+                self.locked_chips = 0;
+            }
+        }
+
         game.current_player_count -= 1;
     }
 
@@ -51,13 +58,15 @@ pub impl PlayerImpl of PlayerTrait {
             if stake >= self.chips {
                 return false;
             }
+            if self.locked_chips == stake {
+                return true;
+            }
             let amt = self.chips - stake;
             if game.params.min_amount_of_chips >= amt {
                 return false;
             }
             self.chips -= stake;
             self.locked_chips += stake;
-            return true;
         }
         true
     }
