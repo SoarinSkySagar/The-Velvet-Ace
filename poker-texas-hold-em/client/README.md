@@ -203,7 +203,7 @@ export default tseslint.config({
 
 ## 11. Contact Information
 
-- Maintainer: [@i_am_10daer](https://t.me/i_am_10daer)
+- Maintainer: [@Birdmannn](https://github.com/Birdmannn)
 - For questions, contact via Telegram or open an issue in the project repository.
 
 > **Recommendation:** Always restart the development server after changing dependencies or configuration to ensure changes take effect.
