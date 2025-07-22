@@ -16,6 +16,14 @@ pub impl GameImpl of GameTrait {
                 // Validate custom params
                 assert(params.max_no_of_players > 1, GameErrors::MIN_PLAYER);
                 assert(params.big_blind > params.small_blind, GameErrors::INVALID_BLIND_PLAYER);
+                assert(params.small_blind > 0, GameErrors::INVALID_GAME_PARAMS);
+                assert(params.big_blind > 0, GameErrors::INVALID_GAME_PARAMS);
+                assert(params.no_of_decks > 0, GameErrors::INVALID_GAME_PARAMS);
+                assert(params.min_amount_of_chips > 0, GameErrors::INVALID_GAME_PARAMS);
+                assert(params.blind_spacing > 0, GameErrors::INVALID_GAME_PARAMS);
+                // Optionally, validate max_no_of_players upper bound (e.g., <= 10)
+                assert(params.max_no_of_players <= 10, GameErrors::INVALID_GAME_PARAMS);
+                // Optionally, validate game_mode and showdown_type if needed
                 params
             },
             Option::None => get_default_game_params(),
