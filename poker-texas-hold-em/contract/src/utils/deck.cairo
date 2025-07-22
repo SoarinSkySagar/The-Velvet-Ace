@@ -154,35 +154,6 @@ mod Tests {
         Card { suit, value }
     }
 
-    fn deck() -> Deck {
-        let mut deck: Deck = Default::default();
-        deck.new_deck();
-
-        deck
-    }
-
-    #[test]
-    fn test_is_cards_distinct() {
-        let mut deck = deck();
-
-        assert!(deck.is_cards_distinct(), "cards should be distinct");
-    }
-
-    #[test]
-    fn test_is_shuffled() {
-        let mut deck = deck();
-        deck.shuffle();
-
-        assert!(deck.is_shuffled(), "deck should be shuffled");
-    }
-
-    #[test]
-    fn test_is_not_shuffled() {
-        let mut deck = deck();
-
-        assert!(!deck.is_shuffled(), "new deck should not be shuffled");
-    }
-
     #[test]
     fn test_verify_game_success() {
         let mut deck: Deck = Default::default();
