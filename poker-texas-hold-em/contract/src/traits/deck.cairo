@@ -83,13 +83,65 @@ pub impl DeckImpl of DeckTrait {
     }
 
     fn is_shuffled(ref self: Deck) -> bool {
-        // for the implementation, check if at least 1/2 of self.new_deck() is at a
-        // different position.
-        true
+        let length = self.cards.len();
+        if length <= 1 {
+            return false;
+        }
+
+        // Create reference ordered deck
+        let mut ordered_deck: Array<Card> = array![];
+        for suit in 0_u8..4_u8 {
+            for value in 1_u16..14_u16 {
+                let card: Card = Card { suit, value };
+                ordered_deck.append(card);
+            };
+        };
+
+        // Compare positions
+        let mut diff_count: u32 = 0;
+        let mut i: u32 = 0;
+        while i != length {
+            if *self.cards.at(i) != *ordered_deck.at(i) {
+                diff_count += 1;
+            }
+            i += 1;
+        };
+
+        // If at least half of the cards moved → shuffled
+        diff_count * 2 >= length
     }
 
     fn is_cards_distinct(ref self: Deck) -> bool {
-        true
+        let length = self.cards.len();
+        if length != 52 {
+            return false;
+        }
+
+        // Use an array to track seen cards
+        let mut seen_cards: Array<u64> = array![];
+        let mut i: u32 = 0;
+        let mut distinct = true;
+
+        while i != length {
+            let card: Card = *self.cards.at(i);
+            let key: u64 = (card.suit.into() * 100) + card.value.into();
+
+            // Check if key already exists
+            let mut j: u32 = 0;
+            while j != seen_cards.len() {
+                if *seen_cards.at(j) == key {
+                    // Cannot return here, so we break logic by setting flag
+                    distinct = false;
+                    break;
+                }
+                j += 1;
+            };
+
+            seen_cards.append(key);
+            i += 1;
+        };
+
+        distinct
     }
 }
 // assert after shuffling, that all cards remain distinct, and the deck is still 52 cards
