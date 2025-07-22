@@ -82,7 +82,7 @@ pub impl DeckImpl of DeckTrait {
         self.cards.pop_front().unwrap()
     }
 
-    fn is_shuffled(ref self: Deck) -> bool {
+    fn is_shuffled(self: @Deck) -> bool {
         let length = self.cards.len();
         if length <= 1 {
             return false;
@@ -111,7 +111,7 @@ pub impl DeckImpl of DeckTrait {
         diff_count * 2 >= length
     }
 
-    fn is_cards_distinct(ref self: Deck) -> bool {
+    fn is_cards_distinct(self: @Deck) -> bool {
         let length = self.cards.len();
         if length != 52 {
             return false;
