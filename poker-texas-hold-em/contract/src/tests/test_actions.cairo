@@ -155,7 +155,6 @@ mod tests {
 
     // [Actions] - call() tests
     #[test]
-    #[ignore]
     fn test_call_succeeds_with_correct_amount() {
         // [Setup]
         let contracts = array![CoreContract::Actions];
@@ -254,7 +253,6 @@ mod tests {
 
     // [Actions] - raise() tests
     #[test]
-    #[ignore]
     fn test_raise_increases_bet_and_chips_correctly() {
         // [Setup]
         let contracts = array![CoreContract::Actions];
