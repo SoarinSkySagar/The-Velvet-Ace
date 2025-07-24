@@ -4,6 +4,7 @@ use core::poseidon::{PoseidonTrait};
 use core::hash::{HashStateTrait, HashStateExTrait};
 use poker::models::deck::Deck;
 use poker::models::card::Card;
+use poker::utils::deck::count_unique_cards;
 
 // pub const DEFAULT_DECK_LENGTH: u32 = 52; // move this up up
 
@@ -82,7 +83,7 @@ pub impl DeckImpl of DeckTrait {
         self.cards.pop_front().unwrap()
     }
 
-    fn is_shuffled(ref self: Deck) -> bool {
+    fn is_shuffled(self: @Deck) -> bool {
         let length = self.cards.len();
         if length <= 1 {
             return false;
@@ -111,37 +112,10 @@ pub impl DeckImpl of DeckTrait {
         diff_count * 2 >= length
     }
 
-    fn is_cards_distinct(ref self: Deck) -> bool {
-        let length = self.cards.len();
-        if length != 52 {
-            return false;
-        }
+    fn is_cards_distinct(self: @Deck) -> bool {
+        let unique_cards_count = count_unique_cards(self);
 
-        // Use an array to track seen cards
-        let mut seen_cards: Array<u64> = array![];
-        let mut i: u32 = 0;
-        let mut distinct = true;
-
-        while i != length {
-            let card: Card = *self.cards.at(i);
-            let key: u64 = (card.suit.into() * 100) + card.value.into();
-
-            // Check if key already exists
-            let mut j: u32 = 0;
-            while j != seen_cards.len() {
-                if *seen_cards.at(j) == key {
-                    // Cannot return here, so we break logic by setting flag
-                    distinct = false;
-                    break;
-                }
-                j += 1;
-            };
-
-            seen_cards.append(key);
-            i += 1;
-        };
-
-        distinct
+        unique_cards_count == 52
     }
 }
 // assert after shuffling, that all cards remain distinct, and the deck is still 52 cards

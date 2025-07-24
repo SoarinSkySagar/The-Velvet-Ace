@@ -245,17 +245,8 @@ pub mod actions {
                 game_pot += amount_to_call;
             }
 
-            let mut updated_game_pots: Array<u256> = ArrayTrait::new();
-            let mut i = 0;
-            while i != game_pots.len() - 1 {
-                updated_game_pots.append(*game_pots.at(i));
-                i += 1;
-            };
-            updated_game_pots.append(game_pot);
-
             world.write_model(@player);
-            // Fixed bug here by replacing game_pot with game_pots @truthixify
-            world.write_member(Model::<Game>::ptr_from_keys(game_id), pot_, updated_game_pots);
+            world.write_member(Model::<Game>::ptr_from_keys(game_id), pot_, game_pot);
 
             self.after_play(player.id);
         }
@@ -314,17 +305,9 @@ pub mod actions {
             }
             game_current_bet = player.current_bet;
 
-            let mut updated_game_pots: Array<u256> = ArrayTrait::new();
-            let mut i = 0;
-            while i != game_pots.len() - 1 {
-                updated_game_pots.append(*game_pots.at(i));
-                i += 1;
-            };
-            updated_game_pots.append(game_pot);
-
             world.write_model(@player);
             world.write_member(Model::<Game>::ptr_from_keys(game_id), cb, game_current_bet);
-            world.write_member(Model::<Game>::ptr_from_keys(game_id), pot_, updated_game_pots);
+            world.write_member(Model::<Game>::ptr_from_keys(game_id), pot_, game_pot);
 
             self.after_play(player.id);
         }
@@ -637,18 +620,8 @@ pub mod actions {
                 // resolve pot at that index.
                 game_pots = self.refresh_pots(game_pots, target_index, current_pot, new_pot);
             }
-            // This doesn't go with what is expected in test
-            // player.current_bet = 0; // the player is maxed out. This value is used for checks.
-
-            let mut updated_game_pots: Array<u256> = ArrayTrait::new();
-            let mut i = 0;
-            while i != game_pots.len() - 1 {
-                updated_game_pots.append(*game_pots.at(i));
-                i += 1;
-            };
-            updated_game_pots.append(current_pot + amount);
-
-            world.write_member(Model::<Game>::ptr_from_keys(game_id), pot_, updated_game_pots);
+            player.current_bet = 0; // the player is maxed out. This value is used for checks.
+            world.write_member(Model::<Game>::ptr_from_keys(game_id), pot_, game_pots);
         }
 
         fn refresh_pots(
