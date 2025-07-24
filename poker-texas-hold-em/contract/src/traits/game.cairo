@@ -5,6 +5,15 @@ use poker::models::base::GameErrors;
 use poker::models::card::Card;
 use starknet::ContractAddress;
 
+// Adequate minimum and maximum values for game parameters
+const MIN_NO_OF_PLAYERS: u32 = 2;
+const MAX_NO_OF_PLAYERS: u32 = 10;
+const MIN_SMALL_BLIND: u64 = 1;
+const MIN_BIG_BLIND: u64 = 2;
+const MIN_NO_OF_DECKS: u8 = 1;
+const MIN_AMOUNT_OF_CHIPS: u256 = 10;
+const MIN_BLIND_SPACING: u16 = 1;
+
 #[generate_trait]
 pub impl GameImpl of GameTrait {
     /// @Birdmannn
@@ -14,16 +23,19 @@ pub impl GameImpl of GameTrait {
         let params = match game_params {
             Option::Some(params) => {
                 // Validate custom params
-                assert(params.max_no_of_players > 1, GameErrors::MIN_PLAYER);
+                assert(params.max_no_of_players >= MIN_NO_OF_PLAYERS, GameErrors::MIN_PLAYER);
+                assert(
+                    params.max_no_of_players <= MAX_NO_OF_PLAYERS, GameErrors::INVALID_GAME_PARAMS,
+                );
+                assert(params.small_blind >= MIN_SMALL_BLIND, GameErrors::INVALID_GAME_PARAMS);
+                assert(params.big_blind >= MIN_BIG_BLIND, GameErrors::INVALID_GAME_PARAMS);
                 assert(params.big_blind > params.small_blind, GameErrors::INVALID_BLIND_PLAYER);
-                assert(params.small_blind > 0, GameErrors::INVALID_GAME_PARAMS);
-                assert(params.big_blind > 0, GameErrors::INVALID_GAME_PARAMS);
-                assert(params.no_of_decks > 0, GameErrors::INVALID_GAME_PARAMS);
-                assert(params.min_amount_of_chips > 0, GameErrors::INVALID_GAME_PARAMS);
-                assert(params.blind_spacing > 0, GameErrors::INVALID_GAME_PARAMS);
-                // Optionally, validate max_no_of_players upper bound (e.g., <= 10)
-                assert(params.max_no_of_players <= 10, GameErrors::INVALID_GAME_PARAMS);
-                // Optionally, validate game_mode and showdown_type if needed
+                assert(params.no_of_decks >= MIN_NO_OF_DECKS, GameErrors::INVALID_GAME_PARAMS);
+                assert(
+                    params.min_amount_of_chips >= MIN_AMOUNT_OF_CHIPS,
+                    GameErrors::INVALID_GAME_PARAMS,
+                );
+                assert(params.blind_spacing >= MIN_BLIND_SPACING, GameErrors::INVALID_GAME_PARAMS);
                 params
             },
             Option::None => get_default_game_params(),
