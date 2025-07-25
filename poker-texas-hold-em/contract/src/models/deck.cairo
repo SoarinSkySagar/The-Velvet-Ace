@@ -12,33 +12,7 @@ pub struct Deck {
 mod tests {
     use super::{Deck, Card};
     use poker::traits::deck::DeckTrait;
-
-    // @augustin-v
-    // Helper function to count unique cards in a deck
-    // Returns the number of distinct cards based on their suit and value
-    fn count_unique_cards(deck: @Deck) -> u32 {
-        let mut count: u32 = 0;
-        let mut seen: Felt252Dict<bool> = Default::default();
-
-        let cards: @Array<Card> = deck.cards;
-        let cards_len: u32 = cards.len();
-
-        let mut i: u32 = 0;
-        while i < cards_len {
-            let card = *cards.at(i);
-            // Create a unique key for each card (suit * 100 + value)
-            let key: felt252 = (card.suit.into() * 100 + card.value.into()).into();
-
-            if !seen.get(key) {
-                seen.insert(key, true);
-                count += 1;
-            }
-
-            i += 1;
-        };
-
-        count
-    }
+    use poker::utils::deck::count_unique_cards;
 
     // @augustin-v
     // Helper function to check if two decks have different card ordering
