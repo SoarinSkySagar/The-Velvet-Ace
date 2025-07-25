@@ -102,6 +102,33 @@ fn verify(
     MerkleTrait::verify_v2(proof, root, card.hash(salt), index)
 }
 
+// @augustin-v
+// Helper function to count unique cards in a deck
+// Returns the number of distinct cards based on their suit and value
+pub fn count_unique_cards(deck: @Deck) -> u32 {
+    let mut count: u32 = 0;
+    let mut seen: Felt252Dict<bool> = Default::default();
+
+    let cards: @Array<Card> = deck.cards;
+    let cards_len: u32 = cards.len();
+
+    let mut i: u32 = 0;
+    while i < cards_len {
+        let card = *cards.at(i);
+        // Create a unique key for each card (suit * 100 + value)
+        let key: felt252 = (card.suit.into() * 100 + card.value.into()).into();
+
+        if !seen.get(key) {
+            seen.insert(key, true);
+            count += 1;
+        }
+
+        i += 1;
+    };
+
+    count
+}
+
 // fn _deal_hands(
 //     ref self: ContractState, ref players: Array<Player>,
 // ) { // deal hands for each player in the array

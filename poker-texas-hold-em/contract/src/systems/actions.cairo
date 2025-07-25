@@ -245,8 +245,17 @@ pub mod actions {
                 game_pot += amount_to_call;
             }
 
+            let mut updated_game_pots: Array<u256> = ArrayTrait::new();
+            let mut i = 0;
+            while i != game_pots.len() - 1 {
+                updated_game_pots.append(*game_pots.at(i));
+                i += 1;
+            };
+            updated_game_pots.append(game_pot);
+
             world.write_model(@player);
-            world.write_member(Model::<Game>::ptr_from_keys(game_id), pot_, game_pot);
+            // Fixed bug here by replacing game_pot with game_pots @truthixify
+            world.write_member(Model::<Game>::ptr_from_keys(game_id), pot_, updated_game_pots);
 
             self.after_play(player.id);
         }
@@ -305,9 +314,17 @@ pub mod actions {
             }
             game_current_bet = player.current_bet;
 
+            let mut updated_game_pots: Array<u256> = ArrayTrait::new();
+            let mut i = 0;
+            while i != game_pots.len() - 1 {
+                updated_game_pots.append(*game_pots.at(i));
+                i += 1;
+            };
+            updated_game_pots.append(game_pot);
+
             world.write_model(@player);
             world.write_member(Model::<Game>::ptr_from_keys(game_id), cb, game_current_bet);
-            world.write_member(Model::<Game>::ptr_from_keys(game_id), pot_, game_pot);
+            world.write_member(Model::<Game>::ptr_from_keys(game_id), pot_, updated_game_pots);
 
             self.after_play(player.id);
         }
@@ -356,11 +373,11 @@ pub mod actions {
             // the caller of this function must have some amount of money staked in the game
             // if the showdown fails to be verified, then the stake is gone.
             let mut world = self.world_default();
-            let community_dealing: bool = world
+            let mut c_deal: bool = world
                 .read_member(Model::<Game>::ptr_from_keys(game_id), selector!("community_dealing"));
             let mut community_cards: Array<Card> = world
                 .read_member(Model::<Game>::ptr_from_keys(game_id), selector!("community_cards"));
-            assert(community_dealing && community_cards.len() <= 5, 'INVALID DEALING');
+            assert(c_deal && community_cards.len() <= 5, 'INVALID DEALING');
             community_cards.append(card);
             world
                 .write_member(
@@ -368,10 +385,12 @@ pub mod actions {
                     selector!("community_cards"),
                     community_cards.clone(),
                 );
-            if community_cards.len() == 1 {}
+            if community_cards.len() > 2 {
+                c_deal = false;
+            }
             world
                 .write_member(
-                    Model::<Game>::ptr_from_keys(game_id), selector!("community_dealing"), false,
+                    Model::<Game>::ptr_from_keys(game_id), selector!("community_dealing"), c_deal,
                 );
 
             let event = CommunityCardDealt { game_id, card };
@@ -620,7 +639,9 @@ pub mod actions {
                 // resolve pot at that index.
                 game_pots = self.refresh_pots(game_pots, target_index, current_pot, new_pot);
             }
-            player.current_bet = 0; // the player is maxed out. This value is used for checks.
+            // This doesn't go with what is expected in test
+            // player.current_bet = 0; // the player is maxed out. This value is used for checks.
+
             world.write_member(Model::<Game>::ptr_from_keys(game_id), pot_, game_pots);
         }
 
