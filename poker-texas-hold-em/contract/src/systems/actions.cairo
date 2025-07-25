@@ -373,11 +373,11 @@ pub mod actions {
             // the caller of this function must have some amount of money staked in the game
             // if the showdown fails to be verified, then the stake is gone.
             let mut world = self.world_default();
-            let community_dealing: bool = world
+            let mut c_deal: bool = world
                 .read_member(Model::<Game>::ptr_from_keys(game_id), selector!("community_dealing"));
             let mut community_cards: Array<Card> = world
                 .read_member(Model::<Game>::ptr_from_keys(game_id), selector!("community_cards"));
-            assert(community_dealing && community_cards.len() <= 5, 'INVALID DEALING');
+            assert(c_deal && community_cards.len() <= 5, 'INVALID DEALING');
             community_cards.append(card);
             world
                 .write_member(
@@ -385,10 +385,12 @@ pub mod actions {
                     selector!("community_cards"),
                     community_cards.clone(),
                 );
-            if community_cards.len() == 1 {}
+            if community_cards.len() > 2 {
+                c_deal = false;
+            }
             world
                 .write_member(
-                    Model::<Game>::ptr_from_keys(game_id), selector!("community_dealing"), false,
+                    Model::<Game>::ptr_from_keys(game_id), selector!("community_dealing"), c_deal,
                 );
 
             let event = CommunityCardDealt { game_id, card };
