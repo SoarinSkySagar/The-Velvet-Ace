@@ -22,7 +22,7 @@ pub mod actions {
     use poker::models::player::{Player, PlayerTrait};
     use poker::traits::game::get_default_game_params;
     use crate::systems::interface::IActions;
-    use openzeppelin_token::erc20::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
+    use openzeppelin::token::erc20::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
     use crate::utils::deck::verify_game;
 
     pub const GAME: felt252 = 'GAME';
