@@ -16,11 +16,12 @@ pub mod actions {
     use poker::traits::game::get_default_game_params;
     use core::num::traits::Zero;
     use crate::systems::interface::IActions;
+    use openzeppelin_token::erc20::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
 
     pub const GAME: felt252 = 'GAME';
     pub const DECK: felt252 = 'DECK';
     pub const MAX_NO_OF_CHIPS: u128 = 100000; /// for test, 1 chip = 1 usd.
-
+    pub const USDC_ADDRESS: felt252 = 0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8;
 
     #[abi(embed_v0)]
     impl ActionsImpl of IActions<ContractState> {
@@ -255,9 +256,17 @@ pub mod actions {
             rank.into()
         }
 
-        fn buy_in(ref self: ContractState, no_of_chips: u256) { // use a crate here
-        // a package would be made for all transactions and nfts out of this contract package.
-        // world.emit_event(@BoughtChip{game_id, no_of_chips})
+        fn buy_in(ref self: ContractState, no_of_chips: u256) {
+            let mut world = self.world_default();
+            let mut player: Player = world.read_model(get_caller_address());
+            let usdc_amount: u256 = no_of_chips / 20;
+            let usdc_dispatcher = ERC20ABIDispatcher { contract_address: USDC_ADDRESS.try_into().unwrap() };
+            let usdc_allowance: u256 = usdc_dispatcher.allowance(player.id, get_contract_address());
+            assert(usdc_allowance >= usdc_amount, 'INSUFFICIENT ALLOWANCE');
+            let res: bool = usdc_dispatcher.transfer_from(player.id, get_contract_address(), usdc_amount);
+            assert(res, 'TRANSFER FAILED');
+            player.chips += no_of_chips;
+            world.write_model(@player);
         }
 
         fn get_dealer(self: @ContractState) -> Option<Player> {
