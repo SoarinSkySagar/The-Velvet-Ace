@@ -21,7 +21,8 @@ pub mod actions {
     pub const GAME: felt252 = 'GAME';
     pub const DECK: felt252 = 'DECK';
     pub const MAX_NO_OF_CHIPS: u128 = 100000; /// for test, 1 chip = 1 usd.
-    pub const USDC_ADDRESS: felt252 = 0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8;
+    pub const USDC_ADDRESS: felt252 =
+        0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8;
 
     #[abi(embed_v0)]
     impl ActionsImpl of IActions<ContractState> {
@@ -260,10 +261,13 @@ pub mod actions {
             let mut world = self.world_default();
             let mut player: Player = world.read_model(get_caller_address());
             let usdc_amount: u256 = no_of_chips / 20;
-            let usdc_dispatcher = ERC20ABIDispatcher { contract_address: USDC_ADDRESS.try_into().unwrap() };
+            let usdc_dispatcher = ERC20ABIDispatcher {
+                contract_address: USDC_ADDRESS.try_into().unwrap(),
+            };
             let usdc_allowance: u256 = usdc_dispatcher.allowance(player.id, get_contract_address());
             assert(usdc_allowance >= usdc_amount, 'INSUFFICIENT ALLOWANCE');
-            let res: bool = usdc_dispatcher.transfer_from(player.id, get_contract_address(), usdc_amount);
+            let res: bool = usdc_dispatcher
+                .transfer_from(player.id, get_contract_address(), usdc_amount);
             assert(res, 'TRANSFER FAILED');
             player.chips += no_of_chips;
             world.write_model(@player);
