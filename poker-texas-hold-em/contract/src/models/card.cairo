@@ -1,6 +1,8 @@
 use core::num::traits::Zero;
+use core::poseidon::PoseidonTrait;
+use core::hash::{HashStateTrait, HashStateExTrait};
 
-#[derive(Copy, Drop, Serde, Default, Debug, Introspect, PartialEq)]
+#[derive(Copy, Drop, Serde, Default, Debug, Introspect, PartialEq, Hash)]
 pub struct Card {
     suit: u8,
     value: u16,
@@ -68,6 +70,20 @@ pub impl CardImpl of CardTrait {
 
     fn is_valid(self: @Card) -> bool {
         self.value.is_non_zero()
+    }
+
+    fn hash(ref self: Card, salt: Array<felt252>) -> felt252 {
+        // static 3 for now. Might be dynamic later.
+        assert(salt.len() == 3, 'SALT IS EMPTY');
+        let mut serialized_data: Array<felt252> = array![];
+        self.serialize(ref serialized_data);
+        let hash = PoseidonTrait::new()
+            .update_with(self)
+            .update_with(*salt.at(1))
+            .update_with(*salt.at(0))
+            .update_with(*salt.at(2))
+            .finalize();
+        hash
     }
 }
 // Should implement into?

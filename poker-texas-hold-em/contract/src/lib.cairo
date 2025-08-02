@@ -22,13 +22,17 @@ mod traits {
 
 mod utils {
     mod hand;
+    mod game;
+    mod deck;
 }
 
 #[cfg(test)]
 mod tests {
+    mod erc20;
     mod setup;
     mod test_actions;
     mod test_hand_compare;
     mod test_hand_rank;
     mod test_world;
+    mod test_resolve_round;
 }

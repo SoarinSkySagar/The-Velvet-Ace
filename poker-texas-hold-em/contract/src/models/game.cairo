@@ -1,5 +1,6 @@
 use starknet::ContractAddress;
 use super::card::Card;
+use super::hand::Hand;
 use poker::traits::game::GameTrait;
 use core::num::traits::Zero;
 
@@ -26,6 +27,14 @@ pub struct GameParams {
     kicker_split: bool,
     min_amount_of_chips: u256,
     blind_spacing: u16,
+    showdown_type: ShowdownType,
+}
+
+#[derive(Copy, Drop, Serde, Default, Introspect, PartialEq)]
+pub enum ShowdownType {
+    #[default]
+    Gathered,
+    Splitted: u256,
 }
 
 /// id - the game id
@@ -52,22 +61,59 @@ pub struct Game {
     #[key]
     id: u64,
     in_progress: bool,
+    round_in_progress: bool,
     has_ended: bool,
     current_round: u8,
     should_end: bool,
-    round_in_progress: bool,
     current_player_count: u32,
     players: Array<ContractAddress>,
     deck: Array<u64>,
     next_player: Option<ContractAddress>,
     community_cards: Array<Card>,
-    pot: u256,
+    pots: Array<u256>,
+    previous_offset: u256,
     current_bet: u256,
     params: GameParams,
     reshuffled: u64,
+    deck_root: felt252,
+    dealt_cards_root: felt252,
+    nonce: u64,
+    community_dealing: bool,
+    showdown: bool,
+    round_count: u64,
+    highest_staker: Option<ContractAddress>,
 }
 
-// then we can implemnt a list node here
+#[derive(Drop, Serde, Copy)]
+#[dojo::model]
+pub struct Salts {
+    #[key]
+    id1: felt252,
+    #[key]
+    id2: felt252,
+    #[key]
+    id3: felt252,
+    used: bool,
+}
+
+// #[derive(Drop, Copy, PartialEq, Default, Serde, Instrospect)]
+// pub enum RoundStatus {
+//     #[default]
+//     IsWaiting,
+//     InProgress,
+//     HasEnded,
+// }
+
+#[derive(Drop, Clone, Serde)]
+#[dojo::model]
+pub struct GameStats {
+    #[key]
+    game_id: u64,
+    mvp: ContractAddress,
+    round_end_time: u64,
+}
+
+// then we can implement a list node here
 #[derive(Drop, Serde, Copy, PartialEq)]
 pub struct Node {
     pub val: ContractAddress,

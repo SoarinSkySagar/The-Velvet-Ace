@@ -12,7 +12,7 @@
 #[cfg(test)]
 mod tests {
     use crate::models::hand::{Hand, HandTrait, HandRank};
-    use crate::models::game::{GameMode, GameParams};
+    use crate::models::game::{GameMode, GameParams, ShowdownType};
     use crate::models::card::{Suits, Royals, Card};
     use starknet::{contract_address_const, ContractAddress};
     use core::num::traits::Zero;
@@ -38,6 +38,7 @@ mod tests {
             kicker_split: kicker_split,
             min_amount_of_chips: 2000,
             blind_spacing: 10,
+            showdown_type: ShowdownType::Gathered,
         }
     }
 
