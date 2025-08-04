@@ -53,6 +53,22 @@ pub impl PlayerImpl of PlayerTrait {
         game.current_player_count == game.params.max_no_of_players
     }
 
+    fn enter_first_player(ref self: Player, ref game: Game) -> bool {
+        let (is_locked, _) = self.locked;
+        assert(!is_locked, GameErrors::PLAYER_ALREADY_LOCKED);
+        assert(self.refresh_stake(ref game), GameErrors::INSUFFICIENT_CHIP);
+
+        if (game.id, game.reshuffled) != self.out {
+            game.players.append(self.id);
+        }
+        self.locked = (true, game.id);
+        self.in_round = true;
+        game.current_player_count += 1;
+        self.eligible_pots = 1;
+
+        game.current_player_count == game.params.max_no_of_players
+    }
+
     fn refresh_stake(ref self: Player, ref game: Game) -> bool {
         if let ShowdownType::Splitted(stake) = game.params.showdown_type {
             if stake >= self.chips {
