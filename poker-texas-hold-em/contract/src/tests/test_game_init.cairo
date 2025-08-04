@@ -1,5 +1,5 @@
 #[cfg(test)]
-mod tests{
+mod tests {
     use crate::models::game::GameParams;
     use poker::traits::game::get_default_game_params;
     use poker::systems::interface::{IActionsDispatcher, IActionsDispatcherTrait};
